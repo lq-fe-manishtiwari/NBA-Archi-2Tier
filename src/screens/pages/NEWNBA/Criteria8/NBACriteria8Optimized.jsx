@@ -57,9 +57,12 @@ const NBACriteria8Optimized = () => {
   const getTotalMarks = (sectionCode) => {
     const marks = {
       '8.1': 40,
-      '8.2': 15,
-      '8.3': 10,
-      '8.4': 15,
+      '8.2': 10,
+      '8.3': 5,
+      '8.4': 5,
+      '8.5': 10,
+      '8.6': 5,
+      '8.7': 10,
     };
     return marks[sectionCode] || 0;
   };
@@ -113,6 +116,36 @@ const NBACriteria8Optimized = () => {
         isCoordinatorField: "is_coordinator_entry",
         dateField: "created_at"
       };
+    } else if (sectionName.includes("8.5")) {
+      return {
+        title: "Career Guidance Entry",
+        statusField: "approval_status",
+        userField: "other_staff_id",
+        nameFields: ["firstname", "lastname"],
+        idField: "career_guidance_id",
+        isCoordinatorField: "is_coordinator_entry",
+        dateField: "created_at"
+      };
+    } else if (sectionName.includes("8.6")) {
+      return {
+        title: "Entrepreneurship Entry",
+        statusField: "approval_status",
+        userField: "other_staff_id",
+        nameFields: ["firstname", "lastname"],
+        idField: "entrepreneurship_id",
+        isCoordinatorField: "is_coordinator_entry",
+        dateField: "created_at"
+      };
+    } else if (sectionName.includes("8.7")) {
+      return {
+        title: "Activities Entry",
+        statusField: "approval_status",
+        userField: "other_staff_id",
+        nameFields: ["firstname", "lastname"],
+        idField: "activities_id",
+        isCoordinatorField: "is_coordinator_entry",
+        dateField: "created_at"
+      };
     } else {
       return {};
     }
@@ -146,6 +179,24 @@ const NBACriteria8Optimized = () => {
         updateCardStatus: newnbaCriteria8Service.updateCardStatus8_4,
         getCardData: newnbaCriteria8Service.getallCardDetails8_4,
         getSectionData: newnbaCriteria8Service.getCriteria8_4_Data
+      };
+    } else if (sectionName.includes("8.5")) {
+      return {
+        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_5,
+        getCardData: newnbaCriteria8Service.getallCardDetails8_5,
+        getSectionData: newnbaCriteria8Service.getCriteria8_5_Data
+      };
+    } else if (sectionName.includes("8.6")) {
+      return {
+        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_6,
+        getCardData: newnbaCriteria8Service.getallCardDetails8_6,
+        getSectionData: newnbaCriteria8Service.getCriteria8_6_Data
+      };
+    } else if (sectionName.includes("8.7")) {
+      return {
+        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_7,
+        getCardData: newnbaCriteria8Service.getallCardDetails8_7,
+        getSectionData: newnbaCriteria8Service.getCriteria8_7_Data
       };
     } else {
       return {};
@@ -485,6 +536,12 @@ const NBACriteria8Optimized = () => {
             primaryId = card.faculty_qualification_improvement_id || card.id || null;
           } else if (sectionName.includes("8.4")) {
             primaryId = card.academic_performance_improvement_id || card.id || null;
+          } else if (sectionName.includes("8.5")) {
+            primaryId = card.career_guidance_id || card.id || null;
+          } else if (sectionName.includes("8.6")) {
+            primaryId = card.entrepreneurship_id || card.id || null;
+          } else if (sectionName.includes("8.7")) {
+            primaryId = card.activities_id || card.id || null;
           } else {
             primaryId = card.id || null;
           }
@@ -495,6 +552,9 @@ const NBACriteria8Optimized = () => {
             academic_audit_id: sectionName.includes("8.2") ? primaryId : null,
             faculty_qualification_improvement_id: sectionName.includes("8.3") ? primaryId : null,
             academic_performance_improvement_id: sectionName.includes("8.4") ? primaryId : null,
+            career_guidance_id: sectionName.includes("8.5") ? primaryId : null,
+            entrepreneurship_id: sectionName.includes("8.6") ? primaryId : null,
+            activities_id: sectionName.includes("8.7") ? primaryId : null,
 
             // Common fields
             other_staff_id: card.other_staff_id || card.staff_id || card.user_id || null,
@@ -505,9 +565,12 @@ const NBACriteria8Optimized = () => {
             // Section-specific content fields
             co_actions_details: card.co_actions_details || '',
             po_pso_actions_details: card.po_pso_actions_details || '',
-            quality_assurance_details: card.quality_assurance_details || '',
-            faculty_feedback_details: card.faculty_feedback_details || '',
-            student_feedback_details: card.student_feedback_details || '',
+            audit_details: card.audit_details || '',
+            feedback_details: card.feedback_details || '',
+            self_learning_details: card.self_learning_details || '',
+            career_guidance_details: card.career_guidance_details || '',
+            entrepreneurship_details: card.entrepreneurship_details || '',
+            activities_details: card.activities_details || '',
 
             // Document fields
             co_supporting_documents: card.co_supporting_documents || [],
@@ -566,6 +629,15 @@ const NBACriteria8Optimized = () => {
           } else if (sectionName.includes("8.4")) {
             hasCoordinatorData = !!coordinatorData?.academic_performance_improvement_id;
             coordinatorId = coordinatorData?.academic_performance_improvement_id;
+          } else if (sectionName.includes("8.5")) {
+            hasCoordinatorData = !!coordinatorData?.career_guidance_id;
+            coordinatorId = coordinatorData?.career_guidance_id;
+          } else if (sectionName.includes("8.6")) {
+            hasCoordinatorData = !!coordinatorData?.entrepreneurship_id;
+            coordinatorId = coordinatorData?.entrepreneurship_id;
+          } else if (sectionName.includes("8.7")) {
+            hasCoordinatorData = !!coordinatorData?.activities_id;
+            coordinatorId = coordinatorData?.activities_id;
           }
 
           if (hasCoordinatorData && coordinatorId) {
@@ -582,7 +654,10 @@ const NBACriteria8Optimized = () => {
                 co_po_pso_actions_id: sectionName.includes("8.1") ? coordinatorId : null,
                 academic_audit_id: sectionName.includes("8.2") ? coordinatorId : null,
                 faculty_qualification_improvement_id: sectionName.includes("8.3") ? coordinatorId : null,
-                academic_performance_improvement_id: sectionName.includes("8.4") ? coordinatorId : null
+                academic_performance_improvement_id: sectionName.includes("8.4") ? coordinatorId : null,
+                career_guidance_id: sectionName.includes("8.5") ? coordinatorId : null,
+                entrepreneurship_id: sectionName.includes("8.6") ? coordinatorId : null,
+                activities_id: sectionName.includes("8.7") ? coordinatorId : null
               };
               allCards.unshift(coordinatorCard);
             } else {
@@ -637,6 +712,12 @@ const NBACriteria8Optimized = () => {
         primaryId = cardItem?.faculty_qualification_improvement_id || null;
       } else if (sectionName.includes("8.4")) {
         primaryId = cardItem?.academic_performance_improvement_id || null;
+      } else if (sectionName.includes("8.5")) {
+        primaryId = cardItem?.career_guidance_id || null;
+      } else if (sectionName.includes("8.6")) {
+        primaryId = cardItem?.entrepreneurship_id || null;
+      } else if (sectionName.includes("8.7")) {
+        primaryId = cardItem?.activities_id || null;
       }
 
       const selectedCardData = {
@@ -647,6 +728,9 @@ const NBACriteria8Optimized = () => {
         qualityAssuranceId: sectionName.includes("8.2") ? primaryId : null,
         facultyFeedbackId: sectionName.includes("8.3") ? primaryId : null,
         studentFeedbackId: sectionName.includes("8.4") ? primaryId : null,
+        careerGuidanceId: sectionName.includes("8.5") ? primaryId : null,
+        entrepreneurshipId: sectionName.includes("8.6") ? primaryId : null,
+        activitiesId: sectionName.includes("8.7") ? primaryId : null,
         cardData: cardItem,
         sectionName: sectionName,
         isCoordinatorEntry: cardItem?.is_coordinator_entry || false,
@@ -660,7 +744,10 @@ const NBACriteria8Optimized = () => {
         coPoPsoActionsId: selectedCardData.coPoPsoActionsId,
         qualityAssuranceId: selectedCardData.qualityAssuranceId,
         facultyFeedbackId: selectedCardData.facultyFeedbackId,
-        studentFeedbackId: selectedCardData.studentFeedbackId
+        studentFeedbackId: selectedCardData.studentFeedbackId,
+        careerGuidanceId: selectedCardData.careerGuidanceId,
+        entrepreneurshipId: selectedCardData.entrepreneurshipId,
+        activitiesId: selectedCardData.activitiesId
       });
 
       setSelectedCard(selectedCardData);
@@ -713,6 +800,12 @@ const NBACriteria8Optimized = () => {
         updateResult = await newnbaCriteria8Service.updateCardStatus8_3(cardId, statusUpdateData);
       } else if (sectionName.includes("8.4")) {
         updateResult = await newnbaCriteria8Service.updateCardStatus8_4(cardId, statusUpdateData);
+      } else if (sectionName.includes("8.5")) {
+        updateResult = await newnbaCriteria8Service.updateCardStatus8_5(cardId, statusUpdateData);
+      } else if (sectionName.includes("8.6")) {
+        updateResult = await newnbaCriteria8Service.updateCardStatus8_6(cardId, statusUpdateData);
+      } else if (sectionName.includes("8.7")) {
+        updateResult = await newnbaCriteria8Service.updateCardStatus8_7(cardId, statusUpdateData);
       } else {
         throw new Error(`Unknown section: ${sectionName}`);
       }
@@ -1250,6 +1343,9 @@ const NBACriteria8Optimized = () => {
                                   qualityAssuranceId={selectedCard.qualityAssuranceId}
                                   facultyFeedbackId={selectedCard.facultyFeedbackId}
                                   studentFeedbackId={selectedCard.studentFeedbackId}
+                                  careerGuidanceId={selectedCard.careerGuidanceId}
+                                  entrepreneurshipId={selectedCard.entrepreneurshipId}
+                                  activitiesId={selectedCard.activitiesId}
                                   isSubCoordinator={isSubCoordinator}
                                   onSuccess={handleCloseForm}
                                   readOnly={true}
@@ -1365,4 +1461,4 @@ const NBACriteria8Optimized = () => {
   );
 };
 
-export default NBACriteria8Optimized;
+export default NBACriteria8Optimized;  
