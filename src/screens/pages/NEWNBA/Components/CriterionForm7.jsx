@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import GenericCriteriaForm from "./GenericCriteriaForm";
+import GenericCriteriaForm7 from "./GenericCriteriaForm7";
 import StatusBadge from "./StatusBadge";
 import { newnbaCriteria7Service } from "../Services/NewNBA-Criteria7.service";
 import { newnbaCriteria7_2_Service } from "../Services/NewNBA-Criteria7_2.service";
@@ -79,24 +79,47 @@ const CriterionForm = ({
         { name: "7.3", marks: 10 },
       ],
     },
+
     "7.5": {
-      title: "7.5. Improvement in the Quality of Students Admitted to the Program",
-      totalMarks: 10,
-      fields: [
-        {
-          name: "7.5",
-          // label: "7.5.1 Adequate and Well-Equipped Laboratories and Technical Manpower ",
-          // marks: 10,
-          hasTable: true,
-          tableConfig: {
-            title: "List of project laboratory/research laboratory/Centre of Excellence",
-            columns: [
-              { field: "laboratory_name", header: "Name of the Laboratory", placeholder: "" },
-            ],
+  title: "7.5. Improvement in the Quality of Students Admitted to the Program",
+  totalMarks: 10,
+  fields: [
+    {
+      name: "7.5",
+      hasTable: true,
+      tableConfig: {
+        title: "Table No.7.5. Improvement in the quality of students admitted to the program for 3 years.",
+
+        columns: [
+          {
+            field: "item",
+            header: "Item",
+            width: "45%",
           },
-        },
-      ],
+          {
+            field: "cay",
+            header: "CAY",
+            width: "18%",
+          },
+          {
+            field: "caym1",
+            header: "CAYm1",
+            width: "18%",
+          },
+          {
+            field: "caym2",
+            header: "CAYm2",
+            width: "18%",
+          },
+        ],
+
+        // Title rows (non-editable, non-draggable)
+        readOnlyRows: [0, 4],
+      },
     },
+  ],
+},
+
 
   }
 
@@ -583,7 +606,7 @@ const CriterionForm = ({
       )}
 
       {/* Main form */}
-      <GenericCriteriaForm
+      <GenericCriteriaForm7
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields || []}
