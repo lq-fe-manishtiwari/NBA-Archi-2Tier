@@ -37,78 +37,50 @@ const CriterionForm = ({
   const sectionConfig = {
   
     "7.1": {
-      title: "7.1. Adequate and Well-Equipped Laboratories and Technical Manpower",
-      totalMarks: 50,
+      title: "7.1. Improvement in Success Index of Students without the Backlogs",
+      totalMarks: 15,
       fields: [
         {
-          name: "7.1.1",
-          label: "7.1.1 Adequate and Well-Equipped Laboratories and Technical Manpower ",
-          marks: 50,
+          // name: "7.1.1",
+          // label: "7.1.1 Adequate and Well-Equipped Laboratories and Technical Manpower ",
+          // marks: 50,
           hasTable: true,
           tableConfig: {
             title: "Teaching-Learning Activities",
             columns: [
-              { field: "laboratory_name", header: "Name of the Laboratories", placeholder: "" },
-              { field: "batch_size", header: "Number of the Students per Setup(Batch Size)", placeholder: "" },
-              { field: "major_equipment", header: "Name of the Major equipment", placeholder: "" },
-              { field: "weekly_utilization", header: "Weekly utilization status(all the courses for which the lab is utilized)", placeholder: "" },
-              { field: "technical_manpower", header: "Technical Manpower support", placeholder: "" },
+              { field: "items", header: "Items", placeholder: "" },
+              { field: "lyg", header: "LYG", placeholder: "" },
+              { field: "lyg_1", header: "LYGm1", placeholder: "" },
+              { field: "lyg_2", header: "LYGm2", placeholder: "" },
+              // { field: "technical_manpower", header: "Technical Manpower support", placeholder: "" },
             ],
           },
         },
       ],
     },
-    "7.2": {
-      title: "7.2. Additional Facilities Created for Improving the Quality of Learning Experience in Laboratories",
-      totalMarks: 20,
-      fields: [
-        {
-          // name: "7.2.1",
-          // label: "7.2.1 Additional Facilities Created for Improving the Quality of Learning Experience in Laboratories ",
-          // marks: 20,
-          hasTable: true,
-          tableConfig: {
-            title: "List of Additional Facilities",
-            columns: [
-              { field: "name_of_facility", header: "Name of the Facility", placeholder: "Enter name" },
-              { field: "details", header: "Details", placeholder: "Details" },
-              { field: "purpose_creating_facility", header: "Purpose for creating Facility", placeholder: "Purpose" },
-              { field: "utilization", header: "Utilization", placeholder: "Utilization" },
-              { field: "relevance", header: "Relevance to POs/PSOs", placeholder: "Relevance" },
-            ],
-          },
-        },
+     "7.2": {
+      title: "7.2.Improvement in Placement and Higher Studies",
+      totalMarks: 10,
+      fields: [ 
+        { name: "7.3", marks: 10 },
       ],
     },
     "7.3": {
-      title: "7.3. Maintenance of Laboratories and Overall Ambiance",
+      title: "7.3. Improvement in Sponsored Projects and Consultancy",
       totalMarks: 10,
       fields: [ 
-        { name: "7.3", label: "7.3.1 Mainenance of Laboratories and Overall Ambiance", marks: 10 },
+        { name: "7.3", marks: 10 },
       ],
     },
-    "7.4": {
-      title: "7.4. Safety Measures in Laboratories",
+     "7.4": {
+      title: "7.4. Academic Audit and Actions Taken thereof during the Assessment Period",
       totalMarks: 10,
-      fields: [
-        {
-          name: "7.4",
-          // label: "7.4 Safety Measures in Laboratories ",
-          // marks: 10,
-          hasTable: true,
-          tableConfig: {
-            title: "List of various safety measures in laboratories",
-            columns: [
-              { field: "laboratory_name", header: "Name of the Laboratory", placeholder: "Enter name" },
-              // { field: "laboratory_type", header: "Type of Laboratory", placeholder: "" },
-              { field: "safety_measures", header: "Safety measures", placeholder: "Safety Measures" },
-            ],
-          },
-        },
+      fields: [ 
+        { name: "7.3", marks: 10 },
       ],
     },
     "7.5": {
-      title: "7.5. Project Laboratory/Research Laboratory",
+      title: "7.5. Improvement in the Quality of Students Admitted to the Program",
       totalMarks: 10,
       fields: [
         {
