@@ -27,18 +27,141 @@ const Criterion3_1Form = ({
   const [alert, setAlert] = useState(null);
   const [isContributor, setIsContributor] = useState(false);
 
-  const config = {
-    title: "3.1. Evaluation of Continuous Assessment: Unit Tests, Mid-Term, Assignments etc.",
-    totalMarks: 10,
-    fields: [
-      {
-        name: "3.1",
-        label: "3.1. Evaluation of Continuous Assessment: Unit Tests, Mid-Term, Assignments etc.",
-        marks: 10,
-        type: "textarea",
+ const config = {
+  title: "3.1 Course Outcomes and Program Outcomes Mapping",
+  totalMarks: 20,
+  fields: [
+    /* ============================================================
+       3.1.1 COURSE OUTCOMES
+    ============================================================ */
+
+    {
+      name: "3.1.1",
+      label:
+        "3.1.1 Course Outcomes (05)",
+      marks: 5,
+      hasTable: true,
+      hasFile: true,
+      tableConfig: {
+        title: "Table No.3.1.1: List of Course Outcomes",
+        subtitle:
+          "SAR should include Course Outcomes of one course from each semester. Each course is expected to have 4–6 outcomes.",
+        addRowLabel: "Add Course Outcome",
+        columns: [
+          {
+            field: "course_code",
+            header: "Course Code",
+            placeholder: "C202",
+            width: "w-24",
+          },
+          {
+            field: "course_name",
+            header: "Course Name",
+            placeholder: "Data Structures",
+            width: "w-48",
+          },
+          {
+            field: "year_of_study",
+            header: "Year of Study",
+            placeholder: "2020–21",
+            width: "w-28",
+          },
+          {
+            field: "co_code",
+            header: "CO Code",
+            placeholder: "C202.1",
+            width: "w-24",
+          },
+          {
+            field: "co_statement",
+            header: "Course Outcome Statement",
+            placeholder: "Apply data structures to solve real-world problems",
+            width: "w-96",
+          },
+        ],
       },
-    ],
-  };
+    },
+
+    /* ============================================================
+       3.1.2 CO–PO MATRIX (SELECTED COURSES)
+    ============================================================ */
+
+    {
+      name: "3.1.2",
+      label:
+        "3.1.2 CO–PO Matrices of Courses Selected in 3.1.1 (05)",
+      marks: 5,
+      hasTable: true,
+      hasFile: true,
+      tableConfig: {
+        title: "Table No.3.1.2: CO–PO Matrices of Selected Courses",
+        subtitle:
+          "Enter mapping strength as 1 (Low), 2 (Medium), 3 (High) or '-' for no correlation.",
+        addRowLabel: "Add CO–PO Mapping",
+        columns: [
+          {
+            field: "co_code",
+            header: "CO",
+            placeholder: "C202.1",
+            width: "w-24",
+          },
+          ...Array.from({ length: 11 }, (_, i) => ({
+            field: `PO${i + 1}`,
+            header: `PO${i + 1}`,
+            width: "w-16",
+            type: "select",
+            options: [
+              { value: "-", label: "-" },
+              { value: "1", label: "Low (1)" },
+              { value: "2", label: "Medium (2)" },
+              { value: "3", label: "High (3)" },
+            ],
+          })),
+        ],
+      },
+    },
+
+    /* ============================================================
+       3.1.3 COURSE–PO MATRIX (ALL YEARS)
+    ============================================================ */
+
+    {
+      name: "3.1.3",
+      label:
+        "3.1.3 Course–PO Matrix of All Five Years of Study (10)",
+      marks: 10,
+      hasTable: true,
+      hasFile: true,
+      tableConfig: {
+        title: "Table No.3.1.3: Course–PO Matrix of All Five Years of Study",
+        subtitle:
+          "Correlation levels: 1 (Low), 2 (Medium), 3 (High). Use '-' if no correlation. Data should be consistent with Table 3.1.2.",
+        addRowLabel: "Add Course–PO Mapping",
+        columns: [
+          {
+            field: "course_code",
+            header: "Course Code",
+            placeholder: "C101 / C202 / C409",
+            width: "w-28",
+          },
+          ...Array.from({ length: 11 }, (_, i) => ({
+            field: `PO${i + 1}`,
+            header: `PO${i + 1}`,
+            width: "w-16",
+            type: "select",
+            options: [
+              { value: "-", label: "-" },
+              { value: "1", label: "Low (1)" },
+              { value: "2", label: "Medium (2)" },
+              { value: "3", label: "High (3)" },
+            ],
+          })),
+        ],
+      },
+    },
+  ],
+};
+
 
   // ---------------- LOAD DATA ----------------
   const loadData = useCallback(async () => {

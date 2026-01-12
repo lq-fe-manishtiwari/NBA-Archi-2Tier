@@ -1,7 +1,7 @@
 // src/screens/pages/NEWNBA/Components/Criteria1/Criterion1_3Form.jsx
 
 import React, { useState, useEffect } from "react";
-import GenericCriteriaForm1_3 from "../GenericCriteriaForm1_3";
+import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
 import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
@@ -40,22 +40,31 @@ const Criterion1_3Form = ({
   const config = {
     title: "1.3. Mapping of Program Outcomes (POs) and Program Specific Outcomes (PSOs) with Courses",
     totalMarks: 15,
+    // fields: [
+    //   {
+    //     name: "1.3.1",
+    //     label: "1.3.1. Program Outcomes (POs) and Program Specific Outcomes (PSOs)",
+    //     marks: 5,
+    //     type: "custom",
+    //     hasFile: true,
+    //   },
+    //   {
+    //     name: "1.3.2",
+    //     label: "1.3.2. PO-Course Mapping",
+    //     marks: 10,
+    //     type: "custom",
+    //     hasFile: true,
+    //   },
+    // ],
+
     fields: [
-      {
+        {
         name: "1.3.1",
-        label: "1.3.1. Program Outcomes (POs) and Program Specific Outcomes (PSOs)",
-        marks: 5,
-        type: "custom",
-        hasFile: true,
-      },
-      {
-        name: "1.3.2",
-        label: "1.3.2. PO-Course Mapping",
+        label: "1.3.1 Process to Identify PO/PSO Compliance",
         marks: 10,
-        type: "custom",
-        hasFile: true,
+        type: "textarea",
       },
-    ],
+    ]
   };
 
   // Load data from API function
@@ -430,7 +439,7 @@ const Criterion1_3Form = ({
 
   return (
     <>
-      <GenericCriteriaForm1_3
+      <GenericCriteriaForm1_2
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

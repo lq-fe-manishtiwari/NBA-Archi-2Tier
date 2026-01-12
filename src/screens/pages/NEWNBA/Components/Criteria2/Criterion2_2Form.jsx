@@ -27,15 +27,45 @@ const Criterion2_2Form = ({
   const [alert, setAlert] = useState(null);
   const [isContributor, setIsContributor] = useState(false);
 
-  const config = {
-    title: "2.2. Quality of Student Capstone Project",
-    totalMarks: 25,
+const config = {
+    title: "2.2 Teaching–Learning Processes",
+    totalMarks: 110,
     fields: [
       {
-        name: "2.2",
-        label: "Describe Processes Followed",
+        name: "2.2.1",
+        label: "2.2.1 Initiatives in Teaching and Learning Process",
+        marks: 15,
+        type: "editor",
+      },
+      {
+        name: "2.2.2",
+        label: "2.2.2 Quality of Internal Semester Question Papers, Assignments and Evaluation",
+        marks: 20,
+        type: "editor",
+      },
+      {
+        name: "2.2.3",
+        label: "2.2.3 Quality of Students Projects",
         marks: 25,
-        type: "textarea",
+        type: "editor",
+      },
+      {
+        name: "2.2.4",
+        label: "2.2.4 Initiatives Related to Profession Interaction",
+        marks: 10,
+        type: "editor",
+      },
+      {
+        name: "2.2.5",
+        label: "2.2.5 Initiatives Related to Skill Development / Internships / Summer Training",
+        marks: 20,
+        type: "editor",
+      },
+      {
+        name: "2.2.6",
+        label: "2.2.6 Quality of Studio Projects and Experiments",
+        marks: 20,
+        type: "editor",
       },
     ],
   };

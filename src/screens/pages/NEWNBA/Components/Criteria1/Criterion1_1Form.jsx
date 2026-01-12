@@ -108,71 +108,71 @@ const groupMappingByPEO = (rawMappingData) => {
         marks: 5,
         type: "textarea",
       },
-      {
-        name: "1.1.2",
-        label: "1.1.2. State PEOs of the Program",
-        marks: 5,
-        type: "textarea",
-      },
-      {
-        name: "1.1.3", // ← FIXED: was "1.1.process"
-        label: "1.1.3. Process of Defining Vision, Mission and PEOs",
-        marks: 15,
-        type: "textarea",
-      },
-      {
-        name: "1.1.4",
-        label: "1.1.4. Dissemination of Vision, Mission and PEOs",
-        marks: 5,
-        type: "textarea",
-      },
-      {
-        name: "1.1.5",
-        label: "1.1.5. Mapping of PEOs with Mission",
-        marks: 10,
-        hasTable: true,
-        tableConfig: {
-          title: "Table 1.1.5: Mapping of PEOs with Mission Statement",
-          subtitle: "M1, M2, ... Mn are distinct elements of mission statement. Enter correlation levels as Low (1), Medium (2) and High (3). If there is no correlation, put \"-\"",
-          addRowLabel: "Add PEO-Mission Mapping",
-          columns: [
-            { 
-              field: "peo_name", 
-              header: "PEO", 
-              placeholder: "PEO1",
-              width: "w-20",
-              editable: false,
-            },
-            { 
-              field: "peo_statement", 
-              header: "PEO Statement", 
-              placeholder: "Statement",
-              width: "w-40",
-              editable: false,
-            },
-            {
-              field: "mission_name",
-              header: "Mission",
-              placeholder: "M1",
-              width: "w-24",
-              editable: true,
-            },
-            {
-              field: "correlation_level",
-              header: "Correlation Level",
-              placeholder: "1, 2, 3, or -",
-              width: "w-40",
-              type: "select",
-              options: [
-                { value: "1", label: "Low (1)" },
-                { value: "2", label: "Medium (2)" },
-                { value: "3", label: "High (3)" },
-                { value: "-", label: "No Correlation (-)" },
-              ],
-            },
-          ],
-        },
-      },
+      // {
+      //   name: "1.1.2",
+      //   label: "1.1.2. State PEOs of the Program",
+      //   marks: 5,
+      //   type: "textarea",
+      // },
+      // {
+      //   name: "1.1.3", // ← FIXED: was "1.1.process"
+      //   label: "1.1.3. Process of Defining Vision, Mission and PEOs",
+      //   marks: 15,
+      //   type: "textarea",
+      // },
+      // {
+      //   name: "1.1.4",
+      //   label: "1.1.4. Dissemination of Vision, Mission and PEOs",
+      //   marks: 5,
+      //   type: "textarea",
+      // },
+      // {
+      //   name: "1.1.5",
+      //   label: "1.1.5. Mapping of PEOs with Mission",
+      //   marks: 10,
+      //   hasTable: true,
+      //   tableConfig: {
+      //     title: "Table 1.1.5: Mapping of PEOs with Mission Statement",
+      //     subtitle: "M1, M2, ... Mn are distinct elements of mission statement. Enter correlation levels as Low (1), Medium (2) and High (3). If there is no correlation, put \"-\"",
+      //     addRowLabel: "Add PEO-Mission Mapping",
+      //     columns: [
+      //       { 
+      //         field: "peo_name", 
+      //         header: "PEO", 
+      //         placeholder: "PEO1",
+      //         width: "w-20",
+      //         editable: false,
+      //       },
+      //       { 
+      //         field: "peo_statement", 
+      //         header: "PEO Statement", 
+      //         placeholder: "Statement",
+      //         width: "w-40",
+      //         editable: false,
+      //       },
+      //       {
+      //         field: "mission_name",
+      //         header: "Mission",
+      //         placeholder: "M1",
+      //         width: "w-24",
+      //         editable: true,
+      //       },
+      //       {
+      //         field: "correlation_level",
+      //         header: "Correlation Level",
+      //         placeholder: "1, 2, 3, or -",
+      //         width: "w-40",
+      //         type: "select",
+      //         options: [
+      //           { value: "1", label: "Low (1)" },
+      //           { value: "2", label: "Medium (2)" },
+      //           { value: "3", label: "High (3)" },
+      //           { value: "-", label: "No Correlation (-)" },
+      //         ],
+      //       },
+      //     ],
+      //   },
+      // },
     ],
   };
 

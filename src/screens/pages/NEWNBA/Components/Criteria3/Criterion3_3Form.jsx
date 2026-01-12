@@ -1,7 +1,8 @@
 // src/screens/pages/NEWNBA/Components/Criteria3/Criterion3_3Form.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm from "../GenericCriteriaForm";
+// import GenericCriteriaForm from "../GenericCriteriaForm";
+import GenericCriteriaForm3_8 from "./GenericCriteriaForm3_8";
 import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { getAllProfileFlags } from "@/_services/adminProfileUtils";
@@ -28,14 +29,39 @@ const Criterion3_3Form = ({
   const [isContributor, setIsContributor] = useState(false);
 
   const config = {
-    title: "3.3. Evaluation of Laboratory Work and Workshop (Continuous and SEE)",
-    totalMarks: 10,
+    title: "3.3. Attainment of Program Outcomes and Program Specific Outcomes",
+    totalMarks: 25,
     fields: [
       {
-        name: "3.3",
-        label: "Describe Student Performance Analysis Process",
-        marks: 10,
+        name: "3.3.1",
+        label: "3.3.1 Assessment Tools & Processes for Program Outcome Evaluation",
+        marks: 5,
         type: "textarea",
+        hasFile: true,
+      },
+      {
+        name: "3.3.2",
+        label: "3.3.2 Record of Program Outcome Attainment",
+        marks: 20,
+        hasTable: true,
+        hasFile: true,
+        tableConfig: {
+          type: "program-outcome-attainment",
+          title: "Table 3.3.2.1: Program Outcome Attainment Record",
+          description: "Record the attainment of program outcomes with respect to set attainment levels.",
+          addRowLabel: "Add Program Outcome Record",
+          columns: [
+            { field: "po_code", header: "PO Code", placeholder: "PO1", width: "w-32" },
+            { field: "direct_attainment", header: "Direct (%)", placeholder: "78", width: "w-24" },
+            { field: "indirect_attainment", header: "Indirect (%)", placeholder: "82", width: "w-24" },
+            { field: "overall_attainment", header: "Overall (%)", placeholder: "80", width: "w-24" },
+            { field: "attainment_level", header: "Attainment Level", placeholder: "3", width: "w-24", type: "select", options: [
+              { value: "1", label: "Level 1" },
+              { value: "2", label: "Level 2" },
+              { value: "3", label: "Level 3" },
+            ]},
+          ],
+        },
       },
     ],
   };
@@ -280,7 +306,7 @@ const Criterion3_3Form = ({
 
   return (
     <div>
-      <GenericCriteriaForm
+      <GenericCriteriaForm3_8
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

@@ -1,7 +1,8 @@
 // src/screens/pages/NEWNBA/Components/Criteria1/Criterion1_4Form.jsx
 
 import React, { useState, useEffect } from "react";
-import GenericCriteriaForm1_4 from "./GenericCriteriaForm1_4";
+// import GenericCriteriaForm1_2 from "./GenericCriteriaForm1_2";
+import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
 import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
@@ -39,22 +40,31 @@ const Criterion1_4Form = ({
   const config = {
     title: "1.4. Course Outcome and Course Articulation Matrix",
     totalMarks: 25,
-    fields: [
-      {
+    // fields: [
+    //   {
+    //     name: "1.4.1",
+    //     label: "1.4.1. Course Outcomes (COs) - Semester Wise",
+    //     marks: 10,
+    //     type: "custom",
+    //     hasFile: true,
+    //   },
+    //   {
+    //     name: "1.4.2",
+    //     label: "1.4.2. Course Articulation Matrix",
+    //     marks: 15,
+    //     type: "custom",
+    //     hasFile: true,
+    //   },
+    // ],
+
+     fields: [
+        {
         name: "1.4.1",
-        label: "1.4.1. Course Outcomes (COs) - Semester Wise",
+        label: "1.4.1 Process to Identify PO/PSO Compliance",
         marks: 10,
-        type: "custom",
-        hasFile: true,
+        type: "textarea",
       },
-      {
-        name: "1.4.2",
-        label: "1.4.2. Course Articulation Matrix",
-        marks: 15,
-        type: "custom",
-        hasFile: true,
-      },
-    ],
+    ]
   };
 
   const loadData = async () => {
@@ -393,7 +403,7 @@ const Criterion1_4Form = ({
 
   return (
     <>
-      <GenericCriteriaForm1_4
+      <GenericCriteriaForm1_2
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

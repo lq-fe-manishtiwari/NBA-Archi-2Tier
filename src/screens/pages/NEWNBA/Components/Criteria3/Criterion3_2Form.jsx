@@ -28,14 +28,40 @@ const Criterion3_2Form = ({
   const [isContributor, setIsContributor] = useState(false);
 
   const config = {
-    title: "3.2. Evaluation of Semester End Exam (SEE) Question Paper",
-    totalMarks: 10,
+    title: "3.2. Attainment of Course Outcomes",
+    totalMarks: 25,
     fields: [
       {
-        name: "3.2",
-        label: "Describe your SEE Question Paper Evaluation Process",
-        marks: 10,
+        name: "3.2.1",
+        label: "3.2.1  Describe the Assessment Tools and Processes Used to Gather the Data for the Evaluation of Course Outcome ",
+        marks: 5,
         type: "textarea",
+        hasFile: true,
+      },
+      {
+        name: "3.2.2",
+        label: "3.2.2 Record the Attainment of Course Outcomes of all Courses with Respect to Set Attainment Levels",
+        marks: 20,
+        hasTable: true,
+        hasFile: true,
+        tableConfig: {
+          type: "course-outcome-attainment",
+          title: "Table 3.2.2.1: Course Outcome Attainment Record",
+          description: "Record the attainment of course outcomes for all courses with respect to set attainment levels.",
+          addRowLabel: "Add Course Record",
+          columns: [
+            { field: "course_code", header: "Course Code", placeholder: "CS301", width: "w-32" },
+            { field: "co1", header: "CO1 (%)", placeholder: "78", width: "w-20" },
+            { field: "co2", header: "CO2 (%)", placeholder: "82", width: "w-20" },
+            { field: "co3", header: "CO3 (%)", placeholder: "75", width: "w-20" },
+            { field: "co4", header: "CO4 (%)", placeholder: "88", width: "w-20" },
+            { field: "attainment_level", header: "Attainment Level", placeholder: "3", width: "w-24", type: "select", options: [
+              { value: "1", label: "Level 1" },
+              { value: "2", label: "Level 2" },
+              { value: "3", label: "Level 3" },
+            ]},
+          ],
+        },
       },
     ],
   };

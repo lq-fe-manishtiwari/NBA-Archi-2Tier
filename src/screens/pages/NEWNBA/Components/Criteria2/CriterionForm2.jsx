@@ -6,12 +6,12 @@ import { toast } from "react-toastify";
 // IMPORT ALL DEDICATED FORMS (just like Criterion1_1)
 import Criterion2_1Form from "./Criterion2_1Form";
 import Criterion2_2Form from "./Criterion2_2Form";
-import Criterion2_3Form from "./Criterion2_3Form";
-import Criterion2_4Form from "./Criterion2_4Form";
-import Criterion2_5Form from "./Criterion2_5Form";
-import Criterion2_6Form from "./Criterion2_6Form";
-import Criterion2_7Form from "./Criterion2_7Form";
-import Criterion2_8Form from "./Criterion2_8Form";
+// import Criterion2_3Form from "./Criterion2_3Form";
+// import Criterion2_4Form from "./Criterion2_4Form";
+// import Criterion2_5Form from "./Criterion2_5Form";
+// import Criterion2_6Form from "./Criterion2_6Form";
+// import Criterion2_7Form from "./Criterion2_7Form";
+// import Criterion2_8Form from "./Criterion2_8Form";
 
 const CriterionForm2 = ({
   section,
@@ -33,12 +33,12 @@ const CriterionForm2 = ({
   const SECTION_COMPONENT_MAP = {
     "2.1": Criterion2_1Form,
     "2.2": Criterion2_2Form,
-    "2.3": Criterion2_3Form,
-    "2.4": Criterion2_4Form,
-    "2.5": Criterion2_5Form,
-    "2.6": Criterion2_6Form,
-    "2.7": Criterion2_7Form,
-    "2.8": Criterion2_8Form,
+    // "2.3": Criterion2_3Form,
+    // "2.4": Criterion2_4Form,
+    // "2.5": Criterion2_5Form,
+    // "2.6": Criterion2_6Form,
+    // "2.7": Criterion2_7Form,
+    // "2.8": Criterion2_8Form,
   };
 
   const Component = SECTION_COMPONENT_MAP[section];
