@@ -1,0 +1,32 @@
+.modal-header, .modal-footer{border:0;border-radius: 0;}
+.modal-footer .submitButton{background-color: #ff9d2f;box-shadow: 0 10px 20px rgba(0,0,0,.14);border-radius: 30px;transition: all .2s ease;color: #fff;
+    border-color: #f2732e;}
+.modal-footer .submitButton:hover{transform: scale(1.1);}
+.modal-content{border-radius: 20px;box-shadow: 0 10px 99px 0 rgba(0, 0, 0, 0.03);position: relative;}
+/*-----Success/Warning/Failure Modal-----*/
+.modal-header .icon{width: 150px !important;display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 34%;}
+.modal-header .icon img{width: 100%;}
+.modalSuccess, .modalError, .modalWarning{top: 15%;}
+.modalSuccess .modal-dialog, .modalError .modal-dialog, .modalWarning .modal-dialog{ padding-top: 50px;}
+.modalSuccess  .modal-header, .modalError  .modal-header, .modalWarning .modal-header{     min-height: 140px;}
+/* .modalSuccess .modal-header .icon{background-image: linear-gradient(#17d850, #4CAF50);} */
+.modalSuccess .modal-body h3{font-size: 2rem;color:#4CAF50;}
+.modalSuccess .modal-footer .btn, .modalError .modal-footer .btn, .modalWarning .modal-footer .btn{box-shadow: 0 10px 20px rgba(0,0,0,.14);border-radius: 6px;color: #fff;min-width: 150px;
+    font-weight: 600;padding: 12px 0;}
+.modalSuccess .modal-footer .btn{background-image: linear-gradient(#17d850, #4CAF50);border-color: #61d252;}
+.modalSuccess .modal-header .close{color:#4CAF50;}
+.modalSuccess .modal-header{background-color:transparent;}
+/* .modalError .modal-header .icon{background-image: linear-gradient(#f4967e, #ea4731);} */
+.modalError .modal-body h3{font-size: 2.5rem;color:#ea4731;}
+.modalError .modal-footer .btn{background-image: linear-gradient(#f4967e, #ea4731);border-color: #FF5722;}
+.modalError .modal-header .close{color:#ea4731}
+.modalError .modal-header{background-color:transparent;}
+/* .modalWarning .modal-header .icon{background-image: linear-gradient(#fedb0d, #f7a924);} */
+.modalWarning .modal-body h3{font-size: 2.5rem;color:#f7a924;}
+.modalWarning .modal-footer .btn{background-image: linear-gradient(#fedb0d, #f7ae22);border-color: #FFC107;}
+.modalWarning .modal-header .close{color:#f7a924}
+.modalWarning .modal-header{background-color:transparent;}

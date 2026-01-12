@@ -1,0 +1,66 @@
+   /* css for Internal criterias */
+  
+  .indicator-row:nth-child(odd) {
+    border-radius: 10px;
+    border-top: solid 3px #2162C1
+  }
+.nba-main-heading {
+  object-fit: contain;
+  font-family: Manrope;
+  font-size: 30px;
+  font-weight: 800;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 2.21;
+  letter-spacing: normal;
+  text-align: left;
+  color: #2162c1;
+}
+
+
+.list-avatar {
+  /* border: 1px solid #000;  */
+  outline: none;
+  border-radius: 50%;
+  display: flex;
+  color: black;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  width:200% !important;
+  /* background-color: transparent;  */
+}
+.indicator-users {
+  display: grid;
+  grid-template-columns: repeat(4, 45px);
+  gap: 10px;
+}
+
+
+.list-avatar-allocated {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: #c5d2e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: #2162C1;
+  border: none;
+  padding: 0;
+}
+
+#allocated_user_list{
+  outline: none;
+  border-radius: 50%;
+  display: flex;
+  color: black;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  width: 50px;
+  height: 50px;
+  border: none;
+}

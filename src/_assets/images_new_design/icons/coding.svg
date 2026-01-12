@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
+    <defs>
+        <style>
+            .cls-4{fill:none;stroke:#2162c1;stroke-linecap:round;stroke-width:2px}
+        </style>
+    </defs>
+    <g id="code-24px" opacity="0.4">
+        <path id="Path_41" fill="none" d="M0 0h26v26H0z"/>
+        <path id="Desktop" fill="#2162c1" d="M22.071 2H3.107A2.113 2.113 0 0 0 1 4.107V16.75a2.113 2.113 0 0 0 2.107 2.107h7.375v2.107H9.428a1.054 1.054 0 0 0 0 2.107h6.322a1.054 1.054 0 0 0 0-2.107H14.7v-2.107h7.375a2.113 2.113 0 0 0 2.107-2.107V4.107A2.113 2.113 0 0 0 22.071 2zm-1.054 14.75H4.161a1.057 1.057 0 0 1-1.054-1.05V5.161a1.057 1.057 0 0 1 1.054-1.054h16.856a1.057 1.057 0 0 1 1.054 1.054V15.7a1.057 1.057 0 0 1-1.054 1.05z" transform="translate(.625 .438)"/>
+        <path id="Line_1" d="M0 0L9 0" class="cls-4" transform="translate(8.5 9.344)"/>
+        <path id="Line_2" d="M0 0L7 0" class="cls-4" transform="translate(8.5 12.594)"/>
+    </g>
+</svg>

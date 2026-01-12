@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="47.178" height="45.071" viewBox="0 0 47.178 45.071">
+    <defs>
+        <filter id="Desktop" width="47.178" height="45.071" x="0" y="0" filterUnits="userSpaceOnUse">
+            <feOffset dy="4"/>
+            <feGaussianBlur result="blur" stdDeviation="4"/>
+            <feFlood flood-color="#2162c1" flood-opacity=".161"/>
+            <feComposite in2="blur" operator="in"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <style>
+            .cls-3{fill:none;stroke:#2162c1;stroke-linecap:round;stroke-width:2px}
+        </style>
+    </defs>
+    <g id="code-24px" transform="translate(10.375 5.563)">
+        <path id="Path_41" fill="none" d="M0 0h26v26H0z"/>
+        <g filter="url(#Desktop)" transform="translate(-10.38 -5.56)">
+            <path id="Desktop-2" fill="#2162c1" d="M22.071 2H3.107A2.113 2.113 0 0 0 1 4.107V16.75a2.113 2.113 0 0 0 2.107 2.107h7.375v2.107H9.428a1.054 1.054 0 0 0 0 2.107h6.322a1.054 1.054 0 0 0 0-2.107H14.7v-2.107h7.375a2.113 2.113 0 0 0 2.107-2.107V4.107A2.113 2.113 0 0 0 22.071 2zm-1.054 14.75H4.161a1.057 1.057 0 0 1-1.054-1.05V5.161a1.057 1.057 0 0 1 1.054-1.054h16.856a1.057 1.057 0 0 1 1.054 1.054V15.7a1.057 1.057 0 0 1-1.054 1.05z" transform="translate(11 6)"/>
+        </g>
+        <path id="Line_1" d="M0 0L9 0" class="cls-3" transform="translate(8.5 9.344)"/>
+        <path id="Line_2" d="M0 0L7 0" class="cls-3" transform="translate(8.5 12.594)"/>
+    </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="202" height="202" viewBox="0 0 202 202">
+    <defs>
+        <linearGradient id="linear-gradient" x1=".5" x2=".5" y1="1" gradientUnits="objectBoundingBox">
+            <stop offset="0" stop-color="#fa0"/>
+            <stop offset="1" stop-color="#fede04"/>
+        </linearGradient>
+        <linearGradient id="linear-gradient-2" x1=".5" x2=".5" y1="1" gradientUnits="objectBoundingBox">
+            <stop offset="0" stop-color="#fff2d9"/>
+            <stop offset="1" stop-color="#fff2f4"/>
+        </linearGradient>
+        <style>
+            .cls-2{fill:url(#linear-gradient-2)}
+        </style>
+    </defs>
+    <g id="_040-error">
+        <g id="Group_205">
+            <path id="Path_729" fill="url(#linear-gradient)" d="M140.384 202H61.616a5.915 5.915 0 0 1-4.184-1.734l-55.7-55.7A5.916 5.916 0 0 1 0 140.385V61.616a5.916 5.916 0 0 1 1.734-4.184l55.7-55.7A5.916 5.916 0 0 1 61.616 0h78.769a5.916 5.916 0 0 1 4.184 1.734l55.7 55.7A5.918 5.918 0 0 1 202 61.616v78.769a5.916 5.916 0 0 1-1.734 4.184l-55.7 55.7a5.918 5.918 0 0 1-4.182 1.731z"/>
+        </g>
+        <g id="Error" transform="translate(83.246 35.902)">
+            <g id="Group_206">
+                <path id="Path_730" d="M228.754 173.852A17.774 17.774 0 0 1 211 156.1v-47.346a17.754 17.754 0 0 1 35.508 0V156.1a17.774 17.774 0 0 1-17.754 17.752z" class="cls-2" transform="translate(-211 -91)"/>
+            </g>
+            <g id="Group_207" transform="translate(0 94.688)">
+                <path id="Path_731" d="M228.754 366.508a17.754 17.754 0 1 1 17.754-17.754 17.774 17.774 0 0 1-17.754 17.754z" class="cls-2" transform="translate(-211 -331)"/>
+            </g>
+        </g>
+    </g>
+</svg>

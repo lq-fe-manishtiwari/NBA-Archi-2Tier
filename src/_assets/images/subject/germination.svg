@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="27.927" viewBox="0 0 18 27.927">
+    <defs>
+        <style>
+            .cls-1{fill:#fa0}
+        </style>
+    </defs>
+    <g id="germination" transform="translate(-91)">
+        <g id="Group_267" transform="translate(92.636 15.524)">
+            <g id="Group_266">
+                <path id="Path_1251" d="M133.715 284.6l-4.631 8.689a.808.808 0 0 1-1.44 0l-4.631-8.689a7.364 7.364 0 1 0 10.7 0z" class="cls-1" transform="translate(-121 -284.599)"/>
+            </g>
+        </g>
+        <g id="Group_269" transform="translate(91)">
+            <g id="Group_268">
+                <path id="Path_1252" d="M108.182 0h-1.636a5.734 5.734 0 0 0-5.727 5.727V7.02a5.309 5.309 0 0 0-.9 1.08 6.421 6.421 0 0 0-.736-1.015V5.727A5.734 5.734 0 0 0 93.455 0h-1.637A.81.81 0 0 0 91 .818v1.637a5.734 5.734 0 0 0 5.727 5.727h1.26a4.8 4.8 0 0 1 1.194 3.125v2.433l-2.144 2.8L100 22.1l2.945-5.547-2.127-2.815v-3.1a3.107 3.107 0 0 1 .916-2.209l.246-.245h1.293A5.734 5.734 0 0 0 109 2.455V.818a.81.81 0 0 0-.818-.818z" class="cls-1" transform="translate(-91)"/>
+            </g>
+        </g>
+    </g>
+</svg>

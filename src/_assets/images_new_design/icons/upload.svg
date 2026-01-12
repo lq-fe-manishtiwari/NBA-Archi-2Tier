@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="17.96" height="20" viewBox="0 0 17.96 20">
+    <defs>
+        <style>
+            .cls-1{fill:#1d1d1d}
+        </style>
+    </defs>
+    <g id="Group_176" transform="rotate(90 538.665 478.546)">
+        <g id="Login" transform="translate(70.141 999.25)">
+            <g id="Group_26">
+                <path id="Path_278" d="M20.816 18.965h-6.985a1 1 0 0 0-1 1 1 1 0 0 0 1 1h6.985a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-6.985a1 1 0 0 0-1 1 1 1 0 0 0 1 1h6.985z" class="cls-1" transform="translate(-12.833 -3)"/>
+            </g>
+        </g>
+        <g id="Login-2" transform="translate(60.119 1003.648)">
+            <g id="Group_26-2">
+                <path id="Path_278-2" d="M14.223 8.067a.982.982 0 0 1 0 1.4l-1.9 1.9h9.18a1 1 0 0 1 1 1 1 1 0 0 1-1 1h-9.18l1.9 1.9a.982.982 0 0 1 0 1.4.982.982 0 0 1-1.4 0l-3.579-3.601a.994.994 0 0 1 0-1.407l3.582-3.592a.982.982 0 0 1 1.397 0z" class="cls-1" transform="translate(-8.952 -7.775)"/>
+            </g>
+        </g>
+    </g>
+</svg>

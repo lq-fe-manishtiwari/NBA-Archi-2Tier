@@ -1,0 +1,47 @@
+.btn-confirm {
+  background-color: #FF9013 !important; 
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 20px !important;
+  font-weight: 500 !important;
+  transition: background-color 0.3s ease !important;
+  /* width:20% */
+}
+
+.btn-confirm:hover {
+  background-color: #FF9015 !important; 
+}
+
+.btn-cancel {
+  background-color: #2162C1 !important; 
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 20px !important;
+  font-weight: 500 !important;
+  transition: background-color 0.3s ease !important;
+}
+
+.btn-cancel:hover {
+  background-color: #2162C2 !important;
+}
+
+.responsive-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+.responsive-container::-webkit-scrollbar {
+  height: 10px;
+}
+.responsive-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.responsive-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+.responsive-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

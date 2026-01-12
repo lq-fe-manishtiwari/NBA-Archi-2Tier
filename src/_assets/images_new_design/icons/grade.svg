@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="225" height="52" viewBox="0 0 225 52">
+    <g font-family="Manrope-Bold, Manrope" font-weight="700">
+        <text fill="#00c49a" font-size="20px" transform="translate(-550 -726) translate(550 747)">
+            <tspan x="0" y="0">Physics Test</tspan>
+        </text>
+        <text fill="#3e4348" font-size="16px" transform="translate(-550 -726) translate(550 773)">
+            <tspan x="0" y="0">10 November 2020, 05:00 PM</tspan>
+        </text>
+    </g>
+</svg>

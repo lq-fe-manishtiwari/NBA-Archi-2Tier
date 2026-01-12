@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="109.693" height="37.665" viewBox="0 0 109.693 37.665">
+    <defs>
+        <filter id="d6h2kzuepa" width="41.873" height="37.665" x="0" y="0" filterUnits="userSpaceOnUse">
+            <feOffset dy="4"/>
+            <feGaussianBlur result="blur" stdDeviation="4"/>
+            <feFlood flood-color="#2162c1" flood-opacity=".161"/>
+            <feComposite in2="blur" operator="in"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+    </defs>
+    <g>
+        <text fill="#2162c1" font-family="Manrope-Bold, Manrope" font-size="18px" font-weight="700" transform="translate(-1108.307 -401.508) translate(1218 423)">
+            <tspan x="-68.697" y="0">Present</tspan>
+        </text>
+        <g>
+            <path fill="none" d="M0 0h24v24H0z" transform="translate(-1108.307 -401.508) translate(1117 404)"/>
+            <g filter="url(#d6h2kzuepa)" transform="translate(-1108.307 -401.508) translate(1117 404) translate(-8.69 -2.49)">
+                <path fill="#2162c1" stroke="#2162c1" d="M9 16.2l-3.5-3.5a.99.99 0 0 0-1.4 1.4l4.19 4.19a1 1 0 0 0 1.41 0L20.3 7.7a.99.99 0 1 0-1.4-1.4z" transform="translate(8.69 2.49)"/>
+            </g>
+        </g>
+    </g>
+</svg>

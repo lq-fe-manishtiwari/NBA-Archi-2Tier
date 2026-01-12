@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="43.5" height="45.667" viewBox="0 0 43.5 45.667">
+    <defs>
+        <filter id="Path_52" width="43.5" height="45.667" x="0" y="0" filterUnits="userSpaceOnUse">
+            <feOffset dy="4"/>
+            <feGaussianBlur result="blur" stdDeviation="4"/>
+            <feFlood flood-color="#2162c1" flood-opacity=".161"/>
+            <feComposite in2="blur" operator="in"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <style>
+            .cls-2{fill:#2162c1}
+        </style>
+    </defs>
+    <g id="receipt_long-24px" transform="translate(8.75 5.833)">
+        <path id="Path_49" fill="none" d="M0 0h26v26H0z"/>
+        <g id="Group_3" transform="translate(3.25 2.167)">
+            <path id="Path_50" d="M14.417 9.167h-4.334A1.087 1.087 0 0 1 9 8.083 1.087 1.087 0 0 1 10.083 7h4.333A1.087 1.087 0 0 1 15.5 8.083a1.087 1.087 0 0 1-1.083 1.084z" class="cls-2" transform="translate(-2.5 -1.583)"/>
+            <path id="Path_51" d="M14.417 12.167h-4.334A1.087 1.087 0 0 1 9 11.083 1.087 1.087 0 0 1 10.083 10h4.333a1.087 1.087 0 0 1 1.084 1.083 1.087 1.087 0 0 1-1.083 1.084z" class="cls-2" transform="translate(-2.5 -1.333)"/>
+            <g filter="url(#Path_52)" transform="translate(-12 -8)">
+                <path id="Path_52-2" d="M20.875 3.625L19.25 2l-1.625 1.625L16 2l-1.625 1.625L12.75 2l-1.625 1.625L9.5 2 7.875 3.625 6.25 2v15.167H4.083A1.087 1.087 0 0 0 3 18.25v2.167a3.246 3.246 0 0 0 3.25 3.25h13a3.246 3.246 0 0 0 3.25-3.25V2zM16 21.5H6.25a1.087 1.087 0 0 1-1.083-1.083v-1.084H16zm4.333-1.083a1.083 1.083 0 0 1-2.167 0V18.25a1.087 1.087 0 0 0-1.083-1.083H8.417V5.25h11.916z" class="cls-2" transform="translate(9 6)"/>
+            </g>
+            <circle id="Ellipse_4" cx="1.083" cy="1.083" r="1.083" class="cls-2" transform="translate(14.083 5.417)"/>
+            <circle id="Ellipse_5" cx="1.083" cy="1.083" r="1.083" class="cls-2" transform="translate(14.083 8.667)"/>
+        </g>
+    </g>
+</svg>

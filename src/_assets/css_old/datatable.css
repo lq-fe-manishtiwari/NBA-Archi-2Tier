@@ -1,0 +1,49 @@
+div.dataTables_length select {
+    width: auto;
+    display: inline-block;
+}
+
+div.dataTables_filter input {
+    margin-left: 0.5em;
+    display: inline-block;
+    width: auto;
+}
+
+div.dataTables_filter {
+    text-align: right;
+}
+
+
+.rows {
+    min-height: '72px' ;    /*override the row height*/
+      }
+
+.headCells {
+    padding-left: '8px';   /*overide the cell padding for head cells*/
+    padding-right: '8px';    
+      }
+
+.cells {
+    padding-left: '8px';  /* override the cell padding for data cells*/
+    padding-right: '8px';
+      }
+
+/* .text {
+    primary: '#268bd2';
+    secondary: '#2aa198';
+  } */
+ .table-background {
+    background-color:  '#002b36';
+  }
+  .context {
+    background: '#cb4b16';
+    color: '#FFFFFF';
+  }
+  .divider {
+    color: '#073642';
+  }
+  /* .action {
+    button: 'rgba(0,0,0,.54)',
+    hover: 'rgba(0,0,0,.08)',
+    disabled: 'rgba(0,0,0,.12)',
+  } */

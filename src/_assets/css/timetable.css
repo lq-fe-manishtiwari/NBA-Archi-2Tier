@@ -1,0 +1,195 @@
+.Class-Update {
+	width: 135px;
+	height: 27px;
+	font-family: Roboto;
+	font-size: 22.8px;
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.06px;
+	color: #0e1447;
+}
+.Rectangle {
+	width: 169px;
+	height: 36px;
+	border-radius: 4px;
+	border: solid 1px #ced5db;
+	background-color: rgba(253, 253, 253, 0.94);
+}
+.Monday {
+	width: 58px;
+	height: 19px;
+	font-family: Roboto;
+	font-size: 16px;
+	font-weight: 500;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.04px;
+	color: #0e1447;
+}
+.View {
+	width: 35px;
+	height: 19px;
+	font-family: Roboto;
+	font-size: 16px;
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.04px;
+	color: #0e1447;
+}
+.Rectangle-Copy {
+	width: 1216px;
+	height: 732px;
+	border-radius: 4px;
+	box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.04);
+	background-color: #ffffff;
+}
+.time {
+	width: 96px;
+	height: 13px;
+	font-family: Roboto;
+	font-size: 11.2px;
+	font-weight: 300;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.03px;
+	color: #0e1447;
+}
+.time_timetable {
+	width: 96px;
+	height: 28px;
+}
+.Oval {
+	width: 12px;
+	height: 12px;
+	opacity: 0.6;
+	background-color: #3699ff;
+}
+.English {
+	width: 47px;
+	height: 16px;
+	font-family: Roboto;
+	font-size: 14.2px;
+	font-weight: 500;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.04px;
+	color: #0e1447;
+}
+.Lesson-2-Incredibl {
+	width: 77px;
+	height: 26px;
+	font-family: Roboto;
+	font-size: 11.2px;
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	line-height: normal;
+	letter-spacing: 0.03px;
+	color: var(--steel);
+}
+.Combined-Shape {
+	width: 619px;
+	height: 53px;
+	border: solid 1px #f1f4f6;
+}
+.Rectangle-button {
+	width: 116px;
+	height: 28px;
+	opacity: 0.5;
+	border: solid 1px var(--tealish);
+	background-color: #ffffff;
+}
+	/* background: #f9f9fb;
+} */
+
+.table{
+	box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.04);
+	background-color: #ffffff;
+	border: 1px solid #ced4da;
+}
+.table td {
+	vertical-align: middle;
+	text-align: left;
+	padding: 16px 12px;
+	border: none !important;
+}
+
+.table td, .table th {
+	border: none !important;
+}
+.table tr{
+	border-bottom: 1px solid #ccc;
+}
+.table th{
+	/* text-align: center !important; */
+	background-color: #f8f8fa;
+}
+.dotBlue {
+	height: 10px;
+	width: 10px;
+	/* background-color: #3699ff; */
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: 5px;
+}
+.dotPeriW{
+	height: 10px;
+	width: 10px;
+	/* background-color: #5867dd; */
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: 5px;
+}
+
+.dotSkyBlue{height: 10px;
+	width: 10px;
+	/* background-color: #3699ff; */
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: 10px;
+}
+
+.dotPink{height: 10px;
+	width: 10px;
+	/* background-color: #fd397a; */
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: 10px;
+}
+
+.subjectTopic { width: 120px; font-size: 12px; color: #748196; padding-left: 20px; }
+#teacher-timetable .subjectTopic { width: 120px; font-size: 12px; color: #748196; padding-left: 15px; }
+#teacher-timetable .table td { text-align: center;}
+.subjectTopic li { list-style: none; }
+
+.content-wrapper{
+	background-color: #fff;
+}
+#timetable-table thead tr th{
+	width: 14%;
+	text-align: left !important;
+}
+.marginL15{
+	margin-left: 15px;
+}
+  
+.BreakRectangle {
+  width: 116px;
+  /* height: 28px; */
+  opacity: 0.5;
+  border: solid 1px #1dc9b7;
+  background-color: #ffffff;
+}
+.paddingL20{
+	padding-left: 20px;
+}
+#timetable-table tbody tr td{
+	text-align: left;
+}

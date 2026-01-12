@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 21" width="20" height="21">
+	<defs>
+		<image width="20" height="21" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAVCAMAAABxCz6aAAAAAXNSR0IB2cksfwAAAY9QTFRFAAAAdIGWdIGWdIGWdIGWdIGWdIGWdIGWdoGVkIaCmYd8kIaCeoKSdIGWdIGW3pNL/5kz3pNLuo1krItudIGWdIGWjoWEwI5g+pg3popydIGWk4aA/Jk1pIl0dIGWnIh6v45hu41kf4OOdIGW45RHdIGW/Zk01pJR0JFV0pFT+Zg3+Zg3/Zk0/pkz+Zg4+pg3/5kz/5kzdIGWdIGWdIGWzZBXfYOPy5BYoIl3iISI2pNNpopydIGWuo1kjIWFfIKQdoGV65ZBiIWIj4aCeIKTeYKT65ZByZBadIGWdIGWdIGW45RHu41jypBZdIGW0JFVxI9ddIGWdIGWh4SIeYKS8JY+35NKvY5idIGWgoOMkoaB0ZFUdIGWdIGW4pRI0ZFUw49ddIGWdIGWnIh6fYOQeIKT55VEfIKQ7ZZAdoGUd4GUg4SLd4KUdIGWdIGWgoOM+5g2/Zk185c8+Zg37pY/75Y++Jg46pVCdIGWqYpw25NN5pVF/5kz/5kzdIGWdIGWdIGWdIGWdIGWdIGWdIGWOErJFQAAAIV0Uk5TAEDQ+/+/Cj/9+v/++scO+v/7+fi+F/f8/fi09f33uP3//fz0+uv++fim+fj9/vj5/qgICwT7+vn3+vry4P38/f74+/z9/fv73sag+/v4/fr5djD+/fr4/PL8+/qNcPb5+lb++f3++/z8/v379jTv+v3+/f7+/f2Qm/r689JwDM4nA1xtaAZeeFYAAAEPSURBVHicXdF1VwJBFIbxlX1VTK6BItba3WIruqjYLbao2N2JivHBvbPDwsHnz9+cM3PvGUWJs6gIF5+gyBJVa1KyKAWpSEuXaLHayCgDmVnIthuo5pCJuY48OA1FfhSpoBBF/7BY00pKy2KwXE5QEYOVVdWiGhNr6+qJGhqbmvmspbWtXaAL6OikLqC7hxy9QJ/Afgy4B4d0eIZHRr0YG5+QODmFaX2GZjGnYX7BLnFxyb3M6MOKxgOsSlxb3yATnZtbErf5XUY/djTsypH4Tp5F3wvsHxxG0Ht0zBg4OT3zk+v8gvHy6vrmVmx0d//wyHs9iY2e8fLqM3sLBt8FfnwimhoK/8fX90+kX/lJf3OXOoimbN5mAAAAAElFTkSuQmCC"/>
+	</defs>
+	<style>
+		tspan { white-space:pre }
+	</style>
+	<use id="Layer" href="#img1" x="0" y="0" />
+</svg>

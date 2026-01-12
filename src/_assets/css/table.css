@@ -1,0 +1,6 @@
+.table td, .table th {
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e8e8e8;
+    text-align: left;
+    height: 0px;}

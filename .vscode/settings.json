@@ -1,0 +1,6 @@
+{
+    "git.ignoreLimitWarning": true,
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
+}

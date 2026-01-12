@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+  /* Optional */
+}
+
+@layer components {
+  .pageheading {
+    @apply text-2xl font-semibold text-primary-600;
+  }
+
+  .tab-link {
+    @apply px-4 py-2 w-32 text-center rounded-full text-sm font-medium transition-all duration-200;
+  }
+
+  .tab-active {
+    @apply bg-primary-600 text-white shadow-sm;
+  }
+
+  .tab-inactive {
+    @apply bg-tabs-50 text-gray-900 hover:bg-tabs-50;
+  }
+
+  .main-container-for-tab {
+    @apply flex flex-wrap gap-3 mt-4 border-b border-gray-200 pb-2;
+  }
+
+  .swal-button--confirm {
+    @apply bg-green-500 text-white rounded-lg px-4 py-2 hover:bg-green-600;
+  }
+
+  .swal-button--cancel {
+    @apply bg-red-500 text-white rounded-lg px-4 py-2 hover:bg-red-600;
+  }
+
+  /* Table Header */
+  .table-header {
+    @apply bg-primary-600 text-primary-50 text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .table-th {
+    @apply text-left px-4 py-3;
+  }
+
+  .table-td {
+    @apply px-4 py-4 text-sm text-gray-700;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-gray-50 transition-colors;
+  }
+
+  .table-cell-center {
+    @apply text-center;
+  }
+
+  /* Action Buttons */
+  .btn-icon {
+    @apply p-2 rounded-lg transition;
+  }
+
+  .btn-view {
+    @apply bg-blue-50 text-blue-600 hover:bg-blue-100;
+  }
+
+  .btn-edit {
+    @apply bg-yellow-50 text-yellow-600 hover:bg-yellow-100;
+  }
+
+  .btn-delete {
+    @apply bg-red-50 text-red-600 hover:bg-red-100;
+  }
+
+  /* Status Toggle */
+  .status-active {
+    @apply bg-green-100 text-green-800 hover:bg-green-200;
+  }
+
+  .status-inactive {
+    @apply bg-red-100 text-red-800 hover:bg-red-200;
+  }
+
+  .status-btn {
+    @apply flex items-center justify-center mx-auto px-3 py-1 rounded-full text-xs font-medium transition-all;
+  }
+
+  /* Card (Mobile) */
+  .staff-card {
+    @apply bg-white rounded-xl shadow-md border border-gray-200 p-4 hover:shadow-lg transition-all;
+  }
+
+  .card-header {
+    @apply flex justify-between items-start mb-3;
+  }
+
+  .card-avatar {
+    @apply w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center;
+  }
+
+  .card-name {
+    @apply font-semibold text-gray-900;
+  }
+
+  .card-subtitle {
+    @apply text-xs text-gray-600;
+  }
+
+  .card-detail {
+    @apply flex items-center text-sm text-gray-700;
+  }
+
+  .card-actions {
+    @apply mt-4 flex justify-end gap-2;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-xl shadow-xl p-6 w-full max-w-md;
+  }
+
+  .modal-title {
+    @apply text-xl font-bold text-gray-900 mb-4;
+  }
+
+  .modal-input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+
+  .modal-footer {
+    @apply mt-6 flex gap-3 justify-end;
+  }
+}

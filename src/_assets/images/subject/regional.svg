@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="16.758" viewBox="0 0 22 16.758">
+    <defs>
+        <style>
+            .cls-1{fill:#00c49a}
+        </style>
+    </defs>
+    <g id="india">
+        <path id="Path_1179" d="M214.867 151.934a1.934 1.934 0 1 0-1.934 1.934 1.936 1.936 0 0 0 1.934-1.934zm-2.578 0a.645.645 0 1 1 .645.645.644.644 0 0 1-.645-.645zm0 0" class="cls-1" transform="translate(-201.934 -143.555)"/>
+        <path id="Path_1180" d="M21.355 0H.645A.644.644 0 0 0 0 .645v4.511h22V.645A.644.644 0 0 0 21.355 0zm0 0" class="cls-1"/>
+        <path id="Path_1181" d="M316.278 151.934a3.191 3.191 0 0 1-.661 1.934h8.438V150h-8.438a3.191 3.191 0 0 1 .661 1.934zm0 0" class="cls-1" transform="translate(-302.056 -143.555)"/>
+        <path id="Path_1182" d="M0 274.512a.644.644 0 0 0 .645.645h20.71a.644.644 0 0 0 .645-.645V270H0zm0 0" class="cls-1" transform="translate(0 -258.398)"/>
+        <path id="Path_1183" d="M7.777 151.934A3.191 3.191 0 0 1 8.438 150H0v3.867h8.438a3.191 3.191 0 0 1-.661-1.933zm0 0" class="cls-1" transform="translate(0 -143.555)"/>
+    </g>
+</svg>

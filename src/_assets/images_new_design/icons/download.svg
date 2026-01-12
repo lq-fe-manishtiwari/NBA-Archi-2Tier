@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+    <defs>
+        <filter id="hs38n6ha0a" width="120" height="120" x="0" y="0" filterUnits="userSpaceOnUse">
+            <feOffset dy="10"/>
+            <feGaussianBlur result="blur" stdDeviation="10"/>
+            <feFlood flood-color="#fa0" flood-opacity=".102"/>
+            <feComposite in2="blur" operator="in"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+    </defs>
+    <g>
+        <g filter="url(#hs38n6ha0a)" transform="translate(-1681 -4110) translate(1681 4110)">
+            <rect width="60" height="60" fill="#fa0" opacity="0.04" rx="30" transform="translate(30 20)"/>
+        </g>
+        <g>
+            <path fill="#fa0" d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-5a1 1 0 0 0-2 0v6a2.006 2.006 0 0 0 2 2h14a2.006 2.006 0 0 0 2-2v-6a1 1 0 0 0-2 0zm-6-.33l1.88-1.88a1 1 0 1 1 1.41 1.41l-3.59 3.59a1 1 0 0 1-1.41 0L7.7 12.2a1 1 0 0 1 1.41-1.41L11 12.67V4a1 1 0 0 1 2 0z" transform="translate(-1681 -4110) translate(1729 4148)"/>
+        </g>
+    </g>
+</svg>

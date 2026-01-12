@@ -1,0 +1,14 @@
+div.dataTables_length select {
+    width: auto;
+    display: inline-block;
+}
+
+div.dataTables_filter input {
+    margin-left: 0.5em;
+    display: inline-block;
+    width: auto;
+}
+
+div.dataTables_filter {
+    text-align: right;
+}
