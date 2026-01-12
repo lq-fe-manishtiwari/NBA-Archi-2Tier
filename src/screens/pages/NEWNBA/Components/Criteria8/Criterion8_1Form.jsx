@@ -37,25 +37,25 @@ const Criterion8_1Form = ({
   };
 
   const sectionConfig = {
-    title: "8.1. Actions Based on Evaluation of COs/POs/PSOs Attainment",
-    totalMarks: 40,
+    title: "8.1.Mentoring System to Help at Individual Levels",
+    totalMarks: 5,
     fields: [
       {
         name: "8.1",
-        label: "8.1.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
-        marks: 20,
+        // label: "8.1.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // marks: 20,
         type: "textarea",
         rows: 8,
         placeholder: "Describe the actions taken based on COs attainment results..."
       },
-      {
-        name: "8.1.2",
-        label: "8.1.2. Actions Taken Based on the Results of Evaluation of the POs/PSOs Attainment",
-        marks: 20,
-        type: "textarea",
-        rows: 8,
-        placeholder: "Describe the actions taken based on POs/PSOs attainment results..."
-      },
+      // {
+      //   name: "8.1.2",
+      //   label: "8.1.2. Actions Taken Based on the Results of Evaluation of the POs/PSOs Attainment",
+      //   marks: 20,
+      //   type: "textarea",
+      //   rows: 8,
+      //   placeholder: "Describe the actions taken based on POs/PSOs attainment results..."
+      // },
     ],
   };
 

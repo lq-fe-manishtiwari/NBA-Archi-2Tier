@@ -8,6 +8,9 @@ import Criterion8_1Form from "./Criterion8_1Form";
 import Criterion8_2Form from "./Criterion8_2Form";
 import Criterion8_3Form from "./Criterion8_3Form";
 import Criterion8_4Form from "./Criterion8_4Form";
+import Criterion8_5Form from "./Criterion8_5Form";
+import Criterion8_6Form from "./Criterion8_6Form";
+import Criterion8_7Form from "./Criterion8_7Form";
 
 const CriterionForm8 = ({
   section,
@@ -21,6 +24,11 @@ const CriterionForm8 = ({
   editMode = false,
   coPoPsoActionsId = null,
   qualityAssuranceId = null,
+  facultyFeedbackId = null,
+  studentFeedbackId = null,
+  careerGuidanceId = null,
+  entrepreneurshipId = null,
+  activitiesId = null,
   isSubCoordinator = false,
   readOnly = false,
   onSuccess = () => {},
@@ -32,6 +40,9 @@ const CriterionForm8 = ({
     "8.2": Criterion8_2Form,
     "8.3": Criterion8_3Form,
     "8.4": Criterion8_4Form,
+    "8.5": Criterion8_5Form,
+    "8.6": Criterion8_6Form,
+    "8.7": Criterion8_7Form,
   };
 
   const Component = SECTION_COMPONENT_MAP[section];
@@ -64,12 +75,23 @@ const CriterionForm8 = ({
       editMode={editMode}
       coPoPsoActionsId={coPoPsoActionsId}
       qualityAssuranceId={qualityAssuranceId}
+      facultyFeedbackId={facultyFeedbackId}
+      studentFeedbackId={studentFeedbackId}
+      careerGuidanceId={careerGuidanceId}
+      entrepreneurshipId={entrepreneurshipId}
+      activitiesId={activitiesId}
+      professionalDevelopmentId={
+        section === "8.2" ? qualityAssuranceId :
+        section === "8.3" ? facultyFeedbackId :
+        section === "8.4" ? studentFeedbackId :
+        section === "8.5" ? careerGuidanceId :
+        section === "8.6" ? entrepreneurshipId :
+        section === "8.7" ? activitiesId : null
+      }
       readOnly={readOnly}
       onSuccess={onSuccess}
       cardData={cardItem} 
-      onSaveSuccess={() => {
-        toast.success(`Criterion ${section} saved successfully!`);
-      }}
+      onSaveSuccess={onSuccess}
     />
   );
 };
