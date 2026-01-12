@@ -38,13 +38,13 @@ const Criterion8_2Form = ({
   }, []);
 
   const config = {
-    title: "8.2 Academic Audit and Actions Taken thereof during the Period of Assessment",
-    totalMarks: 20,
+    title: "8.2 Feedback Analysis and Reward /Corrective Measures Taken, if any ",
+    totalMarks: 10,
     fields: [
       {
         name: "audit_details",
-        label: "8.2 Academic Audit and Actions Taken thereof during the Period of Assessment",
-        marks: 20,
+        // label: "8.2 Academic Audit and Actions Taken thereof during the Period of Assessment",
+        // marks: 20,
         type: "textarea",
         rows: 6,
         placeholder: "Describe the academic audit and actions taken...",

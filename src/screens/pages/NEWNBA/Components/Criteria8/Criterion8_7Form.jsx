@@ -1,4 +1,4 @@
-// src/screens/pages/NEWNBA/Components/Criteria8/Criterion8_4Form.jsx
+// src/screens/pages/NEWNBA/Components/Criteria8/Criterion8_7Form.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm from "../GenericCriteriaForm";
@@ -7,7 +7,7 @@ import SweetAlert from "react-bootstrap-sweetalert";
 import { getAllProfileFlags } from "@/_services/adminProfileUtils";
 import StatusBadge from "../StatusBadge";
 
-const Criterion8_4Form = ({
+const Criterion8_7Form = ({
   nba_accredited_program_id,
   nba_criteria_sub_level2_id,
   nba_contributor_allocation_id,
@@ -38,14 +38,14 @@ const Criterion8_4Form = ({
   }, []);
 
   const config = {
-    title: "8.4 Self-Learning",
-    totalMarks: 5,
+    title: "8.7 Co-curricular and Extra-curricular Activities",
+    totalMarks: 10,
     fields: [
       {
-        name: "self_learning_details",
+        name: "activities_details",
         type: "textarea",
         rows: 6,
-        placeholder: "Describe self-learning initiatives and activities...",
+        placeholder: "Describe co-curricular and extra-curricular activities organized and participated...",
       }
     ]
   };
@@ -65,7 +65,7 @@ const Criterion8_4Form = ({
       
       if (!staffIdToUse) {
         setInitialData({
-          content: { self_learning_details: "" },
+          content: { activities_details: "" },
           tableData: [],
           filesByField: {}
         });
@@ -73,7 +73,7 @@ const Criterion8_4Form = ({
         return;
       }
 
-      const response = await newnbaCriteria8Service.getCriteria8_4_Data(
+      const response = await newnbaCriteria8Service.getCriteria8_7_Data(
         nba_criteria_sub_level2_id,
         staffIdToUse
       );
@@ -87,7 +87,7 @@ const Criterion8_4Form = ({
         dataItem = response;
       }
 
-      if (dataItem && dataItem.self_learning_id) {
+      if (dataItem && dataItem.activities_id) {
         setHasExistingData(true);
         
         if (dataItem.other_staff_name) {
@@ -97,7 +97,7 @@ const Criterion8_4Form = ({
           setContributorName(name);
         }
 
-        setProfessionalDevelopmentId(dataItem.self_learning_id);
+        setProfessionalDevelopmentId(dataItem.activities_id);
 
         if (dataItem.approval_status) {
           setApprovalStatus({
@@ -114,9 +114,9 @@ const Criterion8_4Form = ({
           : [];
 
         const filesByField = {
-          "self_learning_details": filesArray.length > 0
+          "activities_details": filesArray.length > 0
             ? filesArray.map((f, i) => ({
-                id: f.id || `file-learning-${i}`,
+                id: f.id || `file-activities-${i}`,
                 filename: f.filename || f.name || f.file_url || "",
                 s3Url: f.file_url || f.url || f.s3Url || "",
                 url: f.file_url || f.url || f.s3Url || "",
@@ -125,7 +125,7 @@ const Criterion8_4Form = ({
                 uploading: false
               }))
             : [{ 
-                id: `file-learning-0`, 
+                id: `file-activities-0`, 
                 description: "", 
                 file: null, 
                 filename: "", 
@@ -137,7 +137,7 @@ const Criterion8_4Form = ({
         };
 
         setInitialData({
-          content: { self_learning_details: dataItem.self_learning_details || "" },
+          content: { activities_details: dataItem.activities_details || "" },
           tableData: response,
           filesByField: filesByField
         });
@@ -149,11 +149,11 @@ const Criterion8_4Form = ({
         setContributorName("");
         
         setInitialData({
-          content: { self_learning_details: "" },
+          content: { activities_details: "" },
           tableData: [],
           filesByField: {
-            "self_learning_details": [{
-              id: `file-learning-0`,
+            "activities_details": [{
+              id: `file-activities-0`,
               description: "",
               file: null,
               filename: "",
@@ -185,11 +185,11 @@ const Criterion8_4Form = ({
       
       setHasExistingData(false);
       setInitialData({ 
-        content: { self_learning_details: "" }, 
+        content: { activities_details: "" }, 
         tableData: [], 
         filesByField: {
-          "self_learning_details": [{ 
-            id: `file-learning-0`, 
+          "activities_details": [{ 
+            id: `file-activities-0`, 
             description: "", 
             file: null, 
             filename: "", 
@@ -260,7 +260,7 @@ const Criterion8_4Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        self_learning_details: formData.content?.self_learning_details || "",
+        activities_details: formData.content?.activities_details || "",
         supporting_documents: filesWithCategory
           .filter((f) => f.url || f.s3Url || f.file)
           .map((f) => ({
@@ -278,9 +278,9 @@ const Criterion8_4Form = ({
 
       if (hasExistingEntry) {
         const idToUse = professionalDevelopmentId || propProfessionalDevelopmentId;
-        response = await newnbaCriteria8Service.updateData8_4(idToUse, payload);
+        response = await newnbaCriteria8Service.updateData8_7(idToUse, payload);
       } else {
-        response = await newnbaCriteria8Service.saveCriteria8_4_Data(payload);
+        response = await newnbaCriteria8Service.saveCriteria8_7_Data(payload);
       }
 
       const updatedFilesByField = {};
@@ -309,8 +309,8 @@ const Criterion8_4Form = ({
         filesByField: updatedFilesByField
       }));
 
-      if (response?.self_learning_id && !professionalDevelopmentId) {
-        setProfessionalDevelopmentId(response.self_learning_id);
+      if (response?.activities_id && !professionalDevelopmentId) {
+        setProfessionalDevelopmentId(response.activities_id);
         setHasExistingData(true);
       }
 
@@ -322,7 +322,7 @@ const Criterion8_4Form = ({
           confirmBtnCssClass="btn-confirm"
           onConfirm={() => setAlert(null)}
         >
-          Criterion 8.4 saved successfully
+          Criterion 8.7 saved successfully
         </SweetAlert>
       );
 
@@ -374,7 +374,7 @@ const Criterion8_4Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria8Service.deleteData8_4(professionalDevelopmentId);
+            await newnbaCriteria8Service.deleteData8_7(professionalDevelopmentId);
             setAlert(
               <SweetAlert
                 success
@@ -383,7 +383,7 @@ const Criterion8_4Form = ({
                 confirmBtnText="OK"
                 onConfirm={() => setAlert(null)}
               >
-                Self-Learning record deleted successfully
+                Co-curricular and Extra-curricular Activities record deleted successfully
               </SweetAlert>
             );
             await loadData();
@@ -461,4 +461,4 @@ const Criterion8_4Form = ({
   );
 };
 
-export default Criterion8_4Form;
+export default Criterion8_7Form;
