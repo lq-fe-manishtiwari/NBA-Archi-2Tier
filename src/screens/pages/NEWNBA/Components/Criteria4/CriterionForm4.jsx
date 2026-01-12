@@ -1,5 +1,6 @@
 import React from "react";
 import { toast } from "react-toastify";
+import Criterion4_Form from "./Criterion4_Form";
 import Criterion4_AForm from "./Criterion4_AForm";
 import Criterion4_BForm from "./Criterion4_BForm";
 import Criterion4_CForm from "./Criterion4_CForm";
@@ -31,6 +32,7 @@ const CriterionForm4 = ({
 
   // ------------------ SECTION → COMPONENT MAPPING ------------------
   const SECTION_COMPONENT_MAP = {
+    "4": Criterion4_Form,
     "4A": Criterion4_AForm,
     "4B": Criterion4_BForm,
     "4C": Criterion4_CForm,
