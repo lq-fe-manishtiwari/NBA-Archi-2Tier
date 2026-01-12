@@ -20,8 +20,8 @@ const CriterionForm9 = ({
 
   const sectionConfig = {
     "9.1": {
-      title: "9.1. First Year Student-Faculty Ratio (FYSFR) (05)",
-      totalMarks: 5,
+      title: "9.1. Organization, Governance and Transparency (05)",
+      totalMarks: 40,
       fields: [
         {
           name: "9.1.1",

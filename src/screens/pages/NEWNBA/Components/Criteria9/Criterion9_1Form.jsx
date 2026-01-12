@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
+import GenericCriteriaForm from "../GenericCriteriaForm";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import StatusBadge from "../StatusBadge";
 import SweetAlert from "react-bootstrap-sweetalert";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { GripVertical, Trash2, Plus, FileText, Save, Edit, X, Upload, CheckCircle } from "lucide-react";
-import Modal from "react-modal";
-import MergePdfModal from "../../Components/MergePdfModal";
-import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 
 // Import the new service
 import { newnbaCriteria9Service } from "../../Services/NewNBA-Criteria9.service";
 import { getAllProfileFlags } from "@/_services/adminProfileUtils";
-
-Modal.setAppElement("#root");
 
 const Criterion9_1Form = ({
   nba_accredited_program_id,
@@ -29,15 +23,11 @@ const Criterion9_1Form = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fysfrId, setFysfrId] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(!completed);
-  const [fysfr_calculation_table, setTableData] = useState([]);
-  const [filesByField, setFilesByField] = useState({
-    fysfr_documents: [
-      { id: `file-${Date.now()}-fysfr-0`, description: "", file: null, filename: "", s3Url: "", url: "", uploading: false }
-    ]
+  const [initialData, setInitialData] = useState({
+    content: {},
+    tableData: [],
+    filesByField: {},
   });
-  const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
-  const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
   const [approvalStatus, setApprovalStatus] = useState(null);
   const [userRole, setUserRole] = useState({});
   const [contributorName, setContributorName] = useState("");
@@ -48,25 +38,64 @@ const Criterion9_1Form = ({
     setUserRole(userInfo);
   }, []);
 
-  const defaultTableData = [
-    { id: 'row-1', year: "", sanctioned_intake: "", required_faculty: "", faculty_basic_science: "", faculty_engineering: "", percentage: "" },
-    { id: 'row-2', year: "", sanctioned_intake: "", required_faculty: "", faculty_basic_science: "", faculty_engineering: "", percentage: "" },
-    { id: 'row-3', year: "", sanctioned_intake: "", required_faculty: "", faculty_basic_science: "", faculty_engineering: "", percentage: "" }
-  ];
-
-  const columns = [
-    { field: "year", header: "Year", width: "w-20" },
-    { field: "sanctioned_intake", header: "Sanctioned intake of all UG programs (S4)", width: "w-32" },
-    { field: "required_faculty", header: "No. of required faculty (RF4= S4/20)", width: "w-32" },
-    { field: "faculty_basic_science", header: "No. of faculty members in Basic Science Courses & Humanities and Social Sciences including Management courses (NS1)", width: "w-40" },
-    { field: "faculty_engineering", header: "No. of faculty members in Engineering Science Courses (NS2)", width: "w-32" },
-    { field: "percentage", header: "Percentage= No. of faculty members ((NS1*0.8) +(NS2*0.2))/(No. of required faculty (RF4)); Percentage=((NS1*0.8)+ (NS2*0.2))/RF4", width: "w-40" }
-  ];
+  const config = {
+    title: "9.1. Governance, Leadership and Management (40)",
+    totalMarks: 40,
+    fields: [
+      {
+        name: "governing_body",
+        label: "9.1.1 Governing Body, Administrative Setup, Functions of Various Bodies, Service Rules Procedures, Recruitment and Promotional Policies (10)",
+        marks: 10,
+        type: "textarea",
+        rows: 6,
+        placeholder: "Describe governing body, administrative setup, functions of various bodies, service rules procedures, recruitment and promotional policies..."
+      },
+      {
+        name: "education_policy",
+        label: "9.1.2 Strategies for Implementation of Education Policy (5)",
+        marks: 5,
+        type: "textarea",
+        rows: 4,
+        placeholder: "Describe strategies for implementation of education policy..."
+      },
+      {
+        name: "sdg_initiatives",
+        label: "9.1.3 Policy and Implementation Initiatives on Sustainable Development Goals (SDG) (5)",
+        marks: 5,
+        type: "textarea",
+        rows: 4,
+        placeholder: "Describe policy and implementation initiatives on sustainable development goals..."
+      },
+      {
+        name: "decentralization",
+        label: "9.1.4 Decentralization in Working and Grievance Redressal Mechanism (5)",
+        marks: 5,
+        type: "textarea",
+        rows: 4,
+        placeholder: "Describe decentralization in working and grievance redressal mechanism..."
+      },
+      {
+        name: "financial_powers",
+        label: "9.1.5 Delegation of Financial Powers (10)",
+        marks: 10,
+        type: "textarea",
+        rows: 6,
+        placeholder: "Describe delegation of financial powers..."
+      },
+      {
+        name: "transparency",
+        label: "9.1.6 Transparency and Availability of Correct/Unambiguous Information in Public Domain (5)",
+        marks: 5,
+        type: "textarea",
+        rows: 4,
+        placeholder: "Describe transparency and availability of correct/unambiguous information in public domain..."
+      }
+    ]
+  };
 
   // ---------------- LOAD DATA ----------------
   const loadData = useCallback(async () => {
     if (!nba_criteria_sub_level2_id) {
-      setTableData(defaultTableData);
       setLoading(false);
       return;
     }
@@ -84,34 +113,24 @@ const Criterion9_1Form = ({
       // Determine which staff ID to use - otherStaffId has priority
       const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffIdToUse = otherStaffId  || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
+      const staffIdToUse = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
       
       console.log("🎯 Criterion9_1Form - Final staffId:", staffIdToUse);
 
-      // ✅ Get contributor name if otherStaffId is provided
-      if (otherStaffId && otherStaffId !== nba_contributor_allocation_id) {
-        try {
-          console.log("📡 Fetching contributor details for otherStaffId:", otherStaffId);
-          const contributorResponse = await newnbaCriteria9Service.getContributorDetails(otherStaffId);
-          console.log("👤 Contributor details:", contributorResponse);
-          
-          if (contributorResponse) {
-            if (contributorResponse.other_staff_name) {
-              setContributorName(contributorResponse.other_staff_name);
-            } else if (contributorResponse.firstname) {
-              const name = `${contributorResponse.firstname || ''} ${contributorResponse.middlename || ''} ${contributorResponse.lastname || ''}`.trim();
-              setContributorName(name);
-            }
-          }
-        } catch (contributorErr) {
-          console.error("Failed to fetch contributor details:", contributorErr);
-          // Don't fail the whole load process if contributor fetch fails
-        }
-      }
-
       if (!staffIdToUse) {
         console.log("❌ Criterion9_1Form - No staffId found, using empty data");
-        setTableData(defaultTableData);
+        setInitialData({
+          content: {
+            governing_body: "",
+            education_policy: "",
+            sdg_initiatives: "",
+            decentralization: "",
+            financial_powers: "",
+            transparency: ""
+          },
+          tableData: [],
+          filesByField: {}
+        });
         setLoading(false);
         return;
       }
@@ -169,33 +188,134 @@ const Criterion9_1Form = ({
           });
         }
 
-        // Set table data and clean percentage values
-        const tableData = Array.isArray(dataItem.fysfr_calculation_table) && dataItem.fysfr_calculation_table.length > 0
-          ? dataItem.fysfr_calculation_table.map(row => ({
-              ...row,
-              percentage: cleanPercentageValue(row.percentage)
-            }))
-          : defaultTableData;
-        setTableData(tableData);
-        
         // Transform files to filesByField structure
-        const filesArray = Array.isArray(dataItem.fysfr_documents) 
-          ? dataItem.fysfr_documents 
+        const filesArray = Array.isArray(dataItem.supporting_documents)
+          ? dataItem.supporting_documents
           : [];
 
-        if (filesArray.length > 0) {
-          setFilesByField({
-            fysfr_documents: filesArray.map((f, i) => ({
-              id: f.id || `file-fysfr-${i}`,
-              filename: f.filename || f.name || "",
-              s3Url: f.url || f.filePath || "",
-              // ✅ IMPORTANT: Add 'url' field for file display
-              url: f.url || f.filePath || f.s3Url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          });
-        }
+        const filesByField = {
+          "governing_body": filesArray.filter(f => f.category === 'governing_body').length > 0
+            ? filesArray.filter(f => f.category === 'governing_body').map((f, i) => ({
+                id: f.id || `file-governing-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-governing-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }],
+          "education_policy": filesArray.filter(f => f.category === 'education_policy').length > 0
+            ? filesArray.filter(f => f.category === 'education_policy').map((f, i) => ({
+                id: f.id || `file-policy-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-policy-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }],
+          "sdg_initiatives": filesArray.filter(f => f.category === 'sdg_initiatives').length > 0
+            ? filesArray.filter(f => f.category === 'sdg_initiatives').map((f, i) => ({
+                id: f.id || `file-sdg-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-sdg-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }],
+          "decentralization": filesArray.filter(f => f.category === 'decentralization').length > 0
+            ? filesArray.filter(f => f.category === 'decentralization').map((f, i) => ({
+                id: f.id || `file-decentral-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-decentral-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }],
+          "financial_powers": filesArray.filter(f => f.category === 'financial_powers').length > 0
+            ? filesArray.filter(f => f.category === 'financial_powers').map((f, i) => ({
+                id: f.id || `file-financial-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-financial-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }],
+          "transparency": filesArray.filter(f => f.category === 'transparency').length > 0
+            ? filesArray.filter(f => f.category === 'transparency').map((f, i) => ({
+                id: f.id || `file-transparency-${i}`,
+                filename: f.filename || f.name || "",
+                s3Url: f.url || f.filePath || "",
+                url: f.url || f.filePath || f.s3Url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{
+                id: `file-transparency-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                url: "",
+                uploading: false
+              }]
+        };
+
+        setInitialData({
+          content: {
+            governing_body: dataItem.governing_body || "",
+            education_policy: dataItem.education_policy || "",
+            sdg_initiatives: dataItem.sdg_initiatives || "",
+            decentralization: dataItem.decentralization || "",
+            financial_powers: dataItem.financial_powers || "",
+            transparency: dataItem.transparency || ""
+          },
+          tableData: [],
+          filesByField: filesByField
+        });
 
       } else {
         // No existing data, initialize empty
@@ -203,7 +323,74 @@ const Criterion9_1Form = ({
         setFysfrId(null);
         setApprovalStatus(null);
         setContributorName("");
-        setTableData(defaultTableData);
+        
+        setInitialData({
+          content: {
+            governing_body: "",
+            education_policy: "",
+            sdg_initiatives: "",
+            decentralization: "",
+            financial_powers: "",
+            transparency: ""
+          },
+          tableData: [],
+          filesByField: {
+            "governing_body": [{
+              id: `file-governing-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }],
+            "education_policy": [{
+              id: `file-policy-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }],
+            "sdg_initiatives": [{
+              id: `file-sdg-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }],
+            "decentralization": [{
+              id: `file-decentral-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }],
+            "financial_powers": [{
+              id: `file-financial-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }],
+            "transparency": [{
+              id: `file-transparency-0`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              url: "",
+              uploading: false
+            }]
+          }
+        });
       }
 
     } catch (err) {
@@ -226,7 +413,73 @@ const Criterion9_1Form = ({
       }
       
       // Initialize empty data for new entry
-      setTableData(defaultTableData);
+      setInitialData({
+        content: {
+          governing_body: "",
+          education_policy: "",
+          sdg_initiatives: "",
+          decentralization: "",
+          financial_powers: "",
+          transparency: ""
+        },
+        tableData: [],
+        filesByField: {
+          "governing_body": [{
+            id: `file-governing-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }],
+          "education_policy": [{
+            id: `file-policy-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }],
+          "sdg_initiatives": [{
+            id: `file-sdg-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }],
+          "decentralization": [{
+            id: `file-decentral-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }],
+          "financial_powers": [{
+            id: `file-financial-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }],
+          "transparency": [{
+            id: `file-transparency-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            url: "",
+            uploading: false
+          }]
+        }
+      });
       setFysfrId(null);
       setApprovalStatus(null);
       setContributorName("");
@@ -241,7 +494,9 @@ const Criterion9_1Form = ({
   }, [loadData]);
 
   // ---------------- SAVE DATA ----------------
-  const handleSave = async () => {
+  const handleSave = async (formData) => {
+    console.log("Save data received:", formData);
+    
     // Check permissions
     const profileFlags = getAllProfileFlags();
     const isContributor = profileFlags?.isContributor || false;
@@ -277,14 +532,12 @@ const Criterion9_1Form = ({
         throw new Error("Cycle sub-category ID is required");
       }
 
-      // ✅ FIX: Ensure files have both s3Url and url properties
-      const filesWithCategory = Object.keys(filesByField || {}).flatMap(
+      // Prepare files with category
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
         (field) =>
-          (filesByField[field] || []).map((file) => ({
+          (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: "FYSFR Documents",
-            // ✅ Ensure url property exists for file display
-            url: file.url || file.s3Url || "",
+            category: field,
           }))
       );
 
@@ -292,15 +545,20 @@ const Criterion9_1Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        fysfr_calculation_table: fysfr_calculation_table,
-        fysfr_documents: filesWithCategory
-          .filter((f) => f.url || f.s3Url || f.file)
+        governing_body: formData.content?.governing_body || "",
+        education_policy: formData.content?.education_policy || "",
+        sdg_initiatives: formData.content?.sdg_initiatives || "",
+        decentralization: formData.content?.decentralization || "",
+        financial_powers: formData.content?.financial_powers || "",
+        transparency: formData.content?.transparency || "",
+        supporting_documents: filesWithCategory
+          .filter((f) => f.url || f.s3Url)
           .map((f) => ({
             description: f.description || "",
-            filename: f.filename || f.name || f.file?.name || "",
-            url: f.url || f.s3Url || "",
-            category: f.category || "",
+            filename: f.filename || f.name || "",
+            url: f.s3Url || f.url || "",
             id: f.id,
+            category: f.category
           })),
       };
 
@@ -325,18 +583,17 @@ const Criterion9_1Form = ({
       // ✅ IMMEDIATELY UPDATE LOCAL STATE with the saved data
       const updatedFilesByField = {};
       
-      Object.keys(filesByField || {}).forEach(field => {
-        const files = filesByField[field] || [];
+      Object.keys(formData.filesByField || {}).forEach(field => {
+        const files = formData.filesByField[field] || [];
         updatedFilesByField[field] = files.map(file => {
           // Find matching file in payload
-          const savedFile = payload.fysfr_documents?.find(
+          const savedFile = payload.supporting_documents?.find(
             f => f.id === file.id || f.filename === (file.filename || file.file?.name)
           );
           
           return {
             ...file,
             s3Url: savedFile?.url || file.s3Url || file.url || "",
-            // ✅ CRITICAL: Ensure 'url' field is also set for file display
             url: savedFile?.url || file.s3Url || file.url || "",
             filename: savedFile?.filename || file.filename || file.file?.name || "",
             uploading: false
@@ -344,8 +601,12 @@ const Criterion9_1Form = ({
         });
       });
 
-      // Update filesByField state immediately
-      setFilesByField(updatedFilesByField);
+      // Update initialData state immediately
+      setInitialData(prev => ({
+        ...prev,
+        content: formData.content,
+        filesByField: updatedFilesByField
+      }));
 
       // If this is a new entry, set the ID from response
       if (response?.fysfr_id && !fysfrId) {
@@ -364,7 +625,7 @@ const Criterion9_1Form = ({
         </SweetAlert>
       );
 
-      setIsEditMode(false);
+      // Call success callback
       onSaveSuccess?.();
 
     } catch (err) {
@@ -423,7 +684,7 @@ const Criterion9_1Form = ({
                 confirmBtnText="OK"
                 onConfirm={() => setAlert(null)}
               >
-                FYSFR record deleted successfully
+                Governance record deleted successfully
               </SweetAlert>
             );
             await loadData();
@@ -451,199 +712,17 @@ const Criterion9_1Form = ({
     );
   };
 
-  const calculatePercentage = (ns1, ns2, rf4) => {
-    const ns1Num = parseFloat(ns1) || 0;
-    const ns2Num = parseFloat(ns2) || 0;
-    const rf4Num = parseFloat(rf4) || 0;
-    
-    if (rf4Num === 0) return "0%";
-    
-    const calculation = ((ns1Num * 0.8) + (ns2Num * 0.2)) / rf4Num;
-    const percentage = (calculation * 100).toFixed(1);
-    
-    return `${percentage}%`;
-  };
-
-  // Helper function to extract percentage value from formula or return clean percentage
-  const cleanPercentageValue = (percentageString) => {
-    if (!percentageString) return "";
-    
-    // If it's already a clean percentage (like "75.5%"), return as is
-    if (/^\d+\.?\d*%$/.test(percentageString.toString().trim())) {
-      return percentageString;
-    }
-    
-    // If it contains formula, extract the final percentage value
-    const match = percentageString.toString().match(/=(\d+\.?\d*)%$/);
-    if (match) {
-      return `${match[1]}%`;
-    }
-    
-    // If no match found, try to recalculate if we have the data
-    return percentageString;
-  };
-
-  const calculateRequiredFaculty = (intake) => {
-    const intakeNum = parseFloat(intake) || 0;
-    return Math.ceil(intakeNum / 20).toString();
-  };
-
-  const getAveragePercentage = () => {
-    const percentages = fysfr_calculation_table.map(row => {
-      const ns1 = parseFloat(row.faculty_basic_science) || 0;
-      const ns2 = parseFloat(row.faculty_engineering) || 0;
-      const rf4 = parseFloat(row.required_faculty) || 0;
-      
-      if (rf4 === 0) return 0;
-      return ((ns1 * 0.8) + (ns2 * 0.2)) / rf4 * 100;
-    }).filter(p => p > 0);
-    
-    if (percentages.length === 0) return { avg: 0, marks: 0 };
-    
-    const avg = percentages.reduce((sum, p) => sum + p, 0) / percentages.length;
-    let marks = 0;
-    
-    if (avg >= 80) marks = 5;
-    else if (avg >= 70) marks = 4;
-    else if (avg >= 60) marks = 3;
-    else if (avg >= 50) marks = 2;
-    else if (avg >= 40) marks = 1;
-    else marks = 0;
-    
-    return { avg: avg.toFixed(1), marks };
-  };
-
-  const handleChange = (i, field, val) => {
-    const updated = [...fysfr_calculation_table];
-    updated[i][field] = val;
-    
-    // Auto-calculate required faculty when intake changes
-    if (field === 'sanctioned_intake') {
-      updated[i]['required_faculty'] = calculateRequiredFaculty(val);
-    }
-    
-    // Auto-calculate percentage when NS1, NS2, or RF4 changes
-    if (field === 'faculty_basic_science' || field === 'faculty_engineering' || field === 'required_faculty' || field === 'sanctioned_intake') {
-      const ns1 = updated[i]['faculty_basic_science'];
-      const ns2 = updated[i]['faculty_engineering'];
-      const rf4 = updated[i]['required_faculty'];
-      
-      if (ns1 && ns2 && rf4) {
-        updated[i]['percentage'] = calculatePercentage(ns1, ns2, rf4);
-      }
-    }
-    
-    setTableData(updated);
-  };
-
-  const addRow = () => {
-    const newRow = {
-      id: `row-${Date.now()}`,
-      year: "",
-      sanctioned_intake: "",
-      required_faculty: "",
-      faculty_basic_science: "",
-      faculty_engineering: "",
-      percentage: ""
-    };
-    setTableData([...fysfr_calculation_table, newRow]);
-  };
-
-  const removeRow = (i) => {
-    if (fysfr_calculation_table.length <= 1) return;
-    setTableData(fysfr_calculation_table.filter((_, idx) => idx !== i));
-  };
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(fysfr_calculation_table);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
-    setTableData(items);
-  };
-
-  const addFileRow = (fieldName) => {
-    setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: [
-        ...(prev[fieldName] || []),
-        { id: `file-${Date.now()}-${fieldName}-${Math.random()}`, description: "", file: null, filename: "", s3Url: "", url: "", uploading: false },
-      ],
-    }));
-  };
-
-  const updateFileDescription = (fieldName, index, value) => {
-    setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: prev[fieldName].map((f, i) => (i === index ? { ...f, description: value } : f)),
-    }));
-  };
-
-  const handleFileChange = async (fieldName, index, newFile) => {
-    if (!newFile || !(newFile instanceof File)) {
-      toast.error("Invalid file");
-      return;
-    }
-
-    const currentRow = filesByField[fieldName][index];
-
-    setFilesByField(prev => ({
-      ...prev,
-      [fieldName]: prev[fieldName].map((f, i) =>
-        i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
-      )
-    }));
-
-    try {
-      const formData = new FormData();
-      formData.append("file", newFile);
-      
-      if (currentRow.description?.trim()) {
-        formData.append("description", currentRow.description.trim());
-      }
-
-      const resData = await nbaDashboardService.uploadFile(formData);
-      const s3Url = resData || resData?.url || "";
-
-      setFilesByField(prev => ({
-        ...prev,
-        [fieldName]: prev[fieldName].map((f, i) =>
-          i === index
-            ? { ...f, s3Url: s3Url, url: s3Url, filename: newFile.name, uploading: false }
-            : f
-        )
-      }));
-
-      toast.success("Uploaded successfully!");
-    } catch (err) {
-      console.error("Upload failed:", err);
-      toast.error("Upload failed");
-
-      setFilesByField(prev => ({
-        ...prev,
-        [fieldName]: prev[fieldName].map((f, i) =>
-          i === index ? { ...f, uploading: false, file: null, filename: "", s3Url: "", url: "" } : f
-        )
-      }));
-    }
-  };
-
-  const removeFileRow = (fieldName, index) => {
-    setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: prev[fieldName].filter((_, i) => i !== index),
-    }));
-  };
-
+  // ---------------- UI ----------------
   if (loading) {
-    return <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">Loading 9.1. First Year Student-Faculty Ratio (FYSFR)...</div>;
+    return (
+      <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">
+        Loading {config.title}...
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      {/* Contributor Name Display */}
-   
-
       {/* Approval Status */}
       {approvalStatus && approvalStatus.status !== 'COORDINATORS_DATA' && userRole.nba_coordinator !== true && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -663,357 +742,18 @@ const Criterion9_1Form = ({
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-        <div className="bg-[#2163c1] text-white p-8">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold flex items-center gap-4">
-              <FileText className="w-10 h-10" />
-              9.1. First Year Student-Faculty Ratio (FYSFR)
-              <span className="text-xl font-medium text-indigo-200">(05 Marks)</span>
-            </h2>
-            {!completed && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${
-                    isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
-                  }`}
-                  title={isEditMode ? "Cancel Editing" : "Edit Section"}
-                >
-                  {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-8 space-y-12">
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h4 className="text-lg font-bold text-gray-800">Table No. 9.1.1: FYSFR details</h4>
-
-              <DragDropContext onDragEnd={onDragEnd}>
-                <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
-                  <thead>
-                    <tr className="bg-[#2163c1] text-white">
-                      <th className="p-4 w-12"></th>
-                      {columns.map((c) => (
-                        <th key={c.field} className="p-4 text-left font-medium text-xs">{c.header}</th>
-                      ))}
-                      {!completed && isEditMode && <th className="w-20"></th>}
-                    </tr>
-                  </thead>
-                  <Droppable droppableId="table-rows-fysfr">
-                    {(provided) => (
-                      <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                        {fysfr_calculation_table.map((row, i) => (
-                          <Draggable key={row.id} draggableId={row.id.toString()} index={i} isDragDisabled={!isEditMode}>
-                            {(provided, snapshot) => (
-                              <tr
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
-                              >
-                                <td className="p-3">
-                                  <div {...provided.dragHandleProps} className="cursor-grab">
-                                    <GripVertical className="w-6 h-6 text-gray-500" />
-                                  </div>
-                                </td>
-                                {columns.map((col) => (
-                                  <td key={col.field} className="p-3">
-                                    <input
-                                      type="text"
-                                      value={row[col.field] || ""}
-                                      onChange={(e) => handleChange(i, col.field, e.target.value)}
-                                      disabled={!isEditMode || completed || col.field === 'percentage'}
-                                      className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-                                        col.field === 'percentage' ? 'bg-gray-100 cursor-not-allowed' : ''
-                                      }`}
-                                      placeholder={col.field === 'percentage' ? 'Auto-calculated' : ''}
-                                    />
-                                  </td>
-                                ))}
-                                {!completed && isEditMode && fysfr_calculation_table.length > 1 && (
-                                  <td className="text-center">
-                                    <button
-                                      onClick={() => removeRow(i)}
-                                      className="text-red-600 hover:bg-red-50 p-3 rounded-full transition"
-                                    >
-                                      <Trash2 className="w-5 h-5" />
-                                    </button>
-                                  </td>
-                                )}
-                              </tr>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </tbody>
-                    )}
-                  </Droppable>
-                  <tfoot>
-                    <tr className="bg-gray-100">
-                      <td colSpan={columns.length + 2} className="p-4 text-center font-bold text-lg text-blue-700">
-                        Average Percentage: {getAveragePercentage().avg}% ({getAveragePercentage().marks} Marks)
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </DragDropContext>
-
-              {!completed && isEditMode && (
-                <button
-                  onClick={addRow}
-                  className="flex items-center gap-3 px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded-xl hover:shadow-xl transition"
-                >
-                  <Plus className="w-5 h-5" /> Add Row
-                </button>
-              )}
-            </div>
-
-            {isEditMode && !completed && (
-              <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                    <Upload className="w-6 h-6" /> Supporting Documents
-                  </h4>
-                  {filesByField.fysfr_documents?.some((f) => f.filename?.toLowerCase().endsWith(".pdf")) && (
-                    <button
-                      onClick={() => setMergeModal({ isOpen: true, fieldName: "fysfr_documents" })}
-                      className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
-                    >
-                      <FileText className="w-5 h-5" /> Merge PDFs
-                    </button>
-                  )}
-                </div>
-
-                <DragDropContext
-                  onDragEnd={(result) => {
-                    if (!result.destination) return;
-                    const items = Array.from(filesByField.fysfr_documents || []);
-                    const [moved] = items.splice(result.source.index, 1);
-                    items.splice(result.destination.index, 0, moved);
-                    setFilesByField((prev) => ({ ...prev, fysfr_documents: items }));
-                  }}
-                >
-                  <Droppable droppableId="files-fysfr_documents">
-                    {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                        {(filesByField.fysfr_documents || []).map((file, index) => {
-                          if (!file.id) {
-                            file.id = `file-${Date.now()}-fysfr_documents-${Math.random()}`;
-                          }
-                          return (
-                            <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}
-                                >
-                                  <div {...provided.dragHandleProps} className="cursor-grab">
-                                    <GripVertical className="w-5 h-5 text-gray-400" />
-                                  </div>
-                                  <input
-                                    type="text"
-                                    value={file.description || ""}
-                                    onChange={(e) => updateFileDescription("fysfr_documents", index, e.target.value)}
-                                    placeholder="Description"
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  />
-
-                                  <div className="w-64 space-y-2">
-                                    {/* Uploaded Filename Display (on top) */}
-                                    {file.filename && !file.uploading && (
-                                      <button
-                                        onClick={() => setPreviewModal({ isOpen: true, file })}
-                                        className="w-full text-left text-blue-600 font-medium hover:underline flex items-center gap-2 py-1"
-                                        title={file.filename}
-                                      >
-                                        <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-600" />
-                                        <span className="truncate block">{file.filename}</span>
-                                      </button>
-                                    )}
-
-                                    {file.uploading && (
-                                      <div className="text-gray-500 italic text-sm py-1 flex items-center gap-2">
-                                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-                                        <span>Uploading...</span>
-                                      </div>
-                                    )}
-
-                                    {/* Choose File Input (below) */}
-                                    <input
-                                      type="file"
-                                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                      onChange={(e) => {
-                                        const newFile = e.target.files?.[0];
-                                        if (newFile) {
-                                          handleFileChange("fysfr_documents", index, newFile);
-                                        }
-                                      }}
-                                      className="block w-full text-sm text-gray-700
-                                                 file:mr-4 file:py-2.5 file:px-5 
-                                                 file:rounded-lg file:border-0
-                                                 file:text-sm file:font-medium
-                                                 file:bg-[#2163c1] file:text-white
-                                                 file:hover:bg-[#1d57a8] file:cursor-pointer
-                                                 cursor-pointer"
-                                      disabled={file.uploading}
-                                    />
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => addFileRow("fysfr_documents")}
-                                      className="text-green-600 hover:bg-green-50 p-2 rounded transition"
-                                      title="Add another document"
-                                    >
-                                      <Plus className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                      onClick={
-                                        filesByField.fysfr_documents?.length <= 1
-                                          ? undefined
-                                          : () => removeFileRow("fysfr_documents", index)
-                                      }
-                                      disabled={filesByField.fysfr_documents?.length <= 1}
-                                      className={`p-2 rounded transition ${
-                                        filesByField.fysfr_documents?.length <= 1
-                                          ? "text-gray-300 cursor-not-allowed"
-                                          : "text-red-500 hover:bg-red-50"
-                                      }`}
-                                      title={filesByField.fysfr_documents?.length <= 1 ? "At least one document is required" : "Remove document"}
-                                    >
-                                      <Trash2 className="w-5 h-5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          );
-                        })}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              </div>
-            )}
-
-            {!isEditMode && (
-              <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-                <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2 mb-4">
-                  <Upload className="w-6 h-6" /> Supporting Documents
-                </h4>
-                <div className="space-y-3">
-                  {(filesByField.fysfr_documents || []).map((file, index) => (
-                    <div
-                      key={file.id || `view-file-${index}`}
-                      className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300"
-                    >
-                      <div className="flex-1">
-                        <span className="text-gray-700 font-medium">
-                          {file.description || `Document ${index + 1}`}
-                        </span>
-                      </div>
-                      <div className="w-64">
-                        {file.filename && file.url ? (
-                          <button
-                            onClick={() => setPreviewModal({ isOpen: true, file })}
-                            className="text-blue-600 font-medium hover:underline flex items-center gap-2"
-                          >
-                            <CheckCircle className="w-4 h-4" /> {file.filename}
-                          </button>
-                        ) : (
-                          <span className="text-gray-400 italic">No file uploaded</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {isEditMode && !completed && (
-            <div className="text-center pt-10 flex gap-4 justify-center">
-              <button
-                onClick={handleSave}
-                className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${
-                  saving || !isContributorEditable
-                    ? "bg-[#2163c1] cursor-pointer opacity-60"
-                    : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
-                }`}
-                title={saving ? "Saving..." : !isContributorEditable ? "Not allowed to save" : "Save"}
-              >
-                <Save className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={() => setIsEditMode(false)}
-                disabled={saving}
-                className="inline-flex items-center justify-center w-12 h-12 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow-lg"
-                title="Cancel"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={handleDelete}
-                className="inline-flex items-center justify-center w-12 h-12 bg-red-500 text-white rounded-lg hover:bg-red-600 transition shadow-lg"
-                title="Delete Section Data"
-              >
-                <Trash2 className="w-6 h-6" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Preview & Merge Modals */}
-      <Modal
-        isOpen={previewModal.isOpen}
-        onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}
-        className="fixed inset-4 bg-white rounded-2xl shadow-2xl overflow-hidden outline-none"
-        overlayClassName="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
-      >
-        {previewModal.file && (
-          <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white">
-              <h3 className="text-xl font-bold">{previewModal.file.filename}</h3>
-              <button onClick={() => setPreviewModal({ isOpen: false, file: null })}>
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <iframe
-              src={previewModal.file.s3Url}
-              title={previewModal.file.filename}
-              className="flex-1 w-full"
-            />
-          </div>
-        )}
-      </Modal>
-
-      <MergePdfModal
-        isOpen={mergeModal.isOpen}
-        pdfFiles={filesByField[mergeModal.fieldName] || []}
-        onClose={() => setMergeModal({ isOpen: false, fieldName: null })}
-        onFileAdd={(mergedDocument) => {
-          const mergedFile = {
-            id: mergedDocument.id,
-            filename: mergedDocument.filename,
-            description: mergedDocument.description,
-            s3Url: mergedDocument.s3Url,
-            uploading: false,
-            isMerged: true,
-          };
-          setFilesByField((prev) => ({
-            ...prev,
-            [mergeModal.fieldName]: [...(prev[mergeModal.fieldName] || []), mergedFile],
-          }));
-          setMergeModal({ isOpen: false, fieldName: null });
-        }}
+      <GenericCriteriaForm
+        title={config.title}
+        marks={config.totalMarks}
+        fields={config.fields}
+        initialData={initialData}
+        onSave={handleSave}
+        onDelete={fysfrId ? handleDelete : null}
+        isCompleted={completed}
+        isContributorEditable={isContributorEditable}
+        saving={saving}
+        hasExistingData={!!fysfrId}
+        showFileCategories={true}
       />
 
       {alert}
