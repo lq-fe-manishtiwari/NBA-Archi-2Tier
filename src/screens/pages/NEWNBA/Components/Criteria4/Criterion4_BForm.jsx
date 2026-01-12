@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm4_B from "./GenericCriteriaForm4_B";
+import GenericCriteriaForm4_A from "./GenericCriteriaForm4_A";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 
 const Criterion4_BForm = ({
-  cycle_sub_category_id, 
+  cycle_sub_category_id,
   isEditable = true,
   onSaveSuccess,
   programId = null,
@@ -30,107 +30,159 @@ const Criterion4_BForm = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "4B. Admission details for the program through multiple entry and exit points.",
+      "Table No. 4A. Admission details of a program",
     totalMarks: 20,
     fields: [
       {
-        name: "4.1",
-        label: "4B. Admission details for the program through multiple entry and exit points.",
+        name: "4.8",
+        label: "4A. Admission details of a program",
         marks: 20,
         hasTable: true,
         tableConfig: {
-          title: "Teaching-Learning Activities",
+          title: "Admission details of a program",
           columns: [
-              { field: "item", header: "Item (No. of students admitted/exited through multiple entry and exit points) in the respective batch", placeholder: "" ,},
-              { field: "cay", header: "CAY", placeholder: "" },
-              { field: "caym1", header: "CAYm1", placeholder: "" },
-              { field: "caym2", header: "CAYm2", placeholder: "" },
-              { field: "caym3", header: "CAYm3", placeholder: "" },
-              { field: "caym4", header: "CAYm4(LYG)", placeholder: "" },
-              { field: "caym5", header: "CAYm5(LYGm1)", placeholder: "" },
-              { field: "caym6", header: "CAYm6(LYGm2)", placeholder: "" },
+              { 
+                field: "year_of_entry", 
+                header: "Year of entry", 
+                placeholder: "",
+                readOnly: true 
+              },
+              { 
+                field: "admitted_first_year", 
+                header: "Number of students admitted in 1st year of the program (N1)", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_i_year", 
+                header: "I Year", 
+                placeholder: "",
+                subHeader: "Number of students who have successfully graduated without backlogs in any year of study" 
+              },
+              { 
+                field: "graduated_ii_year", 
+                header: "II Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iii_year", 
+                header: "III Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iv_year", 
+                header: "IV Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_v_year", 
+                header: "V Year", 
+                placeholder: "" 
+              },
             ],
           predefinedRows: [
-            { item: "N52= No. of students admitted in 2nd year via multiple entry and exit points in same batch " },
-            { item: "N53= No. of students admitted in 3rd year via multiple entry and exit points in same batch" },
-            { item: "N54= No. of students admitted in 4th year via multiple entry and exit points in same batch" },
-            { item: "N5=N52+N53+N54" , readOnly: true },
-            { item: "N61= No. of students exits after 1st year via multiple entry and exit points in same batch" },
-            { item: "N62= No. of students exit after 2nd year via multiple entry and exit points" },
-            { item: "N63= No. of students exit after 3rd year via multiple entry and exit points in same batch" },
-            { item: "N6=N61+N62+N63" , readOnly: true },
+            { year_of_entry: "CAY" },
+            { year_of_entry: "CAYm1" },
+            { year_of_entry: "CAYm2" },
+            { year_of_entry: "CAYm3" },
+            { year_of_entry: "CAYm4" },
+            { year_of_entry: "CAYm5 (LYG)" },
+            { year_of_entry: "CAYm6 (LYGm1)" },
+            { year_of_entry: "CAYm7 (LYGm2)" },
           ],
         },
       },
     ],
   };
 
-  // ---------------- LOAD DATA (Same as 2.1) ----------------
+  // ---------------- LOAD DATA  ----------------
   const loadData = useCallback(async () => {
-    if (!cycle_sub_category_id) return setLoading(false);
+    if (!cycle_sub_category_id) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       
+      // Check if user is contributor
       const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const userIsContributor = userInfo?.rawData?.is_contributor || false;
       setIsContributor(userIsContributor);
       
+      // Determine staff ID to use - otherStaffId has priority
       const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-
-      const res = await newnbaCriteria4Service.getCriteria4_B_Data(cycle_sub_category_id, currentOtherStaffId);
+      
+      console.log("🟠 Criterion4_BForm - Loading data:");
+      console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
+      console.log("  - otherStaffId (prop):", otherStaffId);
+      console.log("  - currentOtherStaffId (final):", currentOtherStaffId);
+      console.log("  - userIsContributor:", userIsContributor);
+      
+      // Call API with staff ID
+      const res = await newnbaCriteria4Service.getCriteria4_A_Data(cycle_sub_category_id, currentOtherStaffId);
+      
+      // Handle both array and object responses like Criterion1_1Form
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
       
-      console.log("🟠 Criterion4_BForm - Raw API Response:", rawResponse);
-      console.log("🟠 Criterion4_BForm - Processed Data:", d);
+      console.log("🟢 Criterion4_BForm - Raw API Response:", rawResponse);
+      console.log("🟢 Criterion4_BForm - Processed Data:", d);
 
-      setStudentsPerformanceId(d.bstudents_performance_id || d.students_performance_id || null);
+      // Set ID for update/delete operations
+      setStudentsPerformanceId(d.students_performance_id || null);
 
+      // Parse table data from cri4_atable - API returns array of flat objects with row_type
       const tableData = [];
-      if (d.cri4_btable && Array.isArray(d.cri4_btable) && d.cri4_btable.length > 0) {
-        const rowKeys = ["firstyear", "secondyear", "thirdyear", "totalN5", "firstyearN61", "secondyear62", "thirdyear63", "totalN6"];
-        const predefinedItems = [
-          "N52= No. of students admitted in 2nd year via multiple entry and exit points in same batch ",
-          "N53= No. of students admitted in 3rd year via multiple entry and exit points in same batch",
-          "N54= No. of students admitted in 4th year via multiple entry and exit points in same batch",
-          "N5=N52+N53+N54",
-          "N61= No. of students exits after 1st year via multiple entry and exit points in same batch",
-          "N62= No. of students exit after 2nd year via multiple entry and exit points",
-          "N63= No. of students exit after 3rd year via multiple entry and exit points in same batch",
-          "N6=N61+N62+N63"
-        ];
-        
-        rowKeys.forEach((key, index) => {
-          const row = d.cri4_btable.find(r => r.row_type === key);
+      const yearKeys = ["cay", "caym1", "caym2", "caym3", "caym4", "caym5", "caym6", "caym7"];
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      
+      // If we have existing data, populate from API
+      if (d.cri4_atable && Array.isArray(d.cri4_atable) && d.cri4_atable.length > 0) {
+        yearKeys.forEach((key, index) => {
+          const row = d.cri4_atable.find(r => r.row_type === key);
           if (row) {
             tableData.push({
               id: `row-${Date.now()}-${index}`,
-              item: predefinedItems[index] || "",
-              cay: row.cay || "",
-              caym1: row.caym1 || "",
-              caym2: row.caym2 || "",
-              caym3: row.caym3 || "",
-              caym4: row.caym4 || "",
-              caym5: row.caym5 || "",
-              caym6: row.caym6 || ""
+              year_of_entry: yearLabels[index],
+              admitted_first_year: row.admitted_first_year || "",
+              graduated_i_year: row.graduated_i_year || "",
+              graduated_ii_year: row.graduated_ii_year || "",
+              graduated_iii_year: row.graduated_iii_year || "",
+              graduated_iv_year: row.graduated_iv_year || "",
+              graduated_v_year: row.graduated_v_year || ""
             });
           } else {
+            // Add empty row if not found
             tableData.push({
               id: `row-${Date.now()}-${index}`,
-              item: predefinedItems[index] || "",
-              cay: "",
-              caym1: "",
-              caym2: "",
-              caym3: "",
-              caym4: "",
-              caym5: "",
-              caym6: ""
+              year_of_entry: yearLabels[index],
+              admitted_first_year: "",
+              graduated_i_year: "",
+              graduated_ii_year: "",
+              graduated_iii_year: "",
+              graduated_iv_year: "",
+              graduated_v_year: ""
             });
           }
         });
+      } else {
+        // No existing data - create empty rows with predefined labels
+        yearLabels.forEach((label, index) => {
+          tableData.push({
+            id: `row-${Date.now()}-${index}`,
+            year_of_entry: label,
+            admitted_first_year: "",
+            graduated_i_year: "",
+            graduated_ii_year: "",
+            graduated_iii_year: "",
+            graduated_iv_year: "",
+            graduated_v_year: ""
+          });
+        });
       }
+      
+      console.log("✅ Criterion4_BForm - Parsed tableData:", tableData);
 
       setInitialData({
         content: { "4.1": "" },
@@ -150,6 +202,20 @@ const Criterion4_BForm = ({
     } catch (err) {
       console.warn("Load failed:", err);
       setStudentsPerformanceId(null);
+      
+      // Create empty table data with year labels
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      const emptyTableData = yearLabels.map((label, index) => ({
+        id: `row-empty-${index}`,
+        year_of_entry: label,
+        admitted_first_year: "",
+        graduated_i_year: "",
+        graduated_ii_year: "",
+        graduated_iii_year: "",
+        graduated_iv_year: "",
+        graduated_v_year: ""
+      }));
+      
       setInitialData({
         content: { "4.1": "" },
         tableData: [],
@@ -189,54 +255,48 @@ const Criterion4_BForm = ({
     loadData();
   }, [loadData]);
 
-  // ---------------- SAVE DATA (Same as 2.1) ----------------
+  // ---------------- SAVE DATA ----------------
 const handleSave = async (formData) => {
   setSaving(true);
 
   try {
     const table = formData.tableData;
 
-    // Map table rows to required keys
-    const rowKeyMap = [
-      "firstyear",        // row 0
-      "secondyear",       // row 1
-      "thirdyear",        // row 2
-      "totalN5",          // row 3 (N5)
-      "firstyearN61",     // row 4 (N61)
-      "secondyear62",     // row 5 (N62)
-      "thirdyear63",      // row 6 (N63)
-      "totalN6"           // row 7 (N6)
-    ];
+    // Year key mapping
+    const yearToKey = {
+      "CAY": "cay",
+      "CAYm1": "caym1",
+      "CAYm2": "caym2",
+      "CAYm3": "caym3",
+      "CAYm4": "caym4",
+      "CAYm5 (LYG)": "caym5",
+      "CAYm6 (LYGm1)": "caym6",
+      "CAYm7 (LYGm2)": "caym7"
+    };
 
-    const cri4_btable = table.map((row, i) => {
-      const key = rowKeyMap[i];
+    // Build cri4_atable as array of flat objects
+    const cri4_atable = table.map((row) => {
+      const key = yearToKey[row.year_of_entry];
       if (!key) return null;
 
       return {
         row_type: key,
-        cay: row.cay || "",
-        caym1: row.caym1 || "",
-        caym2: row.caym2 || "",
-        caym3: row.caym3 || "",
-        caym4: row.caym4 || "",
-        caym5: row.caym5 || "",
-        caym6: row.caym6 || ""
+        admitted_first_year: row.admitted_first_year || "",
+        graduated_i_year: row.graduated_i_year || "",
+        graduated_ii_year: row.graduated_ii_year || "",
+        graduated_iii_year: row.graduated_iii_year || "",
+        graduated_iv_year: row.graduated_iv_year || "",
+        graduated_v_year: row.graduated_v_year || ""
       };
     }).filter(Boolean);
 
-    const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-      (field) =>
-        (formData.filesByField[field] || []).map((file) => ({
-          ...file,
-          category: "Students' Performance",
-        }))
-    );
-    console.log("🟠 4B filesWithCategory before filter:", filesWithCategory);
+    // Extract documents
+    console.log("🟠 filesWithCategory before filter:", filesWithCategory);
     
-    const cri4_bdocument = filesWithCategory
+    const cri4_adocument = filesWithCategory
       .filter((f) => {
         const hasUrl = f.s3Url && f.s3Url.trim() !== "";
-        console.log(`4B File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
+        console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
         return hasUrl;
       })
       .map((f) => ({
@@ -245,9 +305,9 @@ const handleSave = async (formData) => {
         description: f.description || ""
       }));
     
-    console.log("✅ 4B cri4_bdocument after mapping:", cri4_bdocument);
+    console.log("✅ cri4_adocument after mapping:", cri4_adocument);
 
-    // Get staff ID from localStorage
+    // Get staff ID
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
@@ -257,36 +317,36 @@ const handleSave = async (formData) => {
       userInfo.user_id ||
       userInfoo?.other_staff_id;
 
-    // FINAL PAYLOAD EXACTLY AS REQUIRED
+    // FINAL PAYLOAD (Correct Format)
     const payload = {
-      other_staff_id : staffId,
-      cycle_sub_category_id : cycle_sub_category_id,
-      cri4_btable,
-      cri4_bdocument
+      other_staff_id: staffId,
+      cycle_sub_category_id: cycle_sub_category_id,
+      cri4_adocument,
+      cri4_atable
     };
 
-    console.log("FINAL 4B PAYLOAD:", payload);
-
+    console.log("FINAL PAYLOAD → ", payload);
+    
+    // Use PUT if updating existing entry, POST for new entry
     if (studentsPerformanceId) {
-      await newnbaCriteria4Service.putCriteria4_B_Data(studentsPerformanceId, payload);
+      await newnbaCriteria4Service.putCriteria4_A_Data(studentsPerformanceId, payload);
     } else {
-      await newnbaCriteria4Service.saveCriteria4_B_Data(payload);
+      await newnbaCriteria4Service.saveCriteria4_A_Data(payload);
     }
 
     setAlert(
       <SweetAlert success title="Saved!" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
-        Criterion 4B saved successfully!
+        Criterion 4A saved successfully
       </SweetAlert>
     );
 
     onSaveSuccess?.();
     loadData();
   } catch (err) {
-    console.error("Save failed:", err);
-
+    console.error(err);
     setAlert(
       <SweetAlert danger title="Save Failed" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
-        Something went wrong while saving.
+        Something went wrong while saving
       </SweetAlert>
     );
   } finally {
@@ -294,7 +354,7 @@ const handleSave = async (formData) => {
   }
 };
 
-  // ---------------- DELETE DATA (Same as 2.1) ----------------
+  // ---------------- DELETE DATA----------------
   const handleDelete = async () => {
     if (!studentsPerformanceId) {
       setAlert(
@@ -324,11 +384,11 @@ const handleSave = async (formData) => {
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_BData(
+            const res = await newnbaCriteria4Service.deleteCriteria4_AData(
               studentsPerformanceId
             );
 
-            let message = "Criteria 4 B deleted successfully.";
+            let message = "Criteria 4 A deleted successfully.";
             if (typeof res === "string") message = res;
             else if (res?.data) message = res.data;
 
@@ -368,18 +428,18 @@ const handleSave = async (formData) => {
         You won’t be able to revert this!
       </SweetAlert>
     );
-  };
+};
 
   // ---------------- UI ----------------
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criteria 4 B...
+        Loading Criteria 4 A...
       </div>
     );
   }
 
-   console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
+  console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
 
   // Show card view for coordinators
   if (showCardView) {
@@ -392,11 +452,11 @@ const handleSave = async (formData) => {
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.B",
+            title: "Criterion 4.A",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "bstudents_performance_id",
+            idField: "students_performance_id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
@@ -407,7 +467,7 @@ const handleSave = async (formData) => {
 
   return (
     <div>
-      <GenericCriteriaForm4_B
+      <GenericCriteriaForm4_A
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

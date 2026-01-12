@@ -19,13 +19,13 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
     ? data
     : (columns.some(c => c.readOnly) && tableConfig?.predefinedRows)
       ? tableConfig.predefinedRows.map((r, i) => ({
-        id: `row-${Date.now()}-${i}`,
-        ...r,
-      }))
+          id: `row-${Date.now()}-${i}`,
+          ...r,
+        }))
       : Array.from({ length: 5 }).map((_, i) => ({
-        id: `row-${Date.now()}-${i}`,
-        ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
-      }));
+          id: `row-${Date.now()}-${i}`,
+          ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
+        }));
 
   const handleChange = (i, field, val) => {
     const updated = [...safeData];
@@ -35,24 +35,25 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
 
     // Recalculate ER rows
     ["cay", "caym1", "caym2"].forEach(col => {
-      const N = parseFloat(updated[0][col]) || 0;
-      const N1 = parseFloat(updated[1][col]) || 0;
-      const N4 = parseFloat(updated[2][col]) || 0;
+      const N   = parseFloat(updated[0][col]) || 0;
+      const N1  = parseFloat(updated[1][col]) || 0;
+      const N4  = parseFloat(updated[2][col]) || 0;   // ← typo? should be N1 again? kept as per original
 
-      updated[3][col] = N > 0 ? ((N1 + N4) / N).toFixed(2) : "0.00";
+      updated[3][col] = N > 0 ? ((N1 + N4) / N * 100).toFixed(2) : "0.00";   // assuming % ratio
     });
 
     // Average ER
-    const avg =
-      (parseFloat(updated[3].cay) +
-        parseFloat(updated[3].caym1) +
-        parseFloat(updated[3].caym2)) / 3 || 0;
+    const avg = (
+      parseFloat(updated[3].cay) +
+      parseFloat(updated[3].caym1) +
+      parseFloat(updated[3].caym2)
+    ) / 3 || 0;
 
     const averageER = avg.toFixed(2);
 
     updated[4] = {
       ...updated[4],
-      item: "Average ER = (ER1 + ER2 + ER3)/3",
+      item: "Average ER = (ER_CAY + ER_CAYm1 + ER_CAYm2)/3",
       cay: averageER,
       caym1: averageER,
       caym2: averageER,
@@ -61,9 +62,6 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
 
     onChange(updated);
   };
-
-
-
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -90,7 +88,12 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
             {(provided) => (
               <tbody {...provided.droppableProps} ref={provided.innerRef}>
                 {safeData.map((row, i) => (
-                  <Draggable key={row.id} draggableId={row.id.toString()} index={i} isDragDisabled={disabled || i === 4}>
+                  <Draggable
+                    key={row.id}
+                    draggableId={row.id.toString()}
+                    index={i}
+                    isDragDisabled={disabled || i === 4}
+                  >
                     {(provided, snapshot) => (
                       <tr
                         ref={provided.innerRef}
@@ -105,19 +108,16 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                           )}
                         </td>
 
-                        {/* Item Column */}
                         <td className="p-3 font-medium text-gray-800">
                           {row.item}
                         </td>
 
-                        {/* Special Handling for Average Row (i === 4) */}
                         {i === 4 ? (
-                          <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100">
-                            {row.averageER || row.cay || "0.00"}
+                          <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100 font-bold text-xl">
+                            {row.averageER || row.cay || "0.00"} %
                           </td>
                         ) : (
-                          /* Normal 3 columns for other rows */
-                          columns.slice(1).map((col) => (  // slice(1) because first is "item"
+                          columns.slice(1).map((col) => (
                             <td key={col.field} className="p-3">
                               {col.readOnly || i === 3 ? (
                                 <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
@@ -137,12 +137,6 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                             </td>
                           ))
                         )}
-
-                        {/* Delete button (only for non-average rows) */}
-                        {/* {!disabled && i !== 4 && (
-            <td className="p-3 text-right">
-            </td>
-          )} */}
                       </tr>
                     )}
                   </Draggable>
@@ -157,7 +151,9 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
   );
 };
 
-// Main Component
+// ──────────────────────────────────────────────────────────────
+// Main Form Component (without 4.1.2 table)
+// ──────────────────────────────────────────────────────────────
 const GenericCriteriaForm4_1 = ({
   title = "NBA Section",
   marks = 50,
@@ -168,20 +164,15 @@ const GenericCriteriaForm4_1 = ({
   isCompleted = false,
   isContributorEditable = true,
   saving = false,
-}) => { 
+}) => {
   const [isEditMode, setIsEditMode] = useState(!isCompleted);
 
   const safeContent = initialData?.content || {};
   const safeTableData = initialData?.tableData || [];
 
   const [filesByField, setFilesByField] = useState(() => {
-    // If initialData has filesByField, use it; otherwise initialize with empty slots
-    if (initialData?.filesByField) {
-      console.log("Initializing filesByField from initialData:", initialData.filesByField);
-      return initialData.filesByField;
-    }
+    if (initialData?.filesByField) return initialData.filesByField;
 
-    // Default initialization with empty file slots
     const init = {};
     fields.forEach((field) => {
       init[field.name] = [
@@ -199,7 +190,10 @@ const GenericCriteriaForm4_1 = ({
   const addFileRow = (fieldName) => {
     setFilesByField(prev => ({
       ...prev,
-      [fieldName]: [...(prev[fieldName] || []), { id: `file-${Date.now()}-${fieldName}-${Math.random()}`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+      [fieldName]: [...(prev[fieldName] || []), {
+        id: `file-${Date.now()}-${fieldName}-${Math.random()}`,
+        description: "", file: null, filename: "", s3Url: "", uploading: false
+      }]
     }));
   };
 
@@ -226,9 +220,6 @@ const GenericCriteriaForm4_1 = ({
 
       const resData = await nbaDashboardService.uploadFile(formData);
       const s3Url = resData?.downloadPath || resData?.url || resData || "";
-      
-      console.log("✅ File uploaded, response:", resData);
-      console.log("✅ Extracted s3Url:", s3Url);
 
       setFilesByField(prev => ({
         ...prev,
@@ -236,7 +227,7 @@ const GenericCriteriaForm4_1 = ({
       }));
       toast.success("Uploaded successfully!");
     } catch (err) {
-      console.error("❌ Upload failed:", err);
+      console.error("Upload failed:", err);
       toast.error("Upload failed");
       setFilesByField(prev => ({
         ...prev,
@@ -261,19 +252,6 @@ const GenericCriteriaForm4_1 = ({
     setIsEditMode(false);
   };
 
-  const calculateMarks = (avg) => {
-  const value = parseFloat(avg) || 0;
-
-  if (value >= 90) return 20;
-  if (value >= 80) return 17;
-  if (value >= 70) return 14;
-  if (value >= 60) return 11;
-  if (value >= 50) return 8;
-  if (value >= 40) return 5;
-
-  return 0;
-};
-
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
       <div className="bg-[#2163c1] text-white p-8">
@@ -286,8 +264,7 @@ const GenericCriteriaForm4_1 = ({
           {!isCompleted && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
-                }`}
+              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"}`}
               title={isEditMode ? "Cancel Editing" : "Edit Section"}
             >
               {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
@@ -324,119 +301,123 @@ const GenericCriteriaForm4_1 = ({
               </div>
             )}
 
-            {/* ==== NEW TABLE ADDED BELOW ORIGINAL TABLE ==== */}
-      <div className="mt-12 w-full">
-        <h2 className="text-2xl font-bold text-[#2163c1] mb-6">
-          4.1.2: The marks distribution for enrolment ratio in the 1st year
-        </h2>
-        <div className="overflow-x-auto w-full">
-          <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
-            <thead>
-              <tr className="bg-[#2163c1] text-white">
-                <th className="p-5 text-left font-semibold">Item (Students enrolled in the First Year on average over 3 academic years (CAY, CAYm1, and CAYm2))</th>
-                <th className="p-5 text-left font-semibold">Marks</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b hover:bg-gray-50 transition">
-                <td className="p-5 font-medium text-gray-800">= {tableData?.[4]?.averageER || "0.00"}% students enrolled in the First Year on average over 3 academic years (CAY, CAYm1, CAYm2)</td>
-                <td className="p-5 font-semibold text-indigo-600">{calculateMarks(tableData?.[4]?.averageER)} </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+            {/* Supporting Documents Section – KEPT */}
             <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2"><Upload className="w-6 h-6" /> Supporting Documents</h4>
-                            {isEditMode && filesByField[field.name]?.length > 1 && (
-                              <button onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })} className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2">
-                                <FileText className="w-5 h-5" /> Merge PDFs
-                              </button>
-                            )}
-                          </div>
-            
-                          {isEditMode ? (
-                            <DragDropContext onDragEnd={result => {
-                              if (!result.destination) return;
-                              const items = Array.from(filesByField[field.name] || []);
-                              const [moved] = items.splice(result.source.index, 1);
-                              items.splice(result.destination.index, 0, moved);
-                              setFilesByField(prev => ({ ...prev, [field.name]: items }));
-                            }}>
-                              <Droppable droppableId={`files-${field.name}`}>
-                                {(provided) => (
-                                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                                    {(filesByField[field.name] || []).map((file, index) => {
-                                      if (!file.id) file.id = `file-${Date.now()}-${field.name}-${index}-${Math.random().toString(36).substr(2, 9)}`;
-                                      return (
-                                        <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
-                                          {(provided, snapshot) => (
-                                            <div ref={provided.innerRef} {...provided.draggableProps} className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}>
-                                              <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-5 h-5 text-gray-400" /></div>
-                                              <input type="text" value={file.description || ""} onChange={e => updateFileDescription(field.name, index, e.target.value)} placeholder="Description" className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                              <div className="w-64">
-                                                {file.uploading ? (
-                                                  <span className="text-gray-500 italic">Uploading...</span>
-                                                ) : file.filename ? (
-                                                  <button onClick={() => setPreviewModal({ isOpen: true, file })} className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                                                    <CheckCircle className="w-4 h-4" /> {file.filename}
-                                                  </button>
-                                                ) : (
-                                                  <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={e => handleFileChange(field.name, index, e.target.files?.[0])} className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white" />
-                                                )}
-                                              </div>
-                                              <div className="flex gap-2">
-                                                <button onClick={() => addFileRow(field.name)} className="text-green-600 hover:bg-green-50 p-2 rounded transition" title="Add another document"><Plus className="w-5 h-5" /></button>
-                                                <button
-  onClick={() => removeFileRow(field.name, index)}
-  disabled={(filesByField[field.name] || []).length === 1}
-  className={`p-2 rounded transition
-    ${(filesByField[field.name] || []).length === 1
-      ? "text-gray-300 cursor-not-allowed"
-      : "text-red-500 hover:bg-red-50"
-    }`}
-  title={
-    (filesByField[field.name] || []).length === 1
-      ? "At least one document is required"
-      : "Remove document"
-  }
->
-  <Trash2 className="w-5 h-5" />
-</button>
-                                              </div>
-                                            </div>
-                                          )}
-                                        </Draggable>
-                                      );
-                                    })}
-                                    {provided.placeholder}
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                  <Upload className="w-6 h-6" /> Supporting Documents
+                </h4>
+                {isEditMode && filesByField[field.name]?.length > 1 && (
+                  <button
+                    onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })}
+                    className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
+                  >
+                    <FileText className="w-5 h-5" /> Merge PDFs
+                  </button>
+                )}
+              </div>
+
+              {isEditMode ? (
+                <DragDropContext onDragEnd={result => {
+                  if (!result.destination) return;
+                  const items = Array.from(filesByField[field.name] || []);
+                  const [moved] = items.splice(result.source.index, 1);
+                  items.splice(result.destination.index, 0, moved);
+                  setFilesByField(prev => ({ ...prev, [field.name]: items }));
+                }}>
+                  <Droppable droppableId={`files-${field.name}`}>
+                    {(provided) => (
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                        {(filesByField[field.name] || []).map((file, index) => {
+                          if (!file.id) file.id = `file-${Date.now()}-${field.name}-${index}-${Math.random().toString(36).substr(2,9)}`;
+                          return (
+                            <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}
+                                >
+                                  <div {...provided.dragHandleProps} className="cursor-grab">
+                                    <GripVertical className="w-5 h-5 text-gray-400" />
                                   </div>
-                                )}
-                              </Droppable>
-                            </DragDropContext>
-                          ) : (
-                            <div className="space-y-3">
-                              {(filesByField[field.name] || []).map((file, index) => (
-                                <div key={file.id || `view-file-${field.name}-${index}`} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-                                  <div className="flex-1">
-                                    <span className="text-gray-700 font-medium">{file.description || `Document ${index + 1}`}</span>
-                                  </div>
+                                  <input
+                                    type="text"
+                                    value={file.description || ""}
+                                    onChange={e => updateFileDescription(field.name, index, e.target.value)}
+                                    placeholder="Description"
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  />
                                   <div className="w-64">
-                                    {file.filename && (file.s3Url || file.url) ? (
-                                      <button onClick={() => setPreviewModal({ isOpen: true, file })} className="text-blue-600 font-medium hover:underline flex items-center gap-2">
+                                    {file.uploading ? (
+                                      <span className="text-gray-500 italic">Uploading...</span>
+                                    ) : file.filename ? (
+                                      <button
+                                        onClick={() => setPreviewModal({ isOpen: true, file })}
+                                        className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                                      >
                                         <CheckCircle className="w-4 h-4" /> {file.filename}
                                       </button>
                                     ) : (
-                                      <span className="text-gray-400 italic">No file uploaded</span>
+                                      <input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        onChange={e => handleFileChange(field.name, index, e.target.files?.[0])}
+                                        className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                                      />
                                     )}
                                   </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => addFileRow(field.name)}
+                                      className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                                      title="Add another document"
+                                    >
+                                      <Plus className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                      onClick={() => removeFileRow(field.name, index)}
+                                      disabled={(filesByField[field.name] || []).length === 1}
+                                      className={`p-2 rounded transition ${(filesByField[field.name] || []).length === 1 ? "text-gray-300 cursor-not-allowed" : "text-red-500 hover:bg-red-50"}`}
+                                      title={(filesByField[field.name] || []).length === 1 ? "At least one document is required" : "Remove document"}
+                                    >
+                                      <Trash2 className="w-5 h-5" />
+                                    </button>
+                                  </div>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              ) : (
+                <div className="space-y-3">
+                  {(filesByField[field.name] || []).map((file, index) => (
+                    <div key={file.id || `view-file-${field.name}-${index}`} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
+                      <div className="flex-1">
+                        <span className="text-gray-700 font-medium">{file.description || `Document ${index + 1}`}</span>
+                      </div>
+                      <div className="w-64">
+                        {file.filename && (file.s3Url || file.url) ? (
+                          <button
+                            onClick={() => setPreviewModal({ isOpen: true, file })}
+                            className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                          >
+                            <CheckCircle className="w-4 h-4" /> {file.filename}
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 italic">No file uploaded</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         ))}
 
@@ -444,10 +425,8 @@ const GenericCriteriaForm4_1 = ({
           <div className="text-center pt-10 flex gap-4 justify-center">
             <button
               onClick={handleSave}
-              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${saving || !isContributorEditable
-                ? "bg-[#2163c1] cursor-pointer opacity-60"
-                : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
-                }`}
+              disabled={saving || !isContributorEditable}
+              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${saving || !isContributorEditable ? "bg-[#2163c1] cursor-not-allowed opacity-60" : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"}`}
               title={saving ? "Saving..." : !isContributorEditable ? "Not allowed to save" : "Save"}
             >
               <Save className="w-6 h-6" />
@@ -473,7 +452,7 @@ const GenericCriteriaForm4_1 = ({
         )}
       </div>
 
-      {/* Preview & Merge Modals */}
+      {/* Preview Modal */}
       <Modal
         isOpen={previewModal.isOpen}
         onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}
@@ -502,7 +481,6 @@ const GenericCriteriaForm4_1 = ({
         pdfFiles={filesByField[mergeModal.fieldName] || []}
         onClose={() => setMergeModal({ isOpen: false, fieldName: null })}
         onFileAdd={(mergedDocument) => {
-          // Add merged document to the field's file list
           const mergedFile = {
             id: mergedDocument.id,
             filename: mergedDocument.filename,

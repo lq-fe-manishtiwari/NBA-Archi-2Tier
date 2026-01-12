@@ -31,33 +31,64 @@ const Criterion4_AForm = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "4A. Admission details for the program excluding those admitted through multiple entry and exit points",
+      "Table No. 4A. Admission details of a program",
     totalMarks: 20,
     fields: [
       {
         name: "4.8",
-        label: "4A. Admission details for the program excluding those admitted through multiple entry and exit points",
+        label: "4A. Admission details of a program",
         marks: 20,
         hasTable: true,
         tableConfig: {
-          title: "Teaching-Learning Activities",
+          title: "Admission details of a program",
           columns: [
-              { field: "item", header: "Item (Information is to be provided cumulatively for all the shifts with explicit headings, wherever applicable)", placeholder: "" },
-              { field: "cay", header: "CAY", placeholder: "" },
-              { field: "caym1", header: "CAYm1", placeholder: "" },
-              { field: "caym2", header: "CAYm2", placeholder: "" },
-              { field: "caym3", header: "CAYm3", placeholder: "" },
-              { field: "caym4", header: "CAYm4(LYG)", placeholder: "" },
-              { field: "caym5", header: "CAYm5(LYGm1)", placeholder: "" },
-              { field: "caym6", header: "CAYm6(LYGm2)", placeholder: "" },
+              { 
+                field: "year_of_entry", 
+                header: "Year of entry", 
+                placeholder: "",
+                readOnly: true 
+              },
+              { 
+                field: "admitted_first_year", 
+                header: "Number of students admitted in 1st year of the program (N1)", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_i_year", 
+                header: "I Year", 
+                placeholder: "",
+                subHeader: "Number of students who have successfully graduated without backlogs in any year of study" 
+              },
+              { 
+                field: "graduated_ii_year", 
+                header: "II Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iii_year", 
+                header: "III Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iv_year", 
+                header: "IV Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_v_year", 
+                header: "V Year", 
+                placeholder: "" 
+              },
             ],
           predefinedRows: [
-            { item: "N= Sanctioned intake of the program (as per AICTE/Competent authority)" },
-            { item: "N1= Total no. of students admitted in the 1st year minus the no. of students, who migrated to other programs/ institutions plus no. of students, who migrated to this program" },
-            { item: "N2= Number of students admitted in 2nd year in the same batch via lateral entry including leftover seats " },
-            { item: "N3= Separate division if any" },
-            { item: "N4= Total no. of students admitted in the 1st year via all supernumerary quotas" },
-            { item: "Total number of students admitted in the program (N1 + N2 + N3 + N4) - excluding those admitted through multiple entry and exit points." },
+            { year_of_entry: "CAY" },
+            { year_of_entry: "CAYm1" },
+            { year_of_entry: "CAYm2" },
+            { year_of_entry: "CAYm3" },
+            { year_of_entry: "CAYm4" },
+            { year_of_entry: "CAYm5 (LYG)" },
+            { year_of_entry: "CAYm6 (LYGm1)" },
+            { year_of_entry: "CAYm7 (LYGm2)" },
           ],
         },
       },
@@ -104,45 +135,51 @@ const Criterion4_AForm = ({
 
       // Parse table data from cri4_atable - API returns array of flat objects with row_type
       const tableData = [];
+      const yearKeys = ["cay", "caym1", "caym2", "caym3", "caym4", "caym5", "caym6", "caym7"];
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      
+      // If we have existing data, populate from API
       if (d.cri4_atable && Array.isArray(d.cri4_atable) && d.cri4_atable.length > 0) {
-        const rowKeys = ["sanctionedintake", "firstyear", "secondyear", "thirdyear", "separatedivision", "studentadmitted"];
-        const predefinedItems = [
-          "N= Sanctioned intake of the program (as per AICTE/Competent authority)",
-          "N1= Total no. of students admitted in the 1st year minus the no. of students, who migrated to other programs/ institutions plus no. of students, who migrated to this program",
-          "N2= Number of students admitted in 2nd year in the same batch via lateral entry including leftover seats ",
-          "N3= Separate division if any",
-          "N4= Total no. of students admitted in the 1st year via all supernumerary quotas",
-          "Total number of students admitted in the program (N1 + N2 + N3 + N4) - excluding those admitted through multiple entry and exit points."
-        ];
-        
-        rowKeys.forEach((key, index) => {
+        yearKeys.forEach((key, index) => {
           const row = d.cri4_atable.find(r => r.row_type === key);
           if (row) {
             tableData.push({
               id: `row-${Date.now()}-${index}`,
-              item: predefinedItems[index] || "",
-              cay: row.cay || "",
-              caym1: row.caym1 || "",
-              caym2: row.caym2 || "",
-              caym3: row.caym3 || "",
-              caym4: row.caym4 || "",
-              caym5: row.caym5 || "",
-              caym6: row.caym6 || ""
+              year_of_entry: yearLabels[index],
+              admitted_first_year: row.admitted_first_year || "",
+              graduated_i_year: row.graduated_i_year || "",
+              graduated_ii_year: row.graduated_ii_year || "",
+              graduated_iii_year: row.graduated_iii_year || "",
+              graduated_iv_year: row.graduated_iv_year || "",
+              graduated_v_year: row.graduated_v_year || ""
             });
           } else {
             // Add empty row if not found
             tableData.push({
               id: `row-${Date.now()}-${index}`,
-              item: predefinedItems[index] || "",
-              cay: "",
-              caym1: "",
-              caym2: "",
-              caym3: "",
-              caym4: "",
-              caym5: "",
-              caym6: ""
+              year_of_entry: yearLabels[index],
+              admitted_first_year: "",
+              graduated_i_year: "",
+              graduated_ii_year: "",
+              graduated_iii_year: "",
+              graduated_iv_year: "",
+              graduated_v_year: ""
             });
           }
+        });
+      } else {
+        // No existing data - create empty rows with predefined labels
+        yearLabels.forEach((label, index) => {
+          tableData.push({
+            id: `row-${Date.now()}-${index}`,
+            year_of_entry: label,
+            admitted_first_year: "",
+            graduated_i_year: "",
+            graduated_ii_year: "",
+            graduated_iii_year: "",
+            graduated_iv_year: "",
+            graduated_v_year: ""
+          });
         });
       }
       
@@ -150,7 +187,7 @@ const Criterion4_AForm = ({
 
       setInitialData({
         content: { "4.8": "" },
-        tableData: tableData.length > 0 ? tableData : [],
+        tableData: tableData,
         filesByField: {
           "4.8": (d.cri4_adocument || []).length > 0
             ? (d.cri4_adocument || []).map((f, i) => ({
@@ -167,9 +204,23 @@ const Criterion4_AForm = ({
     } catch (err) {
       console.warn("❌ Criterion4_AForm - API failed or returned 404, showing blank form", err);
       setStudentsPerformanceId(null);
+      
+      // Create empty table data with year labels
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      const emptyTableData = yearLabels.map((label, index) => ({
+        id: `row-empty-${index}`,
+        year_of_entry: label,
+        admitted_first_year: "",
+        graduated_i_year: "",
+        graduated_ii_year: "",
+        graduated_iii_year: "",
+        graduated_iv_year: "",
+        graduated_v_year: ""
+      }));
+      
       setInitialData({
         content: { "4.8": "" },
-        tableData: [],
+        tableData: emptyTableData,
         filesByField: {
           "4.8": [{ id: `file-4.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
@@ -206,7 +257,7 @@ const Criterion4_AForm = ({
     loadData();
   }, [loadData]);
 
-  // ---------------- SAVE DATA (Same as 4.8) ----------------
+  // ---------------- SAVE DATA ----------------
 const handleSave = async (formData) => {
   setSaving(true);
 
@@ -215,37 +266,38 @@ const handleSave = async (formData) => {
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: "Students’ Performance",
+            category: "Students' Performance",
           }))
       );
       console.log(filesWithCategory);
 
     const table = formData.tableData;
 
-    // Row key mapping in correct order (6 rows, last one is auto-calculated)
-    const rowToKey = [
-      "sanctionedintake",
-      "firstyear",
-      "secondyear",
-      "thirdyear",
-      "separatedivision",
-      "studentadmitted"
-    ];
+    // Year key mapping
+    const yearToKey = {
+      "CAY": "cay",
+      "CAYm1": "caym1",
+      "CAYm2": "caym2",
+      "CAYm3": "caym3",
+      "CAYm4": "caym4",
+      "CAYm5 (LYG)": "caym5",
+      "CAYm6 (LYGm1)": "caym6",
+      "CAYm7 (LYGm2)": "caym7"
+    };
 
     // Build cri4_atable as array of flat objects
-    const cri4_atable = table.map((row, i) => {
-      const key = rowToKey[i];
+    const cri4_atable = table.map((row) => {
+      const key = yearToKey[row.year_of_entry];
       if (!key) return null;
 
       return {
         row_type: key,
-        cay: row.cay || "",
-        caym1: row.caym1 || "",
-        caym2: row.caym2 || "",
-        caym3: row.caym3 || "",
-        caym4: row.caym4 || "",
-        caym5: row.caym5 || "",
-        caym6: row.caym6 || ""
+        admitted_first_year: row.admitted_first_year || "",
+        graduated_i_year: row.graduated_i_year || "",
+        graduated_ii_year: row.graduated_ii_year || "",
+        graduated_iii_year: row.graduated_iii_year || "",
+        graduated_iv_year: row.graduated_iv_year || "",
+        graduated_v_year: row.graduated_v_year || ""
       };
     }).filter(Boolean);
 
@@ -265,7 +317,6 @@ const handleSave = async (formData) => {
       }));
     
     console.log("✅ cri4_adocument after mapping:", cri4_adocument);
-
 
     // Get staff ID
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -388,7 +439,7 @@ const handleSave = async (formData) => {
         You won’t be able to revert this!
       </SweetAlert>
     );
-  };
+};
 
   // ---------------- UI ----------------
   if (loading || (showCardView && cardLoading)) {

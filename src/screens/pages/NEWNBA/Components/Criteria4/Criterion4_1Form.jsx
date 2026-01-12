@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm4_1 from "./GenericCriteriaForm4_1";
-import GenericCardWorkflow from "../GenericCardWorkflow"
+import GenericCardWorkflow from "../GenericCardWorkflow";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
-import SweetAlert from "react-bootstrap-sweetalert"; 
+import SweetAlert from "react-bootstrap-sweetalert";
 
-const Criterion4_1Form = ({ 
-  cycle_sub_category_id, 
-  isEditable = true, 
-  onSaveSuccess, 
+const Criterion4_1Form = ({
+  cycle_sub_category_id,
+  isEditable = true,
+  onSaveSuccess,
   programId = null,
-  otherStaffId = null,  
+  otherStaffId = null,
   showCardView = false,
   onCardClick = null,
 }) => {
@@ -21,38 +21,42 @@ const Criterion4_1Form = ({
   const [initialData, setInitialData] = useState({
     content: {},
     tableData: [],
-    files: [],
+    filesByField: {},
   });
 
   const [alert, setAlert] = useState(null);
   const [cardData, setCardData] = useState([]);
   const [cardLoading, setCardLoading] = useState(false);
 
-  // ---------------- CONFIG ----------------
+  // ────────────────────────────────────────────────
+  // CONFIG
+  // ────────────────────────────────────────────────
   const config = {
-    title:
-      "4.1. Enrolment Ratio in the First Year",
+    title: "4.1.1 Enrolment Ratio",
     totalMarks: 20,
     fields: [
       {
-        name: "4.1",
-        label: "4.1. Enrolment Ratio in the First Year",
+        name: "4.1.1",
+        label: "4.1.1 Provide the enrolment ratio for the first year of the program during the last three years",
         marks: 20,
         hasTable: true,
         tableConfig: {
-          title: "Teaching-Learning Activities",
+          title: "Enrolment Ratio Calculation",
           columns: [
-            { field: "item", header: "Item (Students enrolled in the First Year on average over 3 academic years (CAY, CAYm1, and CAYm2))", readOnly: true },
+            {
+              field: "item",
+              header: "Item (Students enrolled at the 1st year Level on average basis during the last three years starting from current academic years)",
+              readOnly: true,
+            },
             { field: "cay", header: "CAY" },
             { field: "caym1", header: "CAYm1" },
             { field: "caym2", header: "CAYm2" },
           ],
           predefinedRows: [
-            { item: "N= Sanctioned intake of the program in the 1st year (as per AICTE/Competent authority)" },
-            { item: "N1= Total no. of students admitted in the 1st year minus the no. of students, who migrated to other programs/ institutions plus no. of students, who migrated to this program" },
-            { item: "N4= Total no. of students admitted in the 1st year via all supernumerary quotas" },
-            { item: "Enrolment Ratio (ER)= (N1+N4)/N " },
-            { item: "Average ER= (ER_1+ ER_2+ ER_3)/3" },
+            { item: "Sanctioned intake of the program (N)", cay: "", caym1: "", caym2: "" },
+            { item: "Total number of students admitted in 1st year (N1)", cay: "", caym1: "", caym2: "" },
+            { item: "Enrolment Ratio", cay: "", caym1: "", caym2: "" },
+            { item: "Average Enrolment Ratio for 3 years.", cay: "", caym1: "", caym2: "" },
           ],
         },
       },
@@ -60,85 +64,66 @@ const Criterion4_1Form = ({
   };
 
   const enrolmentToTable = (enrolment = {}) => {
-    const rows = [
+    return [
       {
         id: `row-sanctioned-${Date.now()}`,
-        item:
-          "N= Sanctioned intake of the program in the 1st year (as per AICTE/Competent authority)",
-        cay: enrolment?.sanctionedintake?.cay ?? "",
-        caym1: enrolment?.sanctionedintake?.caym1 ?? "",
-        caym2: enrolment?.sanctionedintake?.caym2 ?? "",
+        item: "Sanctioned intake of the program (N)",
+        cay: enrolment?.sanctioned_intake?.cay ?? "",
+        caym1: enrolment?.sanctioned_intake?.caym1 ?? "",
+        caym2: enrolment?.sanctioned_intake?.caym2 ?? "",
       },
       {
         id: `row-totaladmitted-${Date.now()}`,
-        item:
-          "N1= Total no. of students admitted in the 1st year minus the no. of students, who migrated to other programs/ institutions plus no. of students, who migrated to this program",
-        cay: enrolment?.Totaladmitted?.cay ?? "",
-        caym1: enrolment?.Totaladmitted?.caym1 ?? "",
-        caym2: enrolment?.Totaladmitted?.caym2 ?? "",
-      },
-      {
-        id: `row-supernum-${Date.now()}`,
-        item: "N4= Total no. of students admitted in the 1st year via all supernumerary quotas",
-        cay: enrolment?.Supernumeraryquota?.cay ?? "",
-        caym1: enrolment?.Supernumeraryquota?.caym1 ?? "",
-        caym2: enrolment?.Supernumeraryquota?.caym2 ?? "",
+        item: "Total number of students admitted in 1st year (N1)",
+        cay: enrolment?.total_admitted?.cay ?? "",
+        caym1: enrolment?.total_admitted?.caym1 ?? "",
+        caym2: enrolment?.total_admitted?.caym2 ?? "",
       },
       {
         id: `row-er-${Date.now()}`,
-        item: "Enrolment Ratio (ER)= (N1+N4)/N ",
-        cay: enrolment?.EnrolmentRatio?.cay ?? "",
-        caym1: enrolment?.EnrolmentRatio?.caym1 ?? "",
-        caym2: enrolment?.EnrolmentRatio?.caym2 ?? "",
+        item: "Enrolment Ratio",
+        cay: enrolment?.enrolment_ratio?.cay ?? "",
+        caym1: enrolment?.enrolment_ratio?.caym1 ?? "",
+        caym2: enrolment?.enrolment_ratio?.caym2 ?? "",
       },
       {
         id: `row-avg-${Date.now()}`,
-        item: "Average ER = (ER_1 + ER_2 + ER_3)/3",
-        cay: enrolment?.averageER?.cay ?? "",
-        caym1: enrolment?.averageER?.caym1 ?? "",
-        caym2: enrolment?.averageER?.caym2 ?? "",
-        averageER: enrolment?.averageER?.cay ?? "",
+        item: "Average Enrolment Ratio for 3 years.",
+        cay: enrolment?.average_er?.cay ?? "",
+        caym1: enrolment?.average_er?.caym1 ?? "",
+        caym2: enrolment?.average_er?.caym2 ?? "",
+        averageER: enrolment?.average_er?.cay ?? "",
       },
     ];
-
-    return rows;
   };
 
   const tableToEnrolment = (tableData = []) => {
-    const rowKeys = ["sanctionedintake", "Totaladmitted", "Supernumeraryquota", "EnrolmentRatio", "averageER"];
-    
-    return tableData.map((row, i) => {
-      const key = rowKeys[i];
-      if (!key) return null;
-
-      return {
-        row_type: key,
-        cay: row.cay || "",
-        caym1: row.caym1 || "",
-        caym2: row.caym2 || ""
-      };
-    }).filter(Boolean);
+    const rowKeys = ["sanctioned_intake", "total_admitted", "enrolment_ratio"];
+    return tableData.slice(0, 3).map((row, i) => ({
+      row_type: rowKeys[i],
+      cay: row.cay || "",
+      caym1: row.caym1 || "",
+      caym2: row.caym2 || "",
+    }));
   };
 
   const mapFiles = (filesByField) => {
-  const arr = filesByField["enrolment_ratio_documents"] || [];
+    const arr = filesByField["4.1.1"] || [];
+    return arr
+      .filter(f => f.s3Url || f.file)
+      .map(f => ({
+        filename: f.filename,
+        url: f.s3Url || "",
+        description: f.description || "",
+      }));
+  };
 
-  return arr
-    .filter(f => f.s3Url || f.file) // allow newly uploaded files
-    .map(f => ({
-      filename: f.filename,
-      url: f.s3Url || "",      // backend will fill after upload
-      description: f.description || ""
-    }));
-};
-
- const loadContributorsData = async () => {
+  const loadContributorsData = async () => {
     if (!showCardView || !cycle_sub_category_id) return;
-    
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_1_Data?.(cycle_sub_category_id);
-      setCardData(contributorsResponse || []);
+      const res = await newnbaCriteria4Service.getAllCriteria4_1_Data?.(cycle_sub_category_id);
+      setCardData(res || []);
     } catch (err) {
       console.error("Failed to load contributors data:", err);
       setCardData([]);
@@ -147,16 +132,7 @@ const Criterion4_1Form = ({
     }
   };
 
-  // Load data from API
-    useEffect(() => {
-      loadData();
-      if (showCardView) {
-        loadContributorsData();
-      }
-    }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
-
-  // ---------------- LOAD DATA  ----------------
-   const loadData = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) {
       setLoading(false);
       return;
@@ -169,61 +145,50 @@ const Criterion4_1Form = ({
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const userIsContributor = userInfo?.rawData?.is_contributor || false;
       setIsContributor(userIsContributor);
-      
-      const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+
+      const currentOtherStaffId =
+        otherStaffId ||
+        userInfo?.rawData?.other_staff_id ||
+        userInfo.user_id ||
+        userInfoo?.other_staff_id;
 
       const res = await newnbaCriteria4Service.getCriteria4_1_Data(cycle_sub_category_id, currentOtherStaffId);
-      const rawResponse = res?.data || res || [];
-      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
-      
-      console.log("🟢 4.1 API Response:", d);
-      console.log("🟢 4.1 cri411_enrolment_ratio_document:", d.cri411_enrolment_ratio_document);
+      const d = res?.data?.[0] || res?.data || res || {};
 
       setEnrolmentRatioId(d.enrolment_ratio_id || null);
 
-      // Map cri411_enrolment_ratio_table (server) -> tableData (UI)
       const tableArray = d.cri411_enrolment_ratio_table || [];
-      console.log("🟢 4.1 cri411_enrolment_ratio_table:", tableArray);
-      
-      // Convert array to nested object format
       const enrolment = {};
       tableArray.forEach(row => {
         enrolment[row.row_type] = { cay: row.cay, caym1: row.caym1, caym2: row.caym2 };
       });
-      console.log("🟢 4.1 converted enrolment object:", enrolment);
-      
-      const tableData = enrolmentToTable(enrolment);
-      
-      // Files: server might send cri411_enrolment_ratio_document
-      const serverFiles = d.cri411_enrolment_ratio_document || d.enrolment_ratio_documents || d.quality_process_documents || [];
-      console.log("🟢 4.1 serverFiles:", serverFiles);
-      const files = (serverFiles || []).map((f, i) => ({
+
+      const tableDataFromApi = enrolmentToTable(enrolment);
+
+      const serverFiles = d.cri411_enrolment_ratio_document || [];
+      const files = serverFiles.map((f, i) => ({
         id: f.id || `file-${i}`,
         filename: f.filename || f.file_name || f.name,
         s3Url: f.url || f.file_url || f.downloadPath || "",
-        url: f.url || f.file_url || f.downloadPath || "",
         description: f.description || "",
         uploading: false,
       }));
-      console.log("🟢 4.1 mapped files:", files);
 
       setInitialData({
-        content: { "4.1": d.quality_processes_description || d.description || "" },
-        tableData,
+        content: { "4.1.1": d.description || "" },
+        tableData: tableDataFromApi,
         filesByField: {
-          "4.1": files.length > 0 ? files : [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
+          "4.1.1": files.length > 0 ? files : [{ id: `file-4.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        },
       });
     } catch (err) {
       console.warn("Load failed:", err);
-
-      setEnrolmentRatioId(null);
       setInitialData({
-        content: { "4.1": "" },
+        content: { "4.1.1": "" },
         tableData: enrolmentToTable(),
         filesByField: {
-          "4.1": [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
+          "4.1.1": [{ id: `file-4.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        },
       });
     } finally {
       setLoading(false);
@@ -232,116 +197,65 @@ const Criterion4_1Form = ({
 
   useEffect(() => {
     loadData();
-  }, [loadData]); 
+    if (showCardView) loadContributorsData();
+  }, [loadData, showCardView]);
 
-  // ---------------- SAVE DATA ----------------
-const handleSave = async (formData) => {
-  setSaving(true);
+  const handleSave = async (formData) => {
+    setSaving(true);
+    try {
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-  try {
-  const mapFiles = (filesByField) => {
-  const arr = filesByField["4.1"] || [];   // field name
+      const staffId =
+        otherStaffId ||
+        userInfo?.rawData?.other_staff_id ||
+        userInfo.user_id ||
+        userInfoo?.other_staff_id;
 
-  return arr
-    .filter(f => f.s3Url || f.file) // only uploaded files
-    .map(f => ({
-      description: f.description || "",
-      filename: f.filename || "",
-      url: f.s3Url || ""
-    }));
-};
+      const tableData = formData.tableData || [];
+      const enrolment_ratio = tableToEnrolment(tableData);
 
-    // Get staff ID
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const documents = mapFiles(formData.filesByField);
 
-    const staffId =
-      otherStaffId ||
-      userInfo?.rawData?.other_staff_id ||
-      userInfo.user_id ||
-      userInfoo?.other_staff_id;
+      const payload = {
+        other_staff_id: staffId,
+        cycle_sub_category_id: cycle_sub_category_id,
+        cri411_enrolment_ratio_table: enrolment_ratio,
+        cri411_enrolment_ratio_document: documents,
+        description: formData.content["4.1.1"] || "",
+      };
 
-    const tableData = formData.tableData || [];
+      if (enrolmentRatioId) {
+        await newnbaCriteria4Service.putCriteria4_1_Data(enrolmentRatioId, payload);
+      } else {
+        await newnbaCriteria4Service.saveCriteria4_1_Data(payload);
+      }
 
-    // 1️⃣ Convert table → enrolment ratio table
-    const enrolment_ratio = tableToEnrolment(tableData);
-
-    // 2️⃣ Extract average enrolment percentage from row 4
-    const averageER =
-      tableData[4]?.averageER ||
-      tableData[4]?.cay ||
-      "0.00";
-
-    // Calculate marks logic (based on your rule)
-    const marks = parseFloat(averageER) >= 90 ? "20" : "0";
-    const documents = mapFiles(formData.filesByField);
-
-    // --- FINAL REQUIRED PAYLOAD FORMAT ---
-    const payload = {
-      other_staff_id: staffId,
-      cycle_sub_category_id: cycle_sub_category_id, 
-
-      // TABLE 1
-      cri411_enrolment_ratio_table: enrolment_ratio,
-
-      // TABLE 2
-      cri412_marks_distribution_table: [
-        {
-          average_enrolment_percentage: averageER,
-          marks: marks
-        }
-      ],
-      cri411_enrolment_ratio_document: documents,
-      // cri412_marks_distribution_document: documents
-    };
-
-    console.log("FINAL 4.1 PAYLOAD:", payload);
-
-    if (enrolmentRatioId) {
-          await newnbaCriteria4Service.putCriteria4_1_Data(enrolmentRatioId, payload);
-        } else {
-          await newnbaCriteria4Service.saveCriteria4_1_Data(payload);
-        }
-
-    // await newnbaCriteria4Service.saveCriteria4_1_Data(payload);
-
-    setAlert(
-      <SweetAlert success title="Saved!" onConfirm={() => setAlert(null)}>
-        Criterion 4.1 saved successfully
-      </SweetAlert>
-    );
-
-    onSaveSuccess?.();
-    loadData();
-
-  } catch (err) {
-    console.error("Save failed:", err);
-
-    setAlert(
-      <SweetAlert danger title="Save Failed" onConfirm={() => setAlert(null)}>
-        Something went wrong while saving
-      </SweetAlert>
-    );
-  } finally {
-    setSaving(false);
-  }
-};
-
-
-  // ---------------- DELETE DATA ----------------
-  const handleDelete = async () => {
-    if (!enrolmentRatioId) {
       setAlert(
-        <SweetAlert
-          info
-          title="Nothing to Delete"
-          confirmBtnCssClass="btn-confirm"
-          confirmBtnText="OK"
-          onConfirm={() => setAlert(null)}
-        >
-          No data available to delete
+        <SweetAlert success title="Saved!" onConfirm={() => setAlert(null)}>
+          Criterion 4.1.1 saved successfully
         </SweetAlert>
       );
+
+      onSaveSuccess?.();
+      loadData();
+    } catch (err) {
+      console.error("Save failed:", err);
+      setAlert(
+        <SweetAlert danger title="Save Failed" onConfirm={() => setAlert(null)}>
+          Something went wrong while saving
+        </SweetAlert>
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!enrolmentRatioId) {
+      setAlert(<SweetAlert info title="Nothing to Delete" onConfirm={() => setAlert(null)}>
+        No data available to delete
+      </SweetAlert>);
       return;
     }
 
@@ -351,71 +265,34 @@ const handleSave = async (formData) => {
         showCancel
         confirmBtnText="Yes, delete it!"
         cancelBtnText="Cancel"
-        confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
-
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_1Data(
-              enrolmentRatioId
-            );
-
-            let message = "Criterion 4.1 deleted successfully.";
-            if (typeof res === "string") message = res;
-            else if (res?.data) message = res.data;
-
-            setAlert(
-              <SweetAlert
-                success
-                title="Deleted!"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                {message}
-              </SweetAlert>
-            );
-
+            await newnbaCriteria4Service.deleteCriteria4_1Data(enrolmentRatioId);
+            setAlert(<SweetAlert success title="Deleted!" onConfirm={() => setAlert(null)}>
+              Criterion 4.1.1 deleted successfully.
+            </SweetAlert>);
             setEnrolmentRatioId(null);
             loadData();
             onSaveSuccess?.();
           } catch (err) {
-            console.error("Delete failed:", err);
-
-            setAlert(
-              <SweetAlert
-                danger
-                title="Delete Failed"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                Error deleting the record
-              </SweetAlert>
-            );
+            setAlert(<SweetAlert danger title="Delete Failed" onConfirm={() => setAlert(null)}>
+              Error deleting the record
+            </SweetAlert>);
           }
         }}
         onCancel={() => setAlert(null)}
       >
-        You won’t be able to revert this!
+        You won't be able to revert this!
       </SweetAlert>
     );
   };
 
-  // ---------------- UI ----------------
   if (loading || (showCardView && cardLoading)) {
-    return (
-      <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 4.1...
-      </div>
-    );
+    return <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">Loading Criterion 4.1.1...</div>;
   }
 
-  console.log("🎯 Criterion4_1Form rendering with initialData:", initialData);
-
-  // Show card view for coordinators
   if (showCardView) {
     return (
       <>
@@ -426,7 +303,7 @@ const handleSave = async (formData) => {
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.1",
+            title: "Criterion 4.1.1",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
@@ -448,7 +325,6 @@ const handleSave = async (formData) => {
         initialData={initialData}
         saving={saving}
         isContributorEditable={isEditable}
-        showFileCategories={true}
         onSave={handleSave}
         onDelete={handleDelete}
       />
@@ -458,4 +334,3 @@ const handleSave = async (formData) => {
 };
 
 export default Criterion4_1Form;
- 
