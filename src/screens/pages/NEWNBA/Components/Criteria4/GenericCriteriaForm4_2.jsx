@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Editor } from "react-editor";
 import Modal from "react-modal";
 import MergePdfModal from "../MergePdfModal";
 import { toast } from "react-toastify";
@@ -9,61 +8,50 @@ import {
   GripVertical, Trash2, Plus, FileText, Save, CheckCircle,
   Upload, X, Edit
 } from "lucide-react";
-import { uploadFileToS3 } from "../S3UploadHelper";
+
 Modal.setAppElement("#root");
 
-// Generic Table
-const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
-
+// Reusable table component (styled like your 4.1 enrolment ratio example)
+const SuccessRateTable = ({
+  title,
+  subTitle,
+  columns,
+  data = [],
+  onChange,
+  disabled,
+  predefinedRows
+}) => {
   const safeData = data.length > 0
-  ? data
-  : tableConfig?.predefinedRows
-      ? tableConfig.predefinedRows.map((r, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...r,
-        }))
-      : Array.from({ length: 4 }).map((_, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
-        }));
+    ? data
+    : predefinedRows.map((r, i) => ({
+        id: `row-${Date.now()}-${i}`,
+        ...r,
+      }));
 
-  const handleChange = (i, field, val) => {
-  const updated = [...safeData];
+  const handleChange = (rowIndex, field, value) => {
+    const updated = [...safeData];
+    updated[rowIndex][field] = value;
 
-  // Update cell
-  updated[i][field] = val;
+    // Recalculate SI (Success Index) - row index 2
+    ["lyg", "lygm1", "lygm2"].forEach(col => {
+      const admitted = parseFloat(updated[0][col]) || 0;
+      const graduated = parseFloat(updated[1][col]) || 0;
+      updated[2][col] = admitted > 0 ? ((graduated / admitted) * 100).toFixed(2) : "0.00";
+    });
 
-  // Columns to compute
-  const cols = ["lyg", "lygm1", "lygm2"];
+    // Average SI - row index 3
+    const siValues = ["lyg", "lygm1", "lygm2"].map(col => parseFloat(updated[2][col]) || 0);
+    const avg = (siValues.reduce((a, b) => a + b, 0) / siValues.length || 0).toFixed(2);
 
-  // ---- 1) SUCCESS RATE (SR) CALCULATION ----
-  cols.forEach(col => {
-    const A = parseFloat(updated[0][col]) || 0;   // Row 0 = A*
-    const B = parseFloat(updated[1][col]) || 0;   // Row 1 = B
+    updated[3] = {
+      ...updated[3],
+      lyg: avg,
+      lygm1: avg,
+      lygm2: avg,
+    };
 
-    const SR = A > 0 ? ((B / A) * 100).toFixed(2) : "0.00";
-
-    updated[2][col] = SR;   // Row 2 = Success Rate
-  });
-
-  // ---- 2) AVERAGE SR OF THREE BATCHES ----
-  const SR1 = parseFloat(updated[2].lyg) || 0;
-  const SR2 = parseFloat(updated[2].lygm1) || 0;
-  const SR3 = parseFloat(updated[2].lygm2) || 0;
-
-  const avgSR = ((SR1 + SR2 + SR3) / 3).toFixed(2);
-
-  updated[3] = {
-    ...updated[3],
-    item: "Average SR of three batches ((SR_1+SR_2+ SR_3)/3)",
-    lyg: avgSR,
-    lygm1: avgSR,
-    lygm2: avgSR
+    onChange(updated);
   };
-
-  // Send updated table
-  onChange(updated);
-};
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -74,7 +62,12 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-xl font-bold text-blue-700">{title}</h3>
+        {subTitle && <p className="text-gray-600 mt-1">{subTitle}</p>}
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
           <thead>
@@ -83,14 +76,18 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
               {columns.map((c) => (
                 <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
               ))}
-              {!disabled && <th className="w-20"></th>}
             </tr>
           </thead>
-          <Droppable droppableId="table-rows">
+          <Droppable droppableId={`droppable-${title}`}>
             {(provided) => (
               <tbody {...provided.droppableProps} ref={provided.innerRef}>
                 {safeData.map((row, i) => (
-                  <Draggable key={row.id} draggableId={(row.id || `missing-id-${i}`).toString()} index={i} isDragDisabled={disabled || i === 4}>
+                  <Draggable
+                    key={row.id}
+                    draggableId={row.id}
+                    index={i}
+                    isDragDisabled={disabled || i >= 2}
+                  >
                     {(provided, snapshot) => (
                       <tr
                         ref={provided.innerRef}
@@ -98,28 +95,23 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                         className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
                       >
                         <td className="p-3">
-                          {i !== 4 && (
+                          {i < 2 && (
                             <div {...provided.dragHandleProps} className="cursor-grab">
                               <GripVertical className="w-6 h-6 text-gray-500" />
                             </div>
                           )}
                         </td>
 
-                        {/* Item Column */}
-                        <td className="p-3 font-medium text-gray-800">
-                          {row.item}
-                        </td>
+                        <td className="p-3 font-medium text-gray-800">{row.item}</td>
 
-                        {/* Special Handling for Average Row (i === 4) */}
                         {i === 3 ? (
-                          <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100">
-                            {row.averageER || row.lyg || "0.00"}
+                          <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100 font-bold text-xl">
+                            {row.lyg || "0.00"}
                           </td>
                         ) : (
-                          /* Normal 3 columns for other rows */
-                          columns.slice(1).map((col) => (  // slice(1) because first is "item"
+                          columns.slice(1).map((col) => (
                             <td key={col.field} className="p-3">
-                              {col.readOnly || i === 3 ? (
+                              {i >= 2 ? (
                                 <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
                                   {row[col.field] || "0.00"}
                                 </div>
@@ -137,12 +129,6 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                             </td>
                           ))
                         )}
-
-                        {/* Delete button (only for non-average rows) */}
-                        {/* {!disabled && i !== 4 && (
-            <td className="p-3 text-right">
-            </td>
-          )} */}
                       </tr>
                     )}
                   </Draggable>
@@ -157,7 +143,9 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
   );
 };
 
+// ──────────────────────────────────────────────────────────────
 // Main Component
+// ──────────────────────────────────────────────────────────────
 const GenericCriteriaForm4_2 = ({
   title = "NBA Section",
   marks = 50,
@@ -171,35 +159,29 @@ const GenericCriteriaForm4_2 = ({
 }) => {
   const [isEditMode, setIsEditMode] = useState(!isCompleted);
 
-  const safeContent = initialData?.content || {};
-  const safeTableData = initialData?.tableData || [];
+  const [tableData421, setTableData421] = useState(initialData?.tableData421 || []);
+  const [tableData422, setTableData422] = useState(initialData?.tableData422 || []);
 
   const [filesByField, setFilesByField] = useState(() => {
-    // If initialData has filesByField, use it; otherwise initialize with empty slots
-    if (initialData?.filesByField) {
-      console.log("Initializing filesByField from initialData:", initialData.filesByField);
-      return initialData.filesByField;
-    }
+    if (initialData?.filesByField) return initialData.filesByField;
 
-    // Default initialization with empty file slots
-    const init = {};
-    fields.forEach((field) => {
-      init[field.name] = [
-        { id: `file-${Date.now()}-${field.name}-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }
-      ];
-    });
-    return init;
+    return {
+      "4.2.1": [{ id: `file-421-${Date.now()}`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+      "4.2.2": [{ id: `file-422-${Date.now()}`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+    };
   });
 
-  const [formValues, setFormValues] = useState(safeContent);
-  const [tableData, setTableData] = useState(safeTableData);
   const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
   const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
 
+  // ─── File Handlers ───────────────────────────────────────────────
   const addFileRow = (fieldName) => {
     setFilesByField(prev => ({
       ...prev,
-      [fieldName]: [...(prev[fieldName] || []), { id: `file-${Date.now()}-${fieldName}-${Math.random()}`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+      [fieldName]: [...(prev[fieldName] || []), {
+        id: `file-${fieldName}-${Date.now()}-${Math.random()}`,
+        description: "", file: null, filename: "", s3Url: "", uploading: false
+      }]
     }));
   };
 
@@ -221,14 +203,12 @@ const GenericCriteriaForm4_2 = ({
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      if (filesByField[fieldName][index].description?.trim())
+      if (filesByField[fieldName][index]?.description?.trim()) {
         formData.append("description", filesByField[fieldName][index].description.trim());
+      }
 
-      const resData = await nbaDashboardService.uploadFile(formData);
-      const s3Url = resData?.downloadPath || resData?.url || resData || "";
-      
-      console.log("✅ File uploaded, response:", resData);
-      console.log("✅ Extracted s3Url:", s3Url);
+      const res = await nbaDashboardService.uploadFile(formData);
+      const s3Url = res?.downloadPath || res?.url || res || "";
 
       setFilesByField(prev => ({
         ...prev,
@@ -236,7 +216,7 @@ const GenericCriteriaForm4_2 = ({
       }));
       toast.success("Uploaded successfully!");
     } catch (err) {
-      console.error("❌ Upload failed:", err);
+      console.error(err);
       toast.error("Upload failed");
       setFilesByField(prev => ({
         ...prev,
@@ -254,8 +234,8 @@ const GenericCriteriaForm4_2 = ({
 
   const handleSave = () => {
     onSave({
-      content: formValues,
-      tableData,
+      tableData421,
+      tableData422,
       filesByField,
     });
     setIsEditMode(false);
@@ -273,8 +253,9 @@ const GenericCriteriaForm4_2 = ({
           {!isCompleted && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
-                }`}
+              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${
+                isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
+              }`}
               title={isEditMode ? "Cancel Editing" : "Edit Section"}
             >
               {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
@@ -283,134 +264,318 @@ const GenericCriteriaForm4_2 = ({
         </div>
       </div>
 
-      <div className="p-8 space-y-12">
-        {fields.map((field) => (
-          <div key={field.name} className="space-y-6">
-            <h3 className="text-xl font-bold text-blue-700 flex justify-between items-center">
-              <span>{field.label}</span>
-              {field.marks && <span className="text-gray-600 font-medium">({field.marks} Marks)</span>}
-            </h3>
+      <div className="p-8 space-y-16">
+        {/* 4.2.1 */}
+        <SuccessRateTable
+          title="4.2.1 Success Rate in the Stipulated Period without Backlogs (30)"
+          subTitle="Success Index (SI) = (Number of students graduated without backlogs) / (Number of students admitted in 1st year) × 100"
+          columns={[
+            { field: "item", header: "Item" },
+            { field: "lyg", header: "LYG" },
+            { field: "lygm1", header: "LYGm1" },
+            { field: "lygm2", header: "LYGm2" },
+          ]}
+          data={tableData421}
+          onChange={setTableData421}
+          disabled={!isEditMode}
+          predefinedRows={[
+            { item: "Number of students admitted in the corresponding 1st year" },
+            { item: "Number of students who have graduated without backlogs in the stipulated period" },
+            { item: "Success index (SI)" },
+            { item: "Average SI for 3 years" },
+          ]}
+        />
 
-            {field.hasTable ? (
-              <GenericTable
-                columns={field.tableConfig.columns}
-                data={tableData}
-                onChange={setTableData}
-                disabled={!isEditMode}
-                tableConfig={field.tableConfig}
-              />
-            ) : (
-              <div className="border-2 border-gray-300 rounded-b-lg bg-white">
-                <Editor
-                  value={formValues[field.name] || ""}
-                  onChange={(val) => setFormValues((prev) => ({ ...prev, [field.name]: val }))}
-                  disabled={!isEditMode || isCompleted}
-                  style={{ minHeight: 240, padding: 16, fontSize: 16 }}
-                  className="focus:outline-none"
-                />
-              </div>
+        {/* Files - 4.2.1 */}
+        <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+              <Upload className="w-6 h-6" /> Supporting Documents (4.2.1)
+            </h4>
+            {isEditMode && filesByField["4.2.1"]?.length > 1 && (
+              <button
+                onClick={() => setMergeModal({ isOpen: true, fieldName: "4.2.1" })}
+                className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
+              >
+                <FileText className="w-5 h-5" /> Merge PDFs
+              </button>
             )}
+          </div>
 
-             <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-                          <div className="flex justify-between items-center mb-4">
-                            <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2"><Upload className="w-6 h-6" /> Supporting Documents</h4>
-                            {isEditMode && filesByField[field.name]?.length > 1 && (
-                              <button onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })} className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2">
-                                <FileText className="w-5 h-5" /> Merge PDFs
-                              </button>
-                            )}
-                          </div>
-            
-                          {isEditMode ? (
-                            <DragDropContext onDragEnd={result => {
-                              if (!result.destination) return;
-                              const items = Array.from(filesByField[field.name] || []);
-                              const [moved] = items.splice(result.source.index, 1);
-                              items.splice(result.destination.index, 0, moved);
-                              setFilesByField(prev => ({ ...prev, [field.name]: items }));
-                            }}>
-                              <Droppable droppableId={`files-${field.name}`}>
-                                {(provided) => (
-                                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                                    {(filesByField[field.name] || []).map((file, index) => {
-                                      if (!file.id) file.id = `file-${Date.now()}-${field.name}-${index}-${Math.random().toString(36).substr(2, 9)}`;
-                                      return (
-                                        <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
-                                          {(provided, snapshot) => (
-                                            <div ref={provided.innerRef} {...provided.draggableProps} className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}>
-                                              <div {...provided.dragHandleProps} className="cursor-grab"><GripVertical className="w-5 h-5 text-gray-400" /></div>
-                                              <input type="text" value={file.description || ""} onChange={e => updateFileDescription(field.name, index, e.target.value)} placeholder="Description" className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                                              <div className="w-64">
-                                                {file.uploading ? (
-                                                  <span className="text-gray-500 italic">Uploading...</span>
-                                                ) : file.filename ? (
-                                                  <button onClick={() => setPreviewModal({ isOpen: true, file })} className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                                                    <CheckCircle className="w-4 h-4" /> {file.filename}
-                                                  </button>
-                                                ) : (
-                                                  <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={e => handleFileChange(field.name, index, e.target.files?.[0])} className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white" />
-                                                )}
-                                              </div>
-                                              <div className="flex gap-2">
-                                                <button onClick={() => addFileRow(field.name)} className="text-green-600 hover:bg-green-50 p-2 rounded transition" title="Add another document"><Plus className="w-5 h-5" /></button>
-                                                <button
-  onClick={() => removeFileRow(field.name, index)}
-  disabled={(filesByField[field.name] || []).length === 1}
-  className={`p-2 rounded transition
-    ${(filesByField[field.name] || []).length === 1
-      ? "text-gray-300 cursor-not-allowed"
-      : "text-red-500 hover:bg-red-50"
-    }`}
-  title={
-    (filesByField[field.name] || []).length === 1
-      ? "At least one document is required"
-      : "Remove document"
-  }
->
-  <Trash2 className="w-5 h-5" />
-</button>
-                                              </div>
-                                            </div>
-                                          )}
-                                        </Draggable>
-                                      );
-                                    })}
-                                    {provided.placeholder}
-                                  </div>
+          {isEditMode ? (
+            <DragDropContext
+              onDragEnd={(result) => {
+                if (!result.destination) return;
+                const items = Array.from(filesByField["4.2.1"] || []);
+                const [moved] = items.splice(result.source.index, 1);
+                items.splice(result.destination.index, 0, moved);
+                setFilesByField((prev) => ({ ...prev, ["4.2.1"]: items }));
+              }}
+            >
+              <Droppable droppableId={`files-4.2.1`}>
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                    {(filesByField["4.2.1"] || []).map((file, index) => {
+                      if (!file.id) file.id = `file-${Date.now()}-4.2.1-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                      return (
+                        <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}
+                            >
+                              <div {...provided.dragHandleProps} className="cursor-grab">
+                                <GripVertical className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <input
+                                type="text"
+                                value={file.description || ""}
+                                onChange={(e) => updateFileDescription("4.2.1", index, e.target.value)}
+                                placeholder="Description"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <div className="w-64">
+                                {file.uploading ? (
+                                  <span className="text-gray-500 italic">Uploading...</span>
+                                ) : file.filename ? (
+                                  <button
+                                    onClick={() => setPreviewModal({ isOpen: true, file })}
+                                    className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                                  >
+                                    <CheckCircle className="w-4 h-4" /> {file.filename}
+                                  </button>
+                                ) : (
+                                  <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    onChange={(e) => handleFileChange("4.2.1", index, e.target.files?.[0])}
+                                    className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                                  />
                                 )}
-                              </Droppable>
-                            </DragDropContext>
-                          ) : (
-                            <div className="space-y-3">
-                              {(filesByField[field.name] || []).map((file, index) => (
-                                <div key={file.id || `view-file-${field.name}-${index}`} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-                                  <div className="flex-1">
-                                    <span className="text-gray-700 font-medium">{file.description || `Document ${index + 1}`}</span>
-                                  </div>
-                                  <div className="w-64">
-                                    {file.filename && (file.s3Url || file.url) ? (
-                                      <button onClick={() => setPreviewModal({ isOpen: true, file })} className="text-blue-600 font-medium hover:underline flex items-center gap-2">
-                                        <CheckCircle className="w-4 h-4" /> {file.filename}
-                                      </button>
-                                    ) : (
-                                      <span className="text-gray-400 italic">No file uploaded</span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => addFileRow("4.2.1")}
+                                  className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                                  title="Add another document"
+                                >
+                                  <Plus className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => removeFileRow("4.2.1", index)}
+                                  disabled={(filesByField["4.2.1"] || []).length === 1}
+                                  className={`p-2 rounded transition ${
+                                    (filesByField["4.2.1"] || []).length === 1
+                                      ? "text-gray-300 cursor-not-allowed"
+                                      : "text-red-500 hover:bg-red-50"
+                                  }`}
+                                  title={
+                                    (filesByField["4.2.1"] || []).length === 1
+                                      ? "At least one supporting document is required"
+                                      : "Remove document"
+                                  }
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
                             </div>
                           )}
-                        </div>
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          ) : (
+            <div className="space-y-3">
+              {(filesByField["4.2.1"] || []).map((file, index) => (
+                <div
+                  key={file.id || `view-file-4.2.1-${index}`}
+                  className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300"
+                >
+                  <div className="flex-1">
+                    <span className="text-gray-700 font-medium">{file.description || `Document ${index + 1}`}</span>
+                  </div>
+                  <div className="w-64">
+                    {file.filename && (file.s3Url || file.url) ? (
+                      <button
+                        onClick={() => setPreviewModal({ isOpen: true, file })}
+                        className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" /> {file.filename}
+                      </button>
+                    ) : (
+                      <span className="text-gray-400 italic">No file uploaded</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 4.2.2 */}
+        <SuccessRateTable
+          title="4.2.2 Success Rate in Stipulated Period (With + Without Backlogs) (20)"
+          subTitle="Success Index (SI) = (Total graduates in stipulated period) / (Number of students admitted in 1st year) × 100"
+          columns={[
+            { field: "item", header: "Item" },
+            { field: "lyg", header: "LYG" },
+            { field: "lygm1", header: "LYGm1" },
+            { field: "lygm2", header: "LYGm2" },
+          ]}
+          data={tableData422}
+          onChange={setTableData422}
+          disabled={!isEditMode}
+          predefinedRows={[
+            { item: "Number of students admitted in the corresponding First Year" },
+            { item: "Number of students who graduated within the stipulated period of the program" },
+            { item: "Success index (SI)" },
+            { item: "Average SI for past 3 years" },
+          ]}
+        />
+
+        {/* Files - 4.2.2 */}
+        <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+              <Upload className="w-6 h-6" /> Supporting Documents (4.2.2)
+            </h4>
+            {isEditMode && filesByField["4.2.2"]?.length > 1 && (
+              <button
+                onClick={() => setMergeModal({ isOpen: true, fieldName: "4.2.2" })}
+                className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
+              >
+                <FileText className="w-5 h-5" /> Merge PDFs
+              </button>
+            )}
           </div>
-        ))}
+
+          {isEditMode ? (
+            <DragDropContext
+              onDragEnd={(result) => {
+                if (!result.destination) return;
+                const items = Array.from(filesByField["4.2.2"] || []);
+                const [moved] = items.splice(result.source.index, 1);
+                items.splice(result.destination.index, 0, moved);
+                setFilesByField((prev) => ({ ...prev, ["4.2.2"]: items }));
+              }}
+            >
+              <Droppable droppableId={`files-4.2.2`}>
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                    {(filesByField["4.2.2"] || []).map((file, index) => {
+                      if (!file.id) file.id = `file-${Date.now()}-4.2.2-${index}-${Math.random().toString(36).substr(2, 9)}`;
+                      return (
+                        <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}
+                            >
+                              <div {...provided.dragHandleProps} className="cursor-grab">
+                                <GripVertical className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <input
+                                type="text"
+                                value={file.description || ""}
+                                onChange={(e) => updateFileDescription("4.2.2", index, e.target.value)}
+                                placeholder="Description"
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <div className="w-64">
+                                {file.uploading ? (
+                                  <span className="text-gray-500 italic">Uploading...</span>
+                                ) : file.filename ? (
+                                  <button
+                                    onClick={() => setPreviewModal({ isOpen: true, file })}
+                                    className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                                  >
+                                    <CheckCircle className="w-4 h-4" /> {file.filename}
+                                  </button>
+                                ) : (
+                                  <input
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    onChange={(e) => handleFileChange("4.2.2", index, e.target.files?.[0])}
+                                    className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                                  />
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => addFileRow("4.2.2")}
+                                  className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                                  title="Add another document"
+                                >
+                                  <Plus className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => removeFileRow("4.2.2", index)}
+                                  disabled={(filesByField["4.2.2"] || []).length === 1}
+                                  className={`p-2 rounded transition ${
+                                    (filesByField["4.2.2"] || []).length === 1
+                                      ? "text-gray-300 cursor-not-allowed"
+                                      : "text-red-500 hover:bg-red-50"
+                                  }`}
+                                  title={
+                                    (filesByField["4.2.2"] || []).length === 1
+                                      ? "At least one supporting document is required"
+                                      : "Remove document"
+                                  }
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          ) : (
+            <div className="space-y-3">
+              {(filesByField["4.2.2"] || []).map((file, index) => (
+                <div
+                  key={file.id || `view-file-4.2.2-${index}`}
+                  className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300"
+                >
+                  <div className="flex-1">
+                    <span className="text-gray-700 font-medium">{file.description || `Document ${index + 1}`}</span>
+                  </div>
+                  <div className="w-64">
+                    {file.filename && (file.s3Url || file.url) ? (
+                      <button
+                        onClick={() => setPreviewModal({ isOpen: true, file })}
+                        className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                      >
+                        <CheckCircle className="w-4 h-4" /> {file.filename}
+                      </button>
+                    ) : (
+                      <span className="text-gray-400 italic">No file uploaded</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {isEditMode && !isCompleted && (
           <div className="text-center pt-10 flex gap-4 justify-center">
             <button
               onClick={handleSave}
               className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${saving || !isContributorEditable
-                ? "bg-[#2163c1] cursor-pointer opacity-60"
-                : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
+                  ? "bg-[#2163c1] cursor-pointer opacity-60"
+                  : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
                 }`}
               title={saving ? "Saving..." : !isContributorEditable ? "Not allowed to save" : "Save"}
             >
@@ -437,7 +602,7 @@ const GenericCriteriaForm4_2 = ({
         )}
       </div>
 
-      {/* Preview & Merge Modals */}
+      {/* Preview Modal */}
       <Modal
         isOpen={previewModal.isOpen}
         onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}
@@ -446,17 +611,13 @@ const GenericCriteriaForm4_2 = ({
       >
         {previewModal.file && (
           <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white">
+            <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white flex justify-between items-center">
               <h3 className="text-xl font-bold">{previewModal.file.filename}</h3>
               <button onClick={() => setPreviewModal({ isOpen: false, file: null })}>
-                <X className="w-6 h-6" />
+                <X className="w-7 h-7" />
               </button>
             </div>
-            <iframe
-              src={previewModal.file.s3Url}
-              title={previewModal.file.filename}
-              className="flex-1 w-full"
-            />
+            <iframe src={previewModal.file.s3Url} className="flex-1" title="Preview" />
           </div>
         )}
       </Modal>
@@ -465,19 +626,10 @@ const GenericCriteriaForm4_2 = ({
         isOpen={mergeModal.isOpen}
         pdfFiles={filesByField[mergeModal.fieldName] || []}
         onClose={() => setMergeModal({ isOpen: false, fieldName: null })}
-        onFileAdd={(mergedDocument) => {
-          // Add merged document to the field's file list
-          const mergedFile = {
-            id: mergedDocument.id,
-            filename: mergedDocument.filename,
-            description: mergedDocument.description,
-            s3Url: mergedDocument.s3Url,
-            uploading: false,
-            isMerged: true,
-          };
-          setFilesByField((prev) => ({
+        onFileAdd={(merged) => {
+          setFilesByField(prev => ({
             ...prev,
-            [mergeModal.fieldName]: [...(prev[mergeModal.fieldName] || []), mergedFile],
+            [mergeModal.fieldName]: [...(prev[mergeModal.fieldName] || []), merged]
           }));
           setMergeModal({ isOpen: false, fieldName: null });
         }}
