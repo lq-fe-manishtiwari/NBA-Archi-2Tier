@@ -32,12 +32,12 @@ const Criterion4_4Form = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "4.4. Academic Performance of the Second Year Students of the Program",
+      "4.4. Academic Performance in Fourth Year ",
     totalMarks: 10,
     fields: [
       {
         name: "4.4",
-        label: "4.4 Academic Performance of the Second Year Students of the Program",
+        label: "4.4 Academic Performance in Fourth Year",
         marks: 10,
         hasTable: true,
           tableConfig: {
@@ -49,7 +49,7 @@ const Criterion4_4Form = ({
               { field: "caym3", header: "CAYm3", placeholder: "" },
             ],
             predefinedRows: [
-            { item: "X= (Mean of 1st year grade point average of all successful students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 1st year/10)" },
+            { item: "(Mean of 4th year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 4th year/10) (X)" },
             { item: "Y= Total no. of successful students" },
             { item: "Z = Total no. of students appeared in the examination " },
             { item: "API = X* (Y/Z)" },

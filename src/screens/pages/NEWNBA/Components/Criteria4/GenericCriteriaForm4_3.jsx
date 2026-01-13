@@ -61,14 +61,14 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
       parseFloat(updated[3].caym3)) /
       3 || 0;
 
-  const averageER = avg.toFixed(2);
+  const averageAPI = avg.toFixed(2);
 
   updated[4] = {
     ...updated[4],
-    caym1: averageER,
-    caym2: averageER,
-    caym3: averageER,
-    averageER,
+    caym1: averageAPI,
+    caym2: averageAPI,
+    caym3: averageAPI,
+    averageAPI,
   };
 
   onChange(updated);
@@ -123,7 +123,7 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                         {/* Special Handling for Average Row (i === 4) */}
                         {i === 4 ? (
                           <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100">
-                            {row.averageER || row.caym1 || "0.00"}
+                            {row.averageAPI || row.caym1 || "0.00"}
                           </td>
                         ) : (
                           /* Normal 3 columns for other rows */

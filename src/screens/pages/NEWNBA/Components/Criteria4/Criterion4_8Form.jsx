@@ -1,11 +1,11 @@
-// src/screens/pages/NEWNBA/Components/Criteria4/Criterion4_5Form.jsx
+// src/screens/pages/NEWNBA/Components/Criteria4/Criterion4_8Form.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm4_5 from "./GenericCriteriaForm4_5";
+import GenericCriteriaForm4_6 from "./GenericCriteriaForm4_6";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 
-const Criterion4_5Form = ({ 
+const Criterion4_8Form = ({
   cycle_sub_category_id,
   isEditable = true,
   onSaveSuccess,
@@ -16,7 +16,7 @@ const Criterion4_5Form = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [thirdYearStudentsId, setThirdYearStudentsId] = useState(null);
+  const [placementId, setPlacementId] = useState(null);
   const [isContributor, setIsContributor] = useState(false);
 
   const [initialData, setInitialData] = useState({
@@ -28,15 +28,18 @@ const Criterion4_5Form = ({
   const [alert, setAlert] = useState(null);
   const [cardData, setCardData] = useState([]);
   const [cardLoading, setCardLoading] = useState(false);
+  
 
   // Helper function to get row labels
   const getRowLabel = (index) => {
     const labels = [
-      "X= (Mean of 1st year grade point average of all successful students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 1st year/10)",
-      "Y= Total no. of successful students",
-      "Z = Total no. of students appeared in the examination",
-      "API = X* (Y/Z)",
-      "Average API = ( API_1 + API_2 + API_3)/3"
+      "FS* =Total no. of final year students",
+      "X= No. of students placed",
+      "Y= No. of students admitted to higher studies",
+      "Z= No. of students taking up entrepreneurship",
+      "X + Y + Z =",
+      "Placement Index (P) = (((X + Y + Z)/FS) * 100)",
+      "Average placement index = (P_1 + P_2 + P_3)/3"
     ];
     return labels[index] || "";
   };
@@ -44,56 +47,35 @@ const Criterion4_5Form = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "4.5. Academic Performance in Third Year (10)",
-    totalMarks: 10,
+      "4.6. Placement, Higher Studies and Entrepreneurship",
+    totalMarks: 30,
     fields: [
       {
-        name: "4.5",
-        label: "4.5 Academic Performance of the Third Year Students of the Program",
-        marks: 10,
+        name: "4.6",
+        label: "4.6 Placement, Higher Studies and Entrepreneurship",
+        marks: 30,
         hasTable: true,
           tableConfig: {
             title: "Teaching-Learning Activities",
             columns: [
-              { field: "item", header: "Academic Performance ", placeholder: "" },
-              { field: "caym1", header: "CAYm1", placeholder: "" },
-              { field: "caym2", header: "CAYm2", placeholder: "" },
-              { field: "caym3", header: "CAYm3", placeholder: "" },
+              { field: "item", header: "Item", placeholder: "" },
+              { field: "lyg", header: "LYG", placeholder: "" },
+              { field: "lygm1", header: "LYGm1", placeholder: "" },
+              { field: "lygm2", header: "LYGm2", placeholder: "" },
             ],
-          },
-           predefinedRows: [
-            { item: "X= (Mean of 1st year grade point average of all successful students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 1st year/10)" },
-            { item: "Y= Total no. of successful students" },
-            { item: "Z = Total no. of students appeared in the examination " },
-            { item: "API = X* (Y/Z)" },
-            { item: "Average API = ( API_1 + API_2 + API_3)/3" },
+            predefinedRows: [
+            { item: "FS* =Total no. of final year students" },
+            { item: "X= No. of students placed" },
+            { item: "Y= No. of students admitted to higher studies" },
+            { item: "Z= No. of students taking up entrepreneurship" },
+            { item: "X + Y + Z =" },
+            { item: "Placement Index (P) = (((X + Y + Z)/FS) * 100) " },
+            { item: "Average placement index = (P_1 + P_2 + P_3)/3" },
           ],
+          },
       },
     ],
   };
-
-  const loadContributorsData = async () => {
-    if (!showCardView || !cycle_sub_category_id) return;
-    
-    setCardLoading(true);
-    try {
-      const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_5_Data?.(cycle_sub_category_id);
-      setCardData(contributorsResponse || []);
-    } catch (err) {
-      console.error("Failed to load contributors data:", err);
-      setCardData([]);
-    } finally {
-      setCardLoading(false);
-    }
-  };
-
-  // Load data from API
-    useEffect(() => {
-      loadData();
-      if (showCardView) {
-        loadContributorsData();
-      }
-    }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
 
   // ---------------- LOAD DATA (Same as 2.1) ----------------
   const loadData = useCallback(async () => {
@@ -109,46 +91,48 @@ const Criterion4_5Form = ({
       
       const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-      const res = await newnbaCriteria4Service.getCriteria4_5_Data(cycle_sub_category_id, currentOtherStaffId);
+      const res = await newnbaCriteria4Service.getCriteria4_6_Data(cycle_sub_category_id, currentOtherStaffId);
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
 
-      setThirdYearStudentsId(d.cri45_third_year_students_id || null);
+      setPlacementId(d.cri46_higher_studies_id || null);
 
       // Transform table data from API response
-      const transformedTableData = d.cri45_third_year_students_table ? 
-        d.cri45_third_year_students_table.map((row, index) => ({
+      const transformedTableData = d.cri46_higher_studies_table ? 
+        d.cri46_higher_studies_table.map((row, index) => ({
           id: `row-${Date.now()}-${index}`,
           item: getRowLabel(index),
-          caym1: row.caym1 || "",
-          caym2: row.caym2 || "",
-          caym3: row.caym3 || ""
+          lyg: row.lyg || "",
+          lygm1: row.lygm1 || "",
+          lygm2: row.lygm2 || ""
         })) : [];
 
       setInitialData({
-        content: { "4.5": "" },
+        content: { "4.6": "" },
         tableData: transformedTableData,
         filesByField: {
-          "4.5": (d.cri45_third_year_students_document || []).length > 0
-            ? (d.cri45_third_year_students_document || []).map((f, i) => ({
-                id: `file-4.5-${i}`,
-                filename: f.file_name || f.name || "",
-                s3Url: f.file_url || f.url || "",
+          "4.6": (d.cri46_higher_studies_document || []).length > 0
+            ? (d.cri46_higher_studies_document || []).map((f, i) => ({
+                id: `file-4.6-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
                 description: f.description || "",
                 uploading: false
               }))
-            : [{ id: `file-4.5-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+            : [{ id: `file-4.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } catch (err) {
       console.warn("Load failed:", err);
 
-      setThirdYearStudentsId(null);
+      setPlacementId(null);
       setInitialData({
-        content: { "4.5": "" },
+        content: { "4.6": "" },
         tableData: [],
         filesByField: {
-          "4.5": [{ id: `file-4.5-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.6": [{ id: `file-4.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } finally {
@@ -156,101 +140,123 @@ const Criterion4_5Form = ({
     }
   }, [cycle_sub_category_id, otherStaffId]);
 
+  const loadContributorsData = async () => {
+      if (!showCardView || !cycle_sub_category_id) return;
+      
+      setCardLoading(true);
+      try {
+        const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_6_Data?.(cycle_sub_category_id);
+        setCardData(contributorsResponse || []);
+      } catch (err) {
+        console.error("Failed to load contributors data:", err);
+        setCardData([]);
+      } finally {
+        setCardLoading(false);
+      }
+    };
+  
+    // Load data from API
+      useEffect(() => {
+        loadData();
+        if (showCardView) {
+          loadContributorsData();
+        }
+      }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-   // ---------------- TRANSFORM TABLE INTO REQUIRED PAYLOAD ----------------
-const transformAcademicPerformance = (table) => {
-  const rowKeys = ["Xrow", "Yrow", "Zrow", "api", "averageApi"];
+  const tablePayload = (formData) => {
+  const rowKeys = ["FSrow", "Xrow", "Yrow", "Zrow", "total", "placement_index", "average"];
   
-  return table.map((row, i) => {
+  return formData.tableData.map((row, i) => {
     const key = rowKeys[i];
     if (!key) return null;
 
     return {
       row_type: key,
-      caym1: row.caym1 || "",
-      caym2: row.caym2 || "",
-      caym3: row.caym3 || ""
+      lyg: row.lyg || "",
+      lygm1: row.lygm1 || "",
+      lygm2: row.lygm2 || ""
     };
   }).filter(Boolean);
 };
+ 
+const DocumentPayload = (formData) => {
+  return Object.keys(formData.filesByField || {}).flatMap((field) =>
+    (formData.filesByField[field] || [])
+      .filter(file => (file.s3Url || file.url) && file.filename)
+      .map((file) => ({
+        name: file.filename,
+        description: file.description || "",
+        url: file.s3Url || file.url
+      }))
+  );
+};
+
 
 
   // ---------------- SAVE DATA ----------------
 const handleSave = async (formData) => {
   setSaving(true);
+  
+  console.log("Criterion4_8Form handleSave - received formData:", formData);
 
   try {
-    const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-        (field) =>
-          (formData.filesByField[field] || []).map((file) => ({
-            ...file,
-            category: "Students’ Performance",
-          }))
-      );
-      console.log(filesWithCategory);
-
-      const cri45_third_year_students_document = filesWithCategory
-      .filter((f) => {
-        const hasUrl = f.s3Url && f.s3Url.trim() !== "";
-        console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
-        return hasUrl;
-      })
-      .map((f) => ({
-        file_name: f.filename,
-        file_url: f.s3Url,
-        description: f.description || ""
-      }));
-
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
     const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-    const cri45_third_year_students_table = transformAcademicPerformance(formData.tableData);
+    const cri46_higher_studies_table = tablePayload(formData);
+    const cri46_higher_studies_document = DocumentPayload(formData);
+    
+    console.log("Files being processed:", formData.filesByField);
+    console.log("Document payload:", cri46_higher_studies_document);
 
     const payload = {
       other_staff_id: staffId,
       cycle_sub_category_id: cycle_sub_category_id,
-      cri45_third_year_students_table,
-      cri45_third_year_students_document
+      cri46_higher_studies_table,
+      cri46_higher_studies_document
     };
 
-    if (thirdYearStudentsId) {
-      await newnbaCriteria4Service.putCriteria4_5_Data(thirdYearStudentsId, payload);
+    console.log("FINAL API CALL → payload:", payload);
+
+    if (placementId) {
+      await newnbaCriteria4Service.putCriteria4_6_Data(placementId, payload);
     } else {
-      await newnbaCriteria4Service.saveCriteria4_5_Data(payload);
+      await newnbaCriteria4Service.saveCriteria4_6_Data(payload);
     }
 
     setAlert(
-      <SweetAlert
-        success
-        title="Saved!"
-        confirmBtnCssClass="btn-confirm"
-        confirmBtnText="OK"
-        onConfirm={() => setAlert(null)}
-      >
-        Criterion 4.5 saved successfully
-      </SweetAlert>
-    );
+          <SweetAlert
+            success
+            title="Saved!"
+            confirmBtnCssClass="btn-confirm"
+            confirmBtnText="OK"
+            onConfirm={() => setAlert(null)}
+          >
+            Criterion 4.6 saved successfully
+          </SweetAlert>
+        );
 
     onSaveSuccess?.();
     loadData();
-  } catch (err) {
-    console.error("Save failed:", err);
 
-    setAlert(
-      <SweetAlert
-        danger
-        title="Save Failed"
-        confirmBtnCssClass="btn-confirm"
-        confirmBtnText="OK"
-        onConfirm={() => setAlert(null)}
-      >
-        Something went wrong while saving
-      </SweetAlert>
-    );
+  } catch (err) {
+    console.error(err);
+      setAlert(
+          <SweetAlert
+            danger
+            title="Save Failed"
+            confirmBtnCssClass="btn-confirm"
+            confirmBtnText="OK"
+            onConfirm={() => setAlert(null)}
+          >
+            Something went wrong while saving
+          </SweetAlert>
+        );
   } finally {
     setSaving(false);
   }
@@ -258,7 +264,7 @@ const handleSave = async (formData) => {
 
   // ---------------- DELETE DATA (Same as 2.1) ----------------
   const handleDelete = async () => {
-    if (!thirdYearStudentsId) {
+    if (!placementId) {
       setAlert(
         <SweetAlert
           info
@@ -286,11 +292,11 @@ const handleSave = async (formData) => {
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_5Data(
-              thirdYearStudentsId
+            const res = await newnbaCriteria4Service.deleteCriteria4_6Data(
+              placementId
             );
 
-            let message = "Criterion 4.5 deleted successfully.";
+            let message = "Criterion 4.6 deleted successfully.";
             if (typeof res === "string") message = res;
             else if (res?.data) message = res.data;
 
@@ -306,7 +312,7 @@ const handleSave = async (formData) => {
               </SweetAlert>
             );
 
-            setThirdYearStudentsId(null);
+            setPlacementId(null);
             loadData();
             onSaveSuccess?.();
           } catch (err) {
@@ -336,12 +342,12 @@ const handleSave = async (formData) => {
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 4.5...
+        Loading Criterion 4.6...
       </div>
     );
   }
 
-  console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
+   console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
 
   // Show card view for coordinators
   if (showCardView) {
@@ -369,7 +375,7 @@ const handleSave = async (formData) => {
 
   return (
     <div>
-      <GenericCriteriaForm4_5
+      <GenericCriteriaForm4_6
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}
@@ -380,10 +386,9 @@ const handleSave = async (formData) => {
         onSave={handleSave}
         onDelete={handleDelete}
       />
-
       {alert}
     </div>
   );
 };
 
-export default Criterion4_5Form;
+export default Criterion4_8Form;
