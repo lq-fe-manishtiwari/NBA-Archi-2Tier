@@ -1,6 +1,6 @@
 // Criterion5_3Form.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm5_3 from "./GenericCriteriaForm5_3";
+import GenericCriteriaForm5_2 from "./GenericCriteriaForm5_2";
 import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
 import { toast } from "react-toastify";
 import SweetAlert from "react-bootstrap-sweetalert";
@@ -32,17 +32,16 @@ const Criterion5_3Form = ({
 
   const [initialData, setInitialData] = useState({
     content: {
-      "5.3": `5.3. Faculty Cadre Proportion (25)
+      "5.3": `5.3. Faculty Qualification (25)
 
-• Faculty Cadre Proportion is 1(RF1): 2(RF2): 6(RF3)
+• Faculty qualification index (FQI) = 2.5 * [(10X + 4Y)/RF] where:
+  • X = No. of faculty members with Ph.D. degree or equivalent as per AICTE/UGC norms.
+  • Y = No. of faculty members with M.Tech. or M.E. degree or equivalent as per AICTE/UGC norms.
+  • RF = No. of required faculty in the Department including allied Departments to adhere to the 20:1 Student-Faculty ratio, with calculations based on both student numbers and faculty requirements as per section 5.1 of SAR; (RF = S/20).
 
-• RF1 = No. of Professors required = 1/9 × No. of Faculty required to comply with 20:1 Student-Faculty ratio based on no. of students (S) as per section 5.1 of SAR.
-
-• RF2 = No. of Associate Professors required = 2/9 × No. of Faculty required to comply with 20:1 Student-Faculty ratio based on no. of students (S) as per section 5.1 of SAR.
-
-• RF3 = No. of Assistant Professors required = 6/9 × No. of Faculty required to comply with 20:1 Student-Faculty ratio based on no. of students (S) as per section 5.1 of SAR.
-
-• Faculty cadre and qualification and experience should be as per AICTE/UGC norms.`
+Note:
+• To determine the RF value (No. of required faculty in the Department, including allied Departments to adhere to the 20:1 Student-Faculty ratio), all students (S as defined in section 5.1 of SAR) in the department, as well as those in allied departments, need to be considered.
+• The programs, such as MCA, BCA, and other non-engineering programs running in the Department or allied Departments, need to have sufficient faculty members to support those programs and exclude the faculty members and students listed in Table No. 5.3.1 (X, Y, and RF).`
     },
     tableData: [],
     filesByField: {},
@@ -65,31 +64,29 @@ const Criterion5_3Form = ({
     setCurrentUserStaffId(staffId);
   }, []);
 
-  // ---------------- CONFIG FOR 5.3 FACULTY CADRE PROPORTION ----------------
+  // ---------------- CONFIG FOR 5.3 FACULTY QUALIFICATION ----------------
   const config = {
-    title: "5.3. Faculty Cadre Proportion",
+    title: "5.3. Faculty Qualification",
     totalMarks: 25,
     fields: [
       {
         name: "5.3",
-        label: "5.3. Faculty Cadre Proportion",
+        label: "5.3. Faculty Qualification",
         marks: 25,
         hasTable: true,
         tableConfig: {
-          title: "Table No. 5.3.1 (AF1, AF2, AF3). Faculty cadre proportion details.",
-          description: "Faculty Cadre Proportion is 1(RF1): 2(RF2): 6(RF3)",
+          title: "Table No. 5.3.1: Faculty qualification.",
+          description: "Faculty qualification index (FQI) = 2.5 × [(10X + 4Y)/RF]",
           columns: [
             { field: "year", header: "Year", type: "label" },
-            { field: "RF1", header: "Required Faculty (RF1)\\nProfessors", type: "number", decimal: true, tooltip: "Professors required" },
-            { field: "AF1", header: "Available Faculty (AF1)\\nProfessors", type: "number", integer: true, tooltip: "Professors available" },
-            { field: "RF2", header: "Required Faculty (RF2)\\nAssociate Professors", type: "number", decimal: true, tooltip: "Associate Professors required" },
-            { field: "AF2", header: "Available Faculty (AF2)\\nAssociate Professors", type: "number", integer: true, tooltip: "Associate Professors available" },
-            { field: "RF3", header: "Required Faculty (RF3)\\nAssistant Professors", type: "number", decimal: true, tooltip: "Assistant Professors required" },
-            { field: "AF3", header: "Available Faculty (AF3)\\nAssistant Professors", type: "number", integer: true, tooltip: "Assistant Professors available" },
+            { field: "X", header: "X (Ph.D.)", type: "number", integer: true, tooltip: "No. of faculty with Ph.D. or equivalent" },
+            { field: "Y", header: "Y (M.Tech/M.E.)", type: "number", integer: true, tooltip: "No. of faculty with M.Tech/M.E. or equivalent" },
+            { field: "RF", header: "RF", type: "number", integer: true, tooltip: "Required Faculty = Total Students / 20" },
+            { field: "FQI", header: "FQI = 2.5 × [(10X + 4Y)/RF]", type: "calculated", tooltip: "Faculty Qualification Index" },
           ],
           years: ["CAY", "CAYm1", "CAYm2"],
-          marksGuidance: "Marks = ⌈ AF1/RF1 + (AF2/RF2 × 0.6) + (AF3/RF3 × 0.4) ⌉ × 12.5 (Maximum 25 marks)",
-          note: "If AF1 = AF2 = 0, then zero mark"
+          marksGuidance: "Marks = Average FQI (capped at 25 marks)",
+          note: "RF should be calculated as S/20 from section 5.1"
         }
       }
     ],
@@ -142,21 +139,21 @@ const Criterion5_3Form = ({
       console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
       console.log("  - staffId:", staffIdToUse);
 
-      const response = await newnbaCriteria5Service.getCriteria5_3_Data(cycle_sub_category_id, staffIdToUse);
+      const response = await newnbaCriteria5Service.getCriteria5_2_Data(cycle_sub_category_id, staffIdToUse);
       console.log("📊 Criterion5_3Form - Raw API Response:", response);
 
       // Handle both array and single object responses
       let data = {};
       if (Array.isArray(response?.data)) {
-        data = response.data.find(item => item && (item.cadre_proportion_id || item.id)) || {};
+        data = response.data.find(item => item && (item.fqi_id || item.id)) || {};
       } else if (response?.data) {
         data = response.data;
       } else if (response && !response.data) {
-        data = Array.isArray(response) ? (response.find(item => item && (item.cadre_proportion_id || item.id)) || {}) : response;
+        data = Array.isArray(response) ? (response.find(item => item && (item.fqi_id || item.id)) || {}) : response;
       }
 
-      if (data.cadre_proportion_id || data.id) {
-        setRecordId(data.cadre_proportion_id || data.id);
+      if (data.fqi_id || data.id) {
+        setRecordId(data.fqi_id || data.id);
 
         // Set contributor name for display
         if (data.other_staff_name) {
@@ -179,21 +176,19 @@ const Criterion5_3Form = ({
         }
 
         // Format table data from API response
-        const formattedTableData = (data.cadre_proportion_table || []).map((item, index) => ({
+        const formattedTableData = (data.fqi_table || []).map((item, index) => ({
           id: `row-${index}`,
           year: item.year || "",
-          RF1: item.professor_required?.toString() || "",
-          AF1: item.professor_available?.toString() || "",
-          RF2: item.associate_required?.toString() || "",
-          AF2: item.associate_available?.toString() || "",
-          RF3: item.assistant_required?.toString() || "",
-          AF3: item.assistant_available?.toString() || "",
+          X: item.x_phd?.toString() || "",
+          Y: item.y_mtech?.toString() || "",
+          RF: item.required_faculty_rf?.toString() || "",
+          FQI: item.fqi?.toString() || "",
         }));
 
         // Handle files
         let filesByField = {};
-        if (data.cadre_supporting_documents && Array.isArray(data.cadre_supporting_documents)) {
-          data.cadre_supporting_documents.forEach(doc => {
+        if (data.fqi_supporting_documents && Array.isArray(data.fqi_supporting_documents)) {
+          data.fqi_supporting_documents.forEach(doc => {
             const fieldName = doc.field_name || "5.3";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
@@ -212,7 +207,7 @@ const Criterion5_3Form = ({
 
         setInitialData({
           content: {
-            "5.3": data.cadre_description || config.fields[0].content || ""
+            "5.3": data.fqi_description || config.fields[0].content || ""
           },
           tableData: formattedTableData,
           filesByField: filesByField,
@@ -272,13 +267,12 @@ const Criterion5_3Form = ({
       // Format table data for API
       const formattedTableData = (formData.tableData || []).map((row) => ({
         year: row.year,
-        professor_required: parseFloat(row.RF1) || 0,
-        professor_available: parseInt(row.AF1) || 0,
-        associate_required: parseFloat(row.RF2) || 0,
-        associate_available: parseInt(row.AF2) || 0,
-        assistant_required: parseFloat(row.RF3) || 0,
-        assistant_available: parseInt(row.AF3) || 0,
+        x_phd: parseInt(row.X) || 0,
+        y_mtech: parseInt(row.Y) || 0,
+        required_faculty_rf: parseInt(row.RF) || 0,
+        fqi: parseFloat(row.FQI) || 0,
       }));
+
 
       // Transform supporting documents - using working logic from Criterion5_4Form
       console.log("formData.filesByField:", formData.filesByField);
@@ -287,13 +281,13 @@ const Criterion5_3Form = ({
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: "Faculty Cadre Documents",
+            category: "Faculty Qualification Documents",
           }))
       );
 
       console.log("filesWithCategory:", filesWithCategory);
 
-      const cadre_supporting_documents = filesWithCategory
+      const supporting_documents = filesWithCategory
         .filter((f) => {
           console.log("Checking file:", f, "has s3Url:", !!f.s3Url, "has url:", !!f.url, "has filename:", !!f.filename);
           return (f.s3Url || f.url) && f.filename;
@@ -303,10 +297,11 @@ const Criterion5_3Form = ({
           file_name: f.filename,
           file_url: f.s3Url || f.url,
           description: f.description || "",
-          category: f.category || "Faculty Cadre Documents",
+          category: f.category || "Faculty Qualification Documents",
         }));
 
-      console.log("cadre_supporting_documents:", cadre_supporting_documents);
+      console.log("supporting_documents:", supporting_documents);
+
 
       // Use appropriate staff ID based on context
       let staffIdToSave;
@@ -327,9 +322,9 @@ const Criterion5_3Form = ({
       const payload = {
         other_staff_id: parseInt(staffIdToSave),
         cycle_sub_category_id: parseInt(cycle_sub_category_id),
-        cadre_description: formData.content["5.3"] || "",
-        cadre_proportion_table: formattedTableData,
-        supporting_documents: cadre_supporting_documents,
+        fqi_description: formData.content["5.3"] || "",
+        fqi_table: formattedTableData,
+        supporting_documents: supporting_documents,
       };
 
       console.log("🚀 Saving payload:", payload);
@@ -337,19 +332,19 @@ const Criterion5_3Form = ({
       let response;
       if (recordId) {
         // Update existing record
-        response = await newnbaCriteria5Service.updateCriteria5_3_Data(recordId, payload);
+        response = await newnbaCriteria5Service.updateCriteria5_2_Data(recordId, payload);
         console.log("✅ Update response:", response);
         setSuccessMessage("Section updated successfully!");
       } else {
         // Create new record
-        response = await newnbaCriteria5Service.saveCriteria5_3_Data(payload);
+        response = await newnbaCriteria5Service.saveCriteria5_2_Data(payload);
         console.log("✅ Save response:", response);
 
         // Set recordId from response
-        if (response?.data?.cadre_proportion_id || response?.data?.id) {
-          setRecordId(response.data.cadre_proportion_id || response.data.id);
-        } else if (response?.cadre_proportion_id || response?.id) {
-          setRecordId(response.cadre_proportion_id || response.id);
+        if (response?.data?.fqi_id || response?.data?.id) {
+          setRecordId(response.data.fqi_id || response.data.id);
+        } else if (response?.fqi_id || response?.id) {
+          setRecordId(response.fqi_id || response.id);
         }
 
         setSuccessMessage("Section created successfully!");
@@ -403,24 +398,42 @@ const Criterion5_3Form = ({
     setShowDeleteAlert(true);
   };
 
-  const confirmDelete = async () => {
-    try {
-      await newnbaCriteria5Service.deleteCriteria5_3Data(recordId);
-      toast.success('✅ Section data deleted successfully!');
-      setRecordId(null);
-      setShowDeleteAlert(false);
-      setInitialData({
-        content: { "5.3": config.fields[0].content || "" },
-        tableData: [],
-        filesByField: {},
-      });
-      onSaveSuccess?.();
-    } catch (err) {
-      console.error("Delete error:", err);
-      toast.error(err.response?.data?.message || "❌ Failed to delete data. Please try again.");
-      setShowDeleteAlert(false);
-    }
-  };
+const confirmDelete = async () => {
+  try {
+    await newnbaCriteria5Service.deleteCriteria5_2Data(recordId);
+
+    toast.success('✅ Section data deleted successfully!');
+
+    // 🔴 IMPORTANT: recordId clear karo
+    setRecordId(null);
+
+    // 🔴 IMPORTANT: approval status bhi reset karo
+    setApprovalStatus(null);
+    setContributorName("");
+
+    // 🔴 IMPORTANT: UI state reset
+    setInitialData({
+      content: { "5.3": config.fields[0].content || "" },
+      tableData: [],
+      filesByField: {},
+    });
+
+    setShowDeleteAlert(false);
+
+    // 🔴 MOST IMPORTANT: data dubara load karo
+    await loadData();
+
+    onSaveSuccess?.();
+
+  } catch (err) {
+    console.error("Delete error:", err);
+    toast.error(
+      err.response?.data?.message || "❌ Failed to delete data. Please try again."
+    );
+    setShowDeleteAlert(false);
+  }
+};
+
 
   const cancelDelete = () => {
     setShowDeleteAlert(false);
@@ -451,7 +464,7 @@ const Criterion5_3Form = ({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">
-        Loading 5.3. Faculty Cadre Proportion...
+        Loading 5.3. Faculty Qualification...
       </div>
     );
   }
@@ -499,7 +512,7 @@ const Criterion5_3Form = ({
         </div>
       )}
 
-      <GenericCriteriaForm5_3
+      <GenericCriteriaForm5_2
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

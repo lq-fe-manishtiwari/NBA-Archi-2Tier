@@ -1,4 +1,3 @@
-// Criterion5_1Form.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm5_1 from "../Criteria5/GenericCriteriaForm5_1";
 import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
@@ -32,38 +31,12 @@ const Criterion5_1Form = ({
 
   const [initialData, setInitialData] = useState({
     content: {
-      "5.1.1": "",
-      "5.1.2": ""
+      "5.1": ""
     },
     tableData: {
-      lateralEntryCalculation: [
-        {
-          id: "case1",
-          case: "Case 1",
-          firstYear: "",
-          leftover: "",
-          secondYear: "",
-          considered: "",
-          sanctionedIntake: "120"
-        }
-      ],
-      studentFacultyRatio: [
-        {
-          id: "ug1",
-          program: "B.Tech Computer Science & Engineering",
-          type: "ug",
-          year: "CAY",
-          b: "1024", c: "", d: "", total: "1024"
-        }
-      ],
+      sfrCalculation: []
     },
     filesByField: {},
-  });
-
-  const [facultyData, setFacultyData] = useState({
-    df: { cay: "", caym1: "", caym2: "" },
-    af: { cay: "0", caym1: "0", caym2: "0" },
-    ff: { cay: "0", caym1: "0", caym2: "0" }
   });
 
   const [saveLoading, setSaveLoading] = useState(false);
@@ -75,32 +48,110 @@ const Criterion5_1Form = ({
 
   // ---------------- CONFIG ----------------
   const config = {
-    title: "5.1. Student-Faculty Ratio (SFR)",
-    totalMarks: 30,
+    title: "5.1. Student-Faculty Ratio (SFR) (20)",
+    totalMarks: 20,
     fields: [
       {
-        name: "5.1.1",
-        label: "5.1.1: Calculation of number of students admitted in the program though lateral entry or left-over seats",
-        marks: 15,
+        name: "5.1",
+        label: "5.1 Student-Faculty Ratio (SFR) Calculation",
+        marks: 20,
         hasTable: true,
-        tableKey: "lateralEntryCalculation",
+        tableKey: "sfrCalculation",
         tableConfig: {
-          title: "Table No. 5.1.1: Lateral Entry and Leftover Seats Calculation",
-          description: "Calculate the number of students to be considered for SFR (ST) based on lateral entry and leftover seats"
-        },
-      },
-      {
-        name: "5.1.2",
-        label: "5.1.2: Student-Faculty Ratio (SFR) Calculation",
-        marks: 15,
-        hasTable: true,
-        tableKey: "studentFacultyRatio",
-        tableConfig: {
-          title: "Table No. 5.1.2: Student-Faculty Ratio Calculation",
-          description: "Detailed calculation of SFR for UG and PG programs"
+          title: "Table No. 5.1: Student-Faculty Ratio Calculation",
+          description: "Calculate Student-Faculty Ratio for Department Level"
         },
       },
     ],
+  };
+
+  // Helper function to get SFR table structure
+  const getDefaultSFRTable = () => {
+    return [
+      // UG Year-wise breakdown
+      { 
+        id: "u1_1", 
+        category: "u1.1", 
+        label: "UG Year 1 - Program 1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_2", 
+        category: "u1.2", 
+        label: "UG Year 2 - Program 1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_3", 
+        category: "u1.3", 
+        label: "UG Year 3 - Program 1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_4", 
+        category: "u1.4", 
+        label: "UG Year 4 - Program 1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_5", 
+        category: "u1.5", 
+        label: "UG Year 5 - Program 1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "ug1_total", 
+        category: "UG1", 
+        label: "Total UG Students", 
+        type: "total",
+        isCalculated: true,
+        cay: "", caym1: "", caym2: "" 
+      },
+      // PG Programs
+      { 
+        id: "pg_programs", 
+        category: "p1.1", 
+        label: "No. of PG Programs in the Department", 
+        type: "pg",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "total_students", 
+        category: "S", 
+        label: "Total Students in Department (S)", 
+        type: "total",
+        isCalculated: true,
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "faculty_count", 
+        category: "F", 
+        label: "Total Faculty Members (F)", 
+        type: "faculty",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "sfr", 
+        category: "SFR", 
+        label: "Student-Faculty Ratio (S/F)", 
+        type: "sfr",
+        isCalculated: true,
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "average_sfr", 
+        category: "Average SFR", 
+        label: "Average SFR (3 years)", 
+        type: "average",
+        isCalculated: true,
+        cay: "", caym1: "", caym2: "" 
+      },
+    ];
   };
 
   // ---------------- LOAD DATA ----------------
@@ -111,29 +162,18 @@ const Criterion5_1Form = ({
       return;
     }
 
-    // Determine which staff ID to use - other_staff_id has priority, fallback to current user
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
     const staffIdToUse = other_staff_id || userInfo?.rawData?.other_staff_id || userInfo2?.other_staff_id;
     
     console.log("🎯 Criterion5_1Form - Final staffId:", staffIdToUse);
-    console.log("🎯 Criterion5_1Form - other_staff_id prop:", other_staff_id);
-    console.log("🎯 Criterion5_1Form - userInfo staff ID:", userInfo?.rawData?.other_staff_id);
-    console.log("🎯 Criterion5_1Form - userInfo2 staff ID:", userInfo2?.other_staff_id);
 
     if (!staffIdToUse) {
       console.log("❌ Criterion5_1Form - No staffId found, using empty data");
       setInitialData({
-        content: { "5.1.1": "", "5.1.2": "" },
+        content: { "5.1": "" },
         tableData: {
-          lateralEntryCalculation: [{
-            id: "case1", case: "Case 1", firstYear: "", leftover: "",
-            secondYear: "", considered: "", sanctionedIntake: "120"
-          }],
-          studentFacultyRatio: [{
-            id: "ug1", program: "B.Tech Computer Science & Engineering",
-            type: "ug", year: "CAY", b: "", c: "", d: "", total: ""
-          }]
+          sfrCalculation: getDefaultSFRTable()
         },
         filesByField: {}
       });
@@ -150,7 +190,6 @@ const Criterion5_1Form = ({
       const response = await newnbaCriteria5Service.getCriteria5_1_Data(cycle_sub_category_id, staffIdToUse);
       console.log("📊 Criterion5_1Form - Raw API Response:", response);
       
-      // Handle both array and single object responses
       let data = {};
       if (Array.isArray(response?.data)) {
         data = response.data.find(item => item && (item.sfr_id || item.criteria5_1_id || item.id)) || {};
@@ -160,20 +199,10 @@ const Criterion5_1Form = ({
         data = Array.isArray(response) ? (response.find(item => item && (item.sfr_id || item.criteria5_1_id || item.id)) || {}) : response;
       }
 
-      console.log("📡 Fetching data from API...");
-      const res = await newnbaCriteria5Service.getCriteria5_1_Data(cycle_sub_category_id, other_staff_id);
-      console.log("📥 API Response:", res);
-
-      // Handle both array and object responses
-      const rawData = res?.data || res || [];
-      const d = Array.isArray(rawData) && rawData.length > 0 ? rawData[0] : rawData;
-      console.log("📊 Raw data:", rawData);
-      console.log("📊 Parsed data:", d);
-
-      if (d.sfr_id || d.criteria5_1_id || d.id) {
-        const newRecordId = d.sfr_id || d.criteria5_1_id || d.id;
+      if (data.sfr_id || data.criteria5_1_id || data.id) {
+        const newRecordId = data.sfr_id || data.criteria5_1_id || data.id;
         setRecordId(newRecordId);
-        console.log("✅ Record ID set to:", newRecordId, "(sfr_id:", d.sfr_id, ")");
+        console.log("✅ Record ID set to:", newRecordId);
 
         const statusData = cardItem || data;
         if (statusData.approval_status) {
@@ -197,108 +226,45 @@ const Criterion5_1Form = ({
           });
         }
         
-        // Parse existing data
-        let lateralData = [];
-        let sfrData = [];
+        // Parse SFR table data
+        let sfrTableData = getDefaultSFRTable();
         let filesByField = {};
 
-        // Handle lateral entry data
-        if (data.lateral_entry_table && Array.isArray(data.lateral_entry_table)) {
-          lateralData = data.lateral_entry_table.map((entry, index) => ({
-            id: `case-${index + 1}`,
-            case: entry.case_name || `Case ${index + 1}`,
-            firstYear: entry.first_year_students || "",
-            leftover: entry.leftover_students || "",
-            secondYear: entry.second_year_students || "",
-            considered: entry.students_considered || "",
-            sanctionedIntake: entry.sanctioned_intake || "120"
-          }));
-          console.log("📊 Loaded lateral entry data from API:", lateralData);
-        } else if (data.lateral_calculation_rows) {
-          try {
-            lateralData = typeof data.lateral_calculation_rows === 'string'
-              ? JSON.parse(data.lateral_calculation_rows)
-              : data.lateral_calculation_rows;
-          } catch (e) {
-            lateralData = [];
-          }
-        }
-
-        // Handle SFR data
-        if (data.sfr_calculation_table && Array.isArray(data.sfr_calculation_table)) {
-          sfrData = data.sfr_calculation_table.map((calc, index) => ({
-            id: `${calc.program_type || 'ug'}-${index + 1}`,
-            program: calc.program_name || "B.Tech Computer Science & Engineering",
-            type: calc.program_type || "ug",
-            year: calc.year || "CAY",
-            b: calc.column_b || "",
-            c: calc.column_c || "",
-            d: calc.column_d || "",
-            total: calc.total || ""
-          }));
-          console.log("📊 Loaded SFR calculation data from API:", sfrData);
-        } else if (data.sfr_calculation_rows) {
-          try {
-            sfrData = typeof data.sfr_calculation_rows === 'string'
-              ? JSON.parse(data.sfr_calculation_rows)
-              : data.sfr_calculation_rows;
-          } catch (e) {
-            sfrData = [];
-          }
+        // Handle SFR table data
+        if (data.sfr_table && Array.isArray(data.sfr_table)) {
+          data.sfr_table.forEach(row => {
+            const existingRow = sfrTableData.find(r => r.category === row.category);
+            if (existingRow) {
+              existingRow.cay = row.cay || "";
+              existingRow.caym1 = row.caym1 || "";
+              existingRow.caym2 = row.caym2 || "";
+            }
+          });
         }
 
         // Handle files
         if (data.sfr_supporting_documents && Array.isArray(data.sfr_supporting_documents)) {
           data.sfr_supporting_documents.forEach(doc => {
-            const fieldName = doc.field_name || "5.1.1";
+            const fieldName = doc.field_name || "5.1";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
             }
             filesByField[fieldName].push({
               id: `file-${Date.now()}-${Math.random()}`,
               filename: doc.file_name,
-              s3Url: doc.s3_url, // Fixed: use s3_url instead of file_url
+              s3Url: doc.s3_url || doc.file_url,
               description: doc.description || "",
               uploading: false
             });
           });
-          console.log("📁 Loaded files from API:", filesByField);
-        } else if (data.files_by_field) {
-          try {
-            filesByField = typeof data.files_by_field === 'string'
-              ? JSON.parse(data.files_by_field)
-              : data.files_by_field;
-          } catch (e) {
-            filesByField = {};
-          }
-        }
-
-        // Handle faculty data (old format)
-        if (data.faculty_data && !data.sfr_calculation_table) {
-          try {
-            const parsedFaculty = typeof data.faculty_data === 'string'
-              ? JSON.parse(data.faculty_data)
-              : data.faculty_data;
-            setFacultyData(parsedFaculty);
-          } catch (e) {
-            // ignore
-          }
         }
 
         setInitialData({
           content: {
-            "5.1.1": data.description_5_1_1 || data.sfr_description || "",
-            "5.1.2": data.description_5_1_2 || ""
+            "5.1": data.description_5_1 || data.sfr_description || ""
           },
           tableData: {
-            lateralEntryCalculation: lateralData.length > 0 ? lateralData : [{
-              id: "case1", case: "Case 1", firstYear: "", leftover: "",
-              secondYear: "", considered: "", sanctionedIntake: "120"
-            }],
-            studentFacultyRatio: sfrData.length > 0 ? sfrData : [{
-              id: "ug1", program: "B.Tech Computer Science & Engineering",
-              type: "ug", year: "CAY", b: "", c: "", d: "", total: ""
-            }]
+            sfrCalculation: sfrTableData
           },
           filesByField: filesByField
         });
@@ -307,16 +273,9 @@ const Criterion5_1Form = ({
         setApprovalStatus(null);
         setContributorName("");
         setInitialData({
-          content: { "5.1.1": "", "5.1.2": "" },
+          content: { "5.1": "" },
           tableData: {
-            lateralEntryCalculation: [{
-              id: "case1", case: "Case 1", firstYear: "", leftover: "",
-              secondYear: "", considered: "", sanctionedIntake: "120"
-            }],
-            studentFacultyRatio: [{
-              id: "ug1", program: "B.Tech Computer Science & Engineering",
-              type: "ug", year: "CAY", b: "", c: "", d: "", total: ""
-            }]
+            sfrCalculation: getDefaultSFRTable()
           },
           filesByField: {}
         });
@@ -327,16 +286,9 @@ const Criterion5_1Form = ({
       toast.error("Failed to load saved data");
       // Set defaults on error
       setInitialData({
-        content: { "5.1.1": "", "5.1.2": "" },
+        content: { "5.1": "" },
         tableData: {
-          lateralEntryCalculation: [{
-            id: "case1", case: "Case 1", firstYear: "", leftover: "",
-            secondYear: "", considered: "", sanctionedIntake: "120"
-          }],
-          studentFacultyRatio: [{
-            id: "ug1", program: "B.Tech Computer Science & Engineering",
-            type: "ug", year: "CAY", b: "", c: "", d: "", total: ""
-          }]
+          sfrCalculation: getDefaultSFRTable()
         },
         filesByField: {}
       });
@@ -356,7 +308,7 @@ const Criterion5_1Form = ({
   }, [loadData, cycle_sub_category_id, other_staff_id]);
 
   // ---------------- SAVE DATA ----------------
-  const handleSave = async (formData, facultyDataFromComponent = null) => {
+  const handleSave = async (formData) => {
     if (!isEditable) {
       toast.error("You don't have permission to edit");
       return;
@@ -365,27 +317,14 @@ const Criterion5_1Form = ({
     setSaveLoading(true);
     try {
       // Transform UI data to API format
-      const currentFacultyData = facultyDataFromComponent || facultyData;
-      
-      // Transform lateral entry data
-      const lateral_entry_table = formData.tableData?.lateralEntryCalculation?.map(row => ({
-        case_name: row.case || "",
-        first_year_students: row.firstYear || "",
-        leftover_students: row.leftover || "",
-        second_year_students: row.secondYear || "",
-        students_considered: row.considered || "",
-        sanctioned_intake: row.sanctionedIntake || ""
-      })) || [];
-
-      // Transform SFR calculation data
-      const sfr_calculation_table = formData.tableData?.studentFacultyRatio?.map(row => ({
-        program_name: row.program || "",
-        program_type: row.type || "",
-        year: row.year || "",
-        column_b: row.b || "",
-        column_c: row.c || "",
-        column_d: row.d || "",
-        total: row.total || ""
+      const sfr_table = formData.tableData?.sfrCalculation?.map(row => ({
+        category: row.category,
+        label: row.label,
+        type: row.type,
+        cay: row.cay || "",
+        caym1: row.caym1 || "",
+        caym2: row.caym2 || "",
+        isCalculated: row.isCalculated || false
       })) || [];
 
       // Transform supporting documents
@@ -404,7 +343,8 @@ const Criterion5_1Form = ({
           });
         });
       }
-  const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
     
       const staffId = userInfo?.rawData?.other_staff_id || userInfo2?.other_staff_id;
@@ -412,12 +352,9 @@ const Criterion5_1Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(cycle_sub_category_id),
-        description_5_1_1: formData.content?.["5.1.1"] || "",
-        description_5_1_2: formData.content?.["5.1.2"] || "",
-        lateral_entry_table,
-        sfr_calculation_table,
-        sfr_supporting_documents,
-        faculty_data: JSON.stringify(currentFacultyData || [])
+        description_5_1: formData.content?.["5.1"] || "",
+        sfr_table,
+        sfr_supporting_documents
       };
 
       console.log("🚀 Saving payload:", payload);
@@ -443,41 +380,15 @@ const Criterion5_1Form = ({
         setSuccessMessage("Section created successfully!");
       }
 
-      // ✅ IMMEDIATELY UPDATE LOCAL STATE with the saved data
-      // This ensures files and data are shown without reloading
-      const updatedFilesByField = {};
-      
-      Object.keys(formData.filesByField || {}).forEach(field => {
-        const files = formData.filesByField[field] || [];
-        updatedFilesByField[field] = files.map(file => {
-          // Find matching file in payload
-          const savedFile = payload.sfr_supporting_documents?.find(
-            f => f.id === file.id || f.filename === (file.filename || file.file?.name)
-          );
-          
-          return {
-            ...file,
-            s3Url: savedFile?.url || file.s3Url || file.url || "",
-            // ✅ CRITICAL: Ensure 'url' field is also set for GenericCriteriaForm
-            url: savedFile?.url || file.s3Url || file.url || "",
-            filename: savedFile?.filename || file.filename || file.file?.name || "",
-            uploading: false
-          };
-        });
+      // Update initialData state immediately
+      setInitialData({
+        content: formData.content,
+        tableData: formData.tableData,
+        filesByField: formData.filesByField || {}
       });
 
-      // Update initialData state immediately
-      setInitialData(prev => ({
-        ...prev,
-        content: formData.content,
-        tableData: formData.tableData || prev.tableData,
-        filesByField: updatedFilesByField
-      }));
-
       setShowSuccessAlert(true);
-
       onSaveSuccess?.();
-      // Still call loadData to ensure full sync, but data is already visible
       loadData();
     } catch (err) {
       console.error("Save failed:", err);
@@ -489,12 +400,9 @@ const Criterion5_1Form = ({
 
   // ---------------- DELETE DATA ----------------
   const handleDelete = async () => {
-    // Use sfr_id for delete operations
     const idToDelete = recordId;
     
-    console.log("🗑️ Delete function called:");
-    console.log("  - recordId:", recordId);
-    console.log("  - idToDelete:", idToDelete);
+    console.log("🗑️ Delete function called:", idToDelete);
   
     if (!idToDelete) {
       console.warn("⚠️ No ID available for deletion");
@@ -514,59 +422,23 @@ const Criterion5_1Form = ({
   
       toast.success("✅ Section data deleted successfully!");
   
-      // 🔥 RESET EVERYTHING IMMEDIATELY
+      // Reset everything
       setRecordId(null);
       setApprovalStatus(null);
       setContributorName("");
   
-      // 🔥 Reset faculty data
-      setFacultyData({
-        df: { cay: "0", caym1: "0", caym2: "0" },
-        af: { cay: "0", caym1: "0", caym2: "0" },
-        ff: { cay: "0", caym1: "0", caym2: "0" }
-      });
-  
-      // 🔥 Reset form data instantly
       setInitialData({
-        content: {
-          "5.1.1": "",
-          "5.1.2": ""
-        },
+        content: { "5.1": "" },
         tableData: {
-          lateralEntryCalculation: [
-            {
-              id: "case1",
-              case: "Case 1",
-              firstYear: "",
-              leftover: "",
-              secondYear: "",
-              considered: "",
-              sanctionedIntake: "120"
-            }
-          ],
-          studentFacultyRatio: [
-            {
-              id: "ug1",
-              program: "B.Tech Computer Science & Engineering",
-              type: "ug",
-              year: "CAY",
-              b: "",
-              c: "",
-              d: "",
-              total: ""
-            }
-          ]
+          sfrCalculation: getDefaultSFRTable()
         },
         filesByField: {}
       });
   
       setShowDeleteAlert(false);
-  
-      // 🔥 Force sync with backend (safety)
       await loadData();
-  
       onSaveSuccess?.();
-  
+
     } catch (err) {
       console.error("Delete error:", err);
       toast.error(
@@ -581,11 +453,6 @@ const Criterion5_1Form = ({
   const cancelDelete = () => {
     setShowDeleteAlert(false);
     toast.info("Delete operation cancelled.");
-  };
-
-  // Handle save from GenericCriteriaForm5_1 with faculty data
-  const handleGenericSave = (formData, facultyDataFromComponent) => {
-    handleSave(formData, facultyDataFromComponent);
   };
 
   // ---------------- UI ----------------
@@ -622,10 +489,8 @@ const Criterion5_1Form = ({
         saving={saveLoading}
         isCompleted={false}
         isContributorEditable={isEditable}
-        onSave={handleGenericSave}
+        onSave={handleSave}
         onDelete={handleDelete}
-        facultyData={facultyData}
-        onFacultyDataChange={setFacultyData}
       />
       
       {showDeleteAlert && (
