@@ -39,18 +39,18 @@ const Criterion9_3Form = ({
   }, []);
 
   const config = {
-    title: "9.3. Feedback Analysis (20)",
-    totalMarks: 20,
+    title: "9.3 Library and Internet (30)",
+    totalMarks: 30,
     fields: [
       {
-        name: "feedback_on_teaching_learning",
-        label: "9.3.1. Feedback on Teaching and Learning Process and Corrective Measures Taken, if any (10)",
-        marks: 10,
+        name: "quality_learning_resource",
+        label: "9.3.1. Quality of Learning Resource (hard/soft) (20)",
+        marks: 20,
         type: "textarea"
       },
       {
-        name: "feedback_on_academic_facilities",
-        label: "9.3.2. Feedback on Academic Facilities (10)",
+        name: "internet",
+        label: "9.3.2. Internet (10)",
         marks: 10,
         type: "textarea"
       }
@@ -86,8 +86,8 @@ const Criterion9_3Form = ({
         console.log("❌ Criterion9_3Form - No staffId found, using empty data");
         setInitialData({
           content: {
-            feedback_on_teaching_learning: "",
-            feedback_on_academic_facilities: ""
+            quality_learning_resource: "",
+            internet: ""
           },
           tableData: [],
           filesByField: {}
@@ -155,9 +155,9 @@ const Criterion9_3Form = ({
           : [];
 
         const filesByField = {
-          "feedback_on_teaching_learning": filesArray.filter(f => f.category === 'teaching_learning').length > 0
-            ? filesArray.filter(f => f.category === 'teaching_learning').map((f, i) => ({
-                id: f.id || `file-teaching-${i}`,
+          "quality_learning_resource": filesArray.filter(f => f.category === 'quality_learning_resource').length > 0
+            ? filesArray.filter(f => f.category === 'quality_learning_resource').map((f, i) => ({
+                id: f.id || `file-quality-${i}`,
                 filename: f.filename || f.name || "",
                 s3Url: f.url || f.filePath || "",
                 // ✅ IMPORTANT: Add 'url' field for GenericCriteriaForm to recognize the file
@@ -166,7 +166,7 @@ const Criterion9_3Form = ({
                 uploading: false
               }))
             : [{
-                id: `file-teaching-0`,
+                id: `file-quality-0`,
                 description: "",
                 file: null,
                 filename: "",
@@ -174,9 +174,9 @@ const Criterion9_3Form = ({
                 url: "", // ✅ Add empty url field
                 uploading: false
               }],
-          "feedback_on_academic_facilities": filesArray.filter(f => f.category === 'academic_facilities').length > 0
-            ? filesArray.filter(f => f.category === 'academic_facilities').map((f, i) => ({
-                id: f.id || `file-facilities-${i}`,
+          "internet": filesArray.filter(f => f.category === 'internet').length > 0
+            ? filesArray.filter(f => f.category === 'internet').map((f, i) => ({
+                id: f.id || `file-internet-${i}`,
                 filename: f.filename || f.name || "",
                 s3Url: f.url || f.filePath || "",
                 // ✅ IMPORTANT: Add 'url' field for GenericCriteriaForm to recognize the file
@@ -185,7 +185,7 @@ const Criterion9_3Form = ({
                 uploading: false
               }))
             : [{
-                id: `file-facilities-0`,
+                id: `file-internet-0`,
                 description: "",
                 file: null,
                 filename: "",
@@ -197,8 +197,8 @@ const Criterion9_3Form = ({
 
         setInitialData({
           content: {
-            feedback_on_teaching_learning: dataItem.feedback_on_teaching_learning || "",
-            feedback_on_academic_facilities: dataItem.feedback_on_academic_facilities || ""
+            quality_learning_resource: dataItem.quality_learning_resource || "",
+            internet: dataItem.internet || ""
           },
           tableData: [],
           filesByField: filesByField
@@ -213,13 +213,13 @@ const Criterion9_3Form = ({
         
         setInitialData({
           content: {
-            feedback_on_teaching_learning: "",
-            feedback_on_academic_facilities: ""
+            quality_learning_resource: "",
+            internet: ""
           },
           tableData: [],
           filesByField: {
-            "feedback_on_teaching_learning": [{
-              id: `file-teaching-0`,
+            "quality_learning_resource": [{
+              id: `file-quality-0`,
               description: "",
               file: null,
               filename: "",
@@ -227,8 +227,8 @@ const Criterion9_3Form = ({
               url: "", // ✅ Add empty url field
               uploading: false
             }],
-            "feedback_on_academic_facilities": [{
-              id: `file-facilities-0`,
+            "internet": [{
+              id: `file-internet-0`,
               description: "",
               file: null,
               filename: "",
@@ -262,13 +262,13 @@ const Criterion9_3Form = ({
       // Initialize empty data for new entry
       setInitialData({
         content: {
-          feedback_on_teaching_learning: "",
-          feedback_on_academic_facilities: ""
+          quality_learning_resource: "",
+          internet: ""
         },
         tableData: [],
         filesByField: {
-          "feedback_on_teaching_learning": [{
-            id: `file-teaching-0`,
+          "quality_learning_resource": [{
+            id: `file-quality-0`,
             description: "",
             file: null,
             filename: "",
@@ -276,8 +276,8 @@ const Criterion9_3Form = ({
             url: "", // ✅ Add empty url field
             uploading: false
           }],
-          "feedback_on_academic_facilities": [{
-            id: `file-facilities-0`,
+          "internet": [{
+            id: `file-internet-0`,
             description: "",
             file: null,
             filename: "",
@@ -344,7 +344,7 @@ const Criterion9_3Form = ({
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: field === 'feedback_on_teaching_learning' ? 'teaching_learning' : 'academic_facilities',
+            category: field === 'quality_learning_resource' ? 'quality_learning_resource' : 'internet',
           }))
       );
 
@@ -352,8 +352,8 @@ const Criterion9_3Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        feedback_on_teaching_learning: formData.content?.feedback_on_teaching_learning || "",
-        feedback_on_academic_facilities: formData.content?.feedback_on_academic_facilities || "",
+        quality_learning_resource: formData.content?.quality_learning_resource || "",
+        internet: formData.content?.internet || "",
         supporting_documents: filesWithCategory
           .filter((f) => f.url || f.s3Url)
           .map((f) => ({
@@ -489,7 +489,7 @@ const Criterion9_3Form = ({
                 confirmBtnText="OK"
                 onConfirm={() => setAlert(null)}
               >
-                Feedback Analysis record deleted successfully
+                Library and Internet record deleted successfully
               </SweetAlert>
             );
             await loadData();
