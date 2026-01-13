@@ -119,11 +119,14 @@ const Criterion4_2Form = ({
         lygm2: row.no_of_students_admitted || row.lygm2 || "",
       })) : [];
 
+      // Provide filesByField matching GenericCriteriaForm4_2 expectations (4.2.1 & 4.2.2)
       setInitialData({
         content: { "4.2": d.quality_processes_description || "" },
-        tableData,
+        tableData421: tableData,
+        tableData422: [],
         filesByField: {
-          "4.2": files.length > 0 ? files : [{ id: `file-4.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.2.1": [{ id: `file-4.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "4.2.2": [{ id: `file-4.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } catch (err) {
@@ -131,9 +134,11 @@ const Criterion4_2Form = ({
       setRecordId(null);
       setInitialData({
         content: { "4.2": "" },
-        tableData: [],
+        tableData421: [],
+        tableData422: [],
         filesByField: {
-          "4.2": [{ id: `file-4.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.2.1": [{ id: `file-4.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "4.2.2": [{ id: `file-4.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } finally {
@@ -185,11 +190,19 @@ const Criterion4_2Form = ({
       userInfo.user_id ||
       userInfoo?.other_staff_id;
 
+      // Normalize incoming formData (GenericCriteriaForm4_2 sends { tableData421, tableData422, filesByField })
+      const incomingFiles = [
+        ...(formData.filesByField?.["4.2.1"] || []),
+        ...(formData.filesByField?.["4.2.2"] || []),
+      ];
+
+      const incomingTable = formData.tableData421 || formData.tableData || [];
+
       const payload = {
         cycle_sub_category_id,
         other_staff_id: staffId,
-        cri42_success_rate_document : transformFiles(formData.filesByField["4.2"]),
-        cri42_success_rate_table : transformTableData(formData.tableData),
+        cri42_success_rate_document: transformFiles(incomingFiles),
+        cri42_success_rate_table: transformTableData(incomingTable),
       };
 
       console.log("Payload to API:", payload);

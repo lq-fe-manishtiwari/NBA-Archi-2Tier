@@ -11,6 +11,7 @@ import Criterion4_4Form from "./Criterion4_4Form";
 import Criterion4_5Form from "./Criterion4_5Form";
 import Criterion4_6Form from "./Criterion4_6Form";
 import Criterion4_7Form from "./Criterion4_7Form";
+import Criterion4_8Form from "./Criterion4_8Form";
 
 const CriterionForm4 = ({
   section,
@@ -43,6 +44,7 @@ const CriterionForm4 = ({
     "4.5": Criterion4_5Form,
     "4.6": Criterion4_6Form,
     "4.7": Criterion4_7Form,
+    "4.8": Criterion4_8Form
   };
 
   const Component = SECTION_COMPONENT_MAP[section];
