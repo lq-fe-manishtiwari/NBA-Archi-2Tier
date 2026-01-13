@@ -1,9 +1,8 @@
-// src/screens/pages/NEWNBA/Components/Criteria4/Criterion4_6Form.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm4_6 from "./GenericCriteriaForm4_6";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
+import GenericCardWorkflow from "../GenericCardWorkflow";
 
 const Criterion4_6Form = ({
   cycle_sub_category_id,
@@ -16,7 +15,7 @@ const Criterion4_6Form = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [placementId, setPlacementId] = useState(null);
+  const [secondYearStudentsId, setSecondYearStudentsId] = useState(null);
   const [isContributor, setIsContributor] = useState(false);
 
   const [initialData, setInitialData] = useState({
@@ -28,56 +27,74 @@ const Criterion4_6Form = ({
   const [alert, setAlert] = useState(null);
   const [cardData, setCardData] = useState([]);
   const [cardLoading, setCardLoading] = useState(false);
-  
 
-  // Helper function to get row labels
+  // Helper function to get row labels (matching the image)
   const getRowLabel = (index) => {
     const labels = [
-      "FS* =Total no. of final year students",
-      "X= No. of students placed",
-      "Y= No. of students admitted to higher studies",
-      "Z= No. of students taking up entrepreneurship",
-      "X + Y + Z =",
-      "Placement Index (P) = (((X + Y + Z)/FS) * 100)",
-      "Average placement index = (P_1 + P_2 + P_3)/3"
+      "(Mean of 2nd year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 2nd year/10) (X)",
+      "Total no. of successful students (Y)",
+      "Total no. of students appeared in the examination (Z)",
+      "API = X * (Y/Z)",
+      "Average API = (AP1 + AP2 + AP3)/3"
     ];
     return labels[index] || "";
   };
 
   // ---------------- CONFIG ----------------
   const config = {
-    title:
-      "4.6. Placement, Higher Studies and Entrepreneurship",
-    totalMarks: 30,
+    title: "4.6. Academic Performance in Second Year (10)",
+    totalMarks: 10,
     fields: [
       {
         name: "4.6",
-        label: "4.6 Placement, Higher Studies and Entrepreneurship",
-        marks: 30,
+        label: "4.6 Academic Performance in Second Year",
+        marks: 10,
         hasTable: true,
-          tableConfig: {
-            title: "Teaching-Learning Activities",
-            columns: [
-              { field: "item", header: "Item", placeholder: "" },
-              { field: "lyg", header: "LYG", placeholder: "" },
-              { field: "lygm1", header: "LYGm1", placeholder: "" },
-              { field: "lygm2", header: "LYGm2", placeholder: "" },
-            ],
-            predefinedRows: [
-            { item: "FS* =Total no. of final year students" },
-            { item: "X= No. of students placed" },
-            { item: "Y= No. of students admitted to higher studies" },
-            { item: "Z= No. of students taking up entrepreneurship" },
-            { item: "X + Y + Z =" },
-            { item: "Placement Index (P) = (((X + Y + Z)/FS) * 100) " },
-            { item: "Average placement index = (P_1 + P_2 + P_3)/3" },
+        tableConfig: {
+          title: "Academic Performance in Second Year",
+          columns: [
+            { field: "item", header: "Academic Performance", placeholder: "" },
+            { field: "caym1", header: "CAYm1", placeholder: "" },
+            { field: "caym2", header: "CAYm2", placeholder: "" },
+            { field: "caym3", header: "CAYm3", placeholder: "" },
           ],
-          },
+        },
+        predefinedRows: [
+          { item: "(Mean of 2nd year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 2nd year/10) (X)" },
+          { item: "Total no. of successful students (Y)" },
+          { item: "Total no. of students appeared in the examination (Z)" },
+          { item: "API = X * (Y/Z)" },
+          { item: "Average API = (AP1 + AP2 + AP3)/3" },
+        ],
       },
     ],
   };
 
-  // ---------------- LOAD DATA (Same as 2.1) ----------------
+  // Load contributors data for card view
+  const loadContributorsData = async () => {
+    if (!showCardView || !cycle_sub_category_id) return;
+    
+    setCardLoading(true);
+    try {
+      const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_6_Data?.(cycle_sub_category_id);
+      setCardData(contributorsResponse || []);
+    } catch (err) {
+      console.error("Failed to load contributors data:", err);
+      setCardData([]);
+    } finally {
+      setCardLoading(false);
+    }
+  };
+
+  // Load data from API
+  useEffect(() => {
+    loadData();
+    if (showCardView) {
+      loadContributorsData();
+    }
+  }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
+
+  // ---------------- LOAD DATA ----------------
   const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) return setLoading(false);
 
@@ -95,29 +112,27 @@ const Criterion4_6Form = ({
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
 
-      setPlacementId(d.cri46_higher_studies_id || null);
+      setSecondYearStudentsId(d.cri46_second_year_students_id || null);
 
       // Transform table data from API response
-      const transformedTableData = d.cri46_higher_studies_table ? 
-        d.cri46_higher_studies_table.map((row, index) => ({
+      const transformedTableData = d.cri46_second_year_students_table ? 
+        d.cri46_second_year_students_table.map((row, index) => ({
           id: `row-${Date.now()}-${index}`,
           item: getRowLabel(index),
-          lyg: row.lyg || "",
-          lygm1: row.lygm1 || "",
-          lygm2: row.lygm2 || ""
+          caym1: row.caym1 || "",
+          caym2: row.caym2 || "",
+          caym3: row.caym3 || ""
         })) : [];
 
       setInitialData({
         content: { "4.6": "" },
         tableData: transformedTableData,
         filesByField: {
-          "4.6": (d.cri46_higher_studies_document || []).length > 0
-            ? (d.cri46_higher_studies_document || []).map((f, i) => ({
+          "4.6": (d.cri46_second_year_students_document || []).length > 0
+            ? (d.cri46_second_year_students_document || []).map((f, i) => ({
                 id: `file-4.6-${i}`,
-                name: f.name || f.file_name || "",
-                filename: f.name || f.file_name || "",
-                url: f.url || f.file_url || "",
-                s3Url: f.url || f.file_url || "",
+                filename: f.file_name || f.name || "",
+                s3Url: f.file_url || f.url || "",
                 description: f.description || "",
                 uploading: false
               }))
@@ -127,7 +142,7 @@ const Criterion4_6Form = ({
     } catch (err) {
       console.warn("Load failed:", err);
 
-      setPlacementId(null);
+      setSecondYearStudentsId(null);
       setInitialData({
         content: { "4.6": "" },
         tableData: [],
@@ -140,131 +155,102 @@ const Criterion4_6Form = ({
     }
   }, [cycle_sub_category_id, otherStaffId]);
 
-  const loadContributorsData = async () => {
-      if (!showCardView || !cycle_sub_category_id) return;
-      
-      setCardLoading(true);
-      try {
-        const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_6_Data?.(cycle_sub_category_id);
-        setCardData(contributorsResponse || []);
-      } catch (err) {
-        console.error("Failed to load contributors data:", err);
-        setCardData([]);
-      } finally {
-        setCardLoading(false);
-      }
-    };
-  
-    // Load data from API
-      useEffect(() => {
-        loadData();
-        if (showCardView) {
-          loadContributorsData();
-        }
-      }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
+  // ---------------- TRANSFORM TABLE INTO REQUIRED PAYLOAD ----------------
+  const transformAcademicPerformance = (table) => {
+    const rowKeys = ["Xrow", "Yrow", "Zrow", "api", "averageApi"];
+    
+    return table.map((row, i) => {
+      const key = rowKeys[i];
+      if (!key) return null;
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const tablePayload = (formData) => {
-  const rowKeys = ["FSrow", "Xrow", "Yrow", "Zrow", "total", "placement_index", "average"];
-  
-  return formData.tableData.map((row, i) => {
-    const key = rowKeys[i];
-    if (!key) return null;
-
-    return {
-      row_type: key,
-      lyg: row.lyg || "",
-      lygm1: row.lygm1 || "",
-      lygm2: row.lygm2 || ""
-    };
-  }).filter(Boolean);
-};
- 
-const DocumentPayload = (formData) => {
-  return Object.keys(formData.filesByField || {}).flatMap((field) =>
-    (formData.filesByField[field] || [])
-      .filter(file => (file.s3Url || file.url) && file.filename)
-      .map((file) => ({
-        name: file.filename,
-        description: file.description || "",
-        url: file.s3Url || file.url
-      }))
-  );
-};
-
-
+      return {
+        row_type: key,
+        caym1: row.caym1 || "",
+        caym2: row.caym2 || "",
+        caym3: row.caym3 || ""
+      };
+    }).filter(Boolean);
+  };
 
   // ---------------- SAVE DATA ----------------
-const handleSave = async (formData) => {
-  setSaving(true);
-  
-  console.log("Criterion4_6Form handleSave - received formData:", formData);
+  const handleSave = async (formData) => {
+    setSaving(true);
 
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+    try {
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
+        (field) =>
+          (formData.filesByField[field] || []).map((file) => ({
+            ...file,
+            category: "Students' Performance - Second Year",
+          }))
+      );
 
-    const cri46_higher_studies_table = tablePayload(formData);
-    const cri46_higher_studies_document = DocumentPayload(formData);
-    
-    console.log("Files being processed:", formData.filesByField);
-    console.log("Document payload:", cri46_higher_studies_document);
+      const cri46_second_year_students_document = filesWithCategory
+        .filter((f) => {
+          const hasUrl = f.s3Url && f.s3Url.trim() !== "";
+          return hasUrl;
+        })
+        .map((f) => ({
+          file_name: f.filename,
+          file_url: f.s3Url,
+          description: f.description || ""
+        }));
 
-    const payload = {
-      other_staff_id: staffId,
-      cycle_sub_category_id: cycle_sub_category_id,
-      cri46_higher_studies_table,
-      cri46_higher_studies_document
-    };
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-    console.log("FINAL API CALL → payload:", payload);
+      const cri46_second_year_students_table = transformAcademicPerformance(formData.tableData);
 
-    if (placementId) {
-      await newnbaCriteria4Service.putCriteria4_6_Data(placementId, payload);
-    } else {
-      await newnbaCriteria4Service.saveCriteria4_6_Data(payload);
-    }
+      const payload = {
+        other_staff_id: staffId,
+        cycle_sub_category_id: cycle_sub_category_id,
+        cri46_second_year_students_table,
+        cri46_second_year_students_document
+      };
 
-    setAlert(
-          <SweetAlert
-            success
-            title="Saved!"
-            confirmBtnCssClass="btn-confirm"
-            confirmBtnText="OK"
-            onConfirm={() => setAlert(null)}
-          >
-            Criterion 4.6 saved successfully
-          </SweetAlert>
-        );
+      if (secondYearStudentsId) {
+        await newnbaCriteria4Service.putCriteria4_6_Data(secondYearStudentsId, payload);
+      } else {
+        await newnbaCriteria4Service.saveCriteria4_6_Data(payload);
+      }
 
-    onSaveSuccess?.();
-    loadData();
-
-  } catch (err) {
-    console.error(err);
       setAlert(
-          <SweetAlert
-            danger
-            title="Save Failed"
-            confirmBtnCssClass="btn-confirm"
-            confirmBtnText="OK"
-            onConfirm={() => setAlert(null)}
-          >
-            Something went wrong while saving
-          </SweetAlert>
-        );
-  } finally {
-    setSaving(false);
-  }
-};
+        <SweetAlert
+          success
+          title="Saved!"
+          confirmBtnCssClass="btn-confirm"
+          confirmBtnText="OK"
+          onConfirm={() => setAlert(null)}
+        >
+          Criterion 4.6 saved successfully
+        </SweetAlert>
+      );
 
-  // ---------------- DELETE DATA (Same as 2.1) ----------------
+      onSaveSuccess?.();
+      loadData();
+    } catch (err) {
+      console.error("Save failed:", err);
+
+      setAlert(
+        <SweetAlert
+          danger
+          title="Save Failed"
+          confirmBtnCssClass="btn-confirm"
+          confirmBtnText="OK"
+          onConfirm={() => setAlert(null)}
+        >
+          Something went wrong while saving
+        </SweetAlert>
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ---------------- DELETE DATA ----------------
   const handleDelete = async () => {
-    if (!placementId) {
+    if (!secondYearStudentsId) {
       setAlert(
         <SweetAlert
           info
@@ -292,9 +278,7 @@ const handleSave = async (formData) => {
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_6Data(
-              placementId
-            );
+            const res = await newnbaCriteria4Service.deleteCriteria4_6Data(secondYearStudentsId);
 
             let message = "Criterion 4.6 deleted successfully.";
             if (typeof res === "string") message = res;
@@ -312,7 +296,7 @@ const handleSave = async (formData) => {
               </SweetAlert>
             );
 
-            setPlacementId(null);
+            setSecondYearStudentsId(null);
             loadData();
             onSaveSuccess?.();
           } catch (err) {
@@ -333,7 +317,7 @@ const handleSave = async (formData) => {
         }}
         onCancel={() => setAlert(null)}
       >
-        You won’t be able to revert this!
+        You won't be able to revert this!
       </SweetAlert>
     );
   };
@@ -347,8 +331,6 @@ const handleSave = async (formData) => {
     );
   }
 
-   console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
-
   // Show card view for coordinators
   if (showCardView) {
     return (
@@ -360,11 +342,11 @@ const handleSave = async (formData) => {
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.1",
+            title: "Criterion 4.6",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "enrolment_ratio_id",
+            idField: "second_year_students_id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
@@ -386,6 +368,7 @@ const handleSave = async (formData) => {
         onSave={handleSave}
         onDelete={handleDelete}
       />
+
       {alert}
     </div>
   );

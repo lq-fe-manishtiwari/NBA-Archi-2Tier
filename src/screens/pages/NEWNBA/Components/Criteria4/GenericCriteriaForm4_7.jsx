@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 Modal.setAppElement("#root");
 
-// Generic Table for 4.6 - Same as 4.5
+// Generic Table for 4.7 - Same as 4.5 and 4.6
 const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig, predefinedRows }) => {
   const safeData =
     data.length > 0
@@ -147,8 +147,8 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig, pre
   );
 };
 
-// Main Component - Same as 4.5
-const GenericCriteriaForm4_6 = ({
+// Main Component - Same as 4.5 and 4.6
+const GenericCriteriaForm4_7 = ({
   title = "NBA Section",
   marks = 50,
   fields = [],
@@ -532,4 +532,4 @@ const GenericCriteriaForm4_6 = ({
   );
 };
 
-export default GenericCriteriaForm4_6;
+export default GenericCriteriaForm4_7;
