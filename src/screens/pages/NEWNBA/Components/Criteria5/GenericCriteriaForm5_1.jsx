@@ -1,5 +1,4 @@
-// GenericCriteriaForm5_1.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Editor } from "react-editor";
 import Modal from "react-modal";
 import MergePdfModal from "../MergePdfModal";
@@ -12,127 +11,253 @@ import {
 
 Modal.setAppElement("#root");
 
-// Special Table for 5.1.1 - Lateral Entry Calculation
-const SpecialTable5_1_1 = ({ data, onChange, disabled }) => {
-  const [rows, setRows] = useState(data.length > 0 ? data : [
-    { 
-      id: "case1", 
-      case: "Case 1", 
-      firstYear: "", 
-      leftover: "", 
-      secondYear: "", 
-      considered: "" 
+// Student-Faculty Ratio Table as per image - FIXED VERSION
+const SFRTable = ({ data, onChange, disabled }) => {
+  const [rows, setRows] = useState(() => {
+    if (data && data.length > 0) {
+      return data;
     }
-  ]);
+    return [
+      { 
+        id: "u1_1", 
+        category: "u1.1", 
+        label: "No. of Students in UG 1st Year = u1", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_2", 
+        category: "u1.2", 
+        label: "No. of Students in UG 2nd Year = u2", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_3", 
+        category: "u1.3", 
+        label: "No. of Students in UG 3rd Year = u3", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_4", 
+        category: "u1.4", 
+        label: "No. of Students in UG 4th Year = u4", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "u1_5", 
+        category: "u1.5", 
+        label: "No. of Students in UG 5th Year = u5", 
+        type: "ug",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "ug1_total", 
+        category: "UG1", 
+        label: "UG1 = u1.1+u1.2+u1.3+u1.4+u1.5", 
+        type: "total",
+        isCalculated: true,
+        cay: "0", caym1: "0", caym2: "0" 
+      },
+      { 
+        id: "pg_programs", 
+        category: "p1.1", 
+        label: "No. of PG Programs in the Department", 
+        type: "pg",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "total_students", 
+        category: "S", 
+        label: "S = Number of Students in Department", 
+        type: "total",
+        isCalculated: true,
+        cay: "0", caym1: "0", caym2: "0" 
+      },
+      { 
+        id: "faculty_count", 
+        category: "F", 
+        label: "F = Total Faculty Members", 
+        type: "faculty",
+        cay: "", caym1: "", caym2: "" 
+      },
+      { 
+        id: "sfr", 
+        category: "SFR", 
+        label: "Student Faculty Ratio (SFR) = S/F", 
+        type: "sfr",
+        isCalculated: true,
+        cay: "0.00", caym1: "0.00", caym2: "0.00" 
+      },
+      { 
+        id: "average_sfr", 
+        category: "Average SFR", 
+        label: "Average SFR (3 years)", 
+        type: "average",
+        isCalculated: true,
+        cay: "0.00", caym1: "0.00", caym2: "0.00" 
+      },
+    ];
+  });
 
-  const [sanctionedIntake, setSanctionedIntake] = useState("120");
+  // 🔥 FIX: Update rows when data prop changes
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setRows(data);
+    }
+  }, [data]);
 
-  const calculateConsidered = (firstYear, secondYear) => {
-    const SA = parseInt(sanctionedIntake) || 0;
-    const FY = parseInt(firstYear) || 0;
-    const L = parseInt(secondYear) || 0;
+  // 🔥 FIX: Use useCallback for calculation functions
+  const calculateUGTotal = useCallback(() => {
+    const ugRows = rows.filter(r => r.type === "ug");
+    const totals = { cay: 0, caym1: 0, caym2: 0 };
     
-    if (SA === 0) return "0";
+    ugRows.forEach(row => {
+      totals.cay += parseInt(row.cay) || 0;
+      totals.caym1 += parseInt(row.caym1) || 0;
+      totals.caym2 += parseInt(row.caym2) || 0;
+    });
     
-    let considered = 0;
+    return totals;
+  }, [rows]);
+
+  // 🔥 FIX: Recalculate function that runs after state update
+  const recalculateAll = useCallback((updatedRows) => {
+    const rowsCopy = [...updatedRows];
     
-    if (FY >= SA) {
-      considered = SA + Math.min(L, SA * 0.10);
-    } else {
-      const availableSeats = SA - FY;
-      considered = SA + Math.min(L, availableSeats);
+    // Calculate UG Total
+    const ugRows = rowsCopy.filter(r => r.type === "ug");
+    const ugTotal = { cay: 0, caym1: 0, caym2: 0 };
+    ugRows.forEach(row => {
+      ugTotal.cay += parseInt(row.cay) || 0;
+      ugTotal.caym1 += parseInt(row.caym1) || 0;
+      ugTotal.caym2 += parseInt(row.caym2) || 0;
+    });
+    
+    // Update UG Total row
+    const ugTotalRow = rowsCopy.find(r => r.category === "UG1");
+    if (ugTotalRow) {
+      ugTotalRow.cay = ugTotal.cay.toString();
+      ugTotalRow.caym1 = ugTotal.caym1.toString();
+      ugTotalRow.caym2 = ugTotal.caym2.toString();
     }
     
-    const maxAllowed = SA * 1.10;
-    considered = Math.min(considered, maxAllowed);
-    
-    return Math.round(considered).toString();
-  };
-
-  const handleChange = (rowIndex, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[rowIndex] = { ...updatedRows[rowIndex], [field]: value };
-    
-    if (field === 'firstYear' || field === 'secondYear') {
-      const considered = calculateConsidered(
-        field === 'firstYear' ? value : updatedRows[rowIndex].firstYear,
-        field === 'secondYear' ? value : updatedRows[rowIndex].secondYear
-      );
-      updatedRows[rowIndex].considered = considered;
+    // Total Students (S) = UG Total
+    const totalStudentsRow = rowsCopy.find(r => r.category === "S");
+    if (totalStudentsRow) {
+      totalStudentsRow.cay = ugTotal.cay.toString();
+      totalStudentsRow.caym1 = ugTotal.caym1.toString();
+      totalStudentsRow.caym2 = ugTotal.caym2.toString();
     }
     
-    setRows(updatedRows);
-    onChange(updatedRows);
-  };
-
-  const handleSanctionedIntakeChange = (value) => {
-    setSanctionedIntake(value);
-    const updatedRows = rows.map(row => ({
-      ...row,
-      considered: calculateConsidered(row.firstYear, row.secondYear)
-    }));
-    setRows(updatedRows);
-    onChange(updatedRows);
-  };
-
-  const addRow = () => {
-    const newRow = {
-      id: `case-${Date.now()}-${Math.random()}`,
-      case: `Case ${rows.length + 1}`,
-      firstYear: "",
-      leftover: "",
-      secondYear: "",
-      considered: ""
+    // Get Faculty Count
+    const facultyRow = rowsCopy.find(r => r.category === "F");
+    const facultyCount = {
+      cay: parseInt(facultyRow?.cay) || 0,
+      caym1: parseInt(facultyRow?.caym1) || 0,
+      caym2: parseInt(facultyRow?.caym2) || 0
     };
-    const newRows = [...rows, newRow];
-    setRows(newRows);
-    onChange(newRows);
-  };
+    
+    // Calculate SFR
+    const sfrRow = rowsCopy.find(r => r.category === "SFR");
+    if (sfrRow && facultyRow) {
+      const calculateRatio = (students, faculty) => {
+        if (!faculty || faculty === 0) return "0.00";
+        return (students / faculty).toFixed(2);
+      };
+      
+      sfrRow.cay = calculateRatio(ugTotal.cay, facultyCount.cay);
+      sfrRow.caym1 = calculateRatio(ugTotal.caym1, facultyCount.caym1);
+      sfrRow.caym2 = calculateRatio(ugTotal.caym2, facultyCount.caym2);
+    }
+    
+    // Calculate Average SFR
+    const sfrValues = {
+      cay: parseFloat(sfrRow?.cay) || 0,
+      caym1: parseFloat(sfrRow?.caym1) || 0,
+      caym2: parseFloat(sfrRow?.caym2) || 0
+    };
+    
+    const averageSFR = ((sfrValues.cay + sfrValues.caym1 + sfrValues.caym2) / 3).toFixed(2);
+    
+    // Add/Update Average SFR row
+    let averageRow = rowsCopy.find(r => r.category === "Average SFR");
+    if (!averageRow) {
+      averageRow = {
+        id: "average_sfr",
+        category: "Average SFR",
+        label: "Average SFR (3 years)",
+        type: "average",
+        isCalculated: true,
+        cay: averageSFR,
+        caym1: averageSFR,
+        caym2: averageSFR
+      };
+      rowsCopy.push(averageRow);
+    } else {
+      averageRow.cay = averageSFR;
+      averageRow.caym1 = averageSFR;
+      averageRow.caym2 = averageSFR;
+    }
+    
+    return rowsCopy;
+  }, []);
 
-  const deleteRow = (index) => {
-    if (rows.length <= 1) return;
-    const updated = rows.filter((_, i) => i !== index);
-    const renumbered = updated.map((row, idx) => ({
-      ...row,
-      case: `Case ${idx + 1}`
-    }));
-    setRows(renumbered);
-    onChange(renumbered);
+  // 🔥 FIX: Handle change properly without causing re-render issues
+  const handleChange = useCallback((id, field, value) => {
+    setRows(prevRows => {
+      // First, update the specific cell
+      const updatedRows = prevRows.map(row => {
+        if (row.id === id) {
+          return { ...row, [field]: value };
+        }
+        return row;
+      });
+      
+      // Then recalculate all calculated values
+      const recalculatedRows = recalculateAll(updatedRows);
+      
+      // Notify parent component
+      setTimeout(() => {
+        onChange(recalculatedRows);
+      }, 0);
+      
+      return recalculatedRows;
+    });
+  }, [onChange, recalculateAll]);
+
+  const getRowStyle = (row) => {
+    if (row.type === "total") {
+      return "bg-blue-50 font-bold";
+    }
+    if (row.type === "faculty") {
+      return "bg-green-50";
+    }
+    if (row.type === "sfr") {
+      return "bg-yellow-50 font-bold";
+    }
+    if (row.type === "average") {
+      return "bg-purple-50 font-bold text-purple-700";
+    }
+    return "bg-white";
   };
 
   return (
     <div className="space-y-6">
       <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Hash className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Sanctioned Intake (SA)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={sanctionedIntake}
-                onChange={(e) => handleSanctionedIntakeChange(e.target.value)}
-                disabled={disabled}
-                className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-center font-bold text-blue-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="120"
-              />
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Calculator className="w-5 h-5 text-blue-600" />
           </div>
-          
-          <div className="text-sm text-gray-600 space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Lateral entry limited to <span className="font-bold">10%</span> of SA</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Total students limited to <span className="font-bold">110%</span> of SA</span>
-            </div>
+          <div>
+            <h4 className="font-bold text-blue-800">Student-Faculty Ratio Calculation</h4>
+            <p className="text-sm text-gray-600 mt-1">
+              <strong>S = Number of Students in Department</strong> (UG1 + PG1 + PG2...)<br />
+              <strong>F = Total Number of regular faculty members</strong> (including contractual faculty)<br />
+              <strong>SFR = S/F</strong>
+            </p>
           </div>
         </div>
       </div>
@@ -141,99 +266,97 @@ const SpecialTable5_1_1 = ({ data, onChange, disabled }) => {
         <table className="w-full bg-white">
           <thead>
             <tr className="bg-[#2163c1] text-white">
-              <th className="p-4 text-left font-semibold w-24">Case</th>
-              <th className="p-4 text-left font-semibold">No. of students admitted in 1st year</th>
-              <th className="p-4 text-left font-semibold">Leftover seats/Unfilled seats in 1st year</th>
-              <th className="p-4 text-left font-semibold">
-                <div className="flex flex-col">
-                  <span>No. of students admitted in 2nd year</span>
-                  <span className="text-sm font-normal opacity-90">L = Lateral entry + Leftover seats</span>
-                </div>
-              </th>
-              <th className="p-4 text-left font-semibold">
-                <div className="flex flex-col">
-                  <span>No. of students considered for SFR (ST)</span>
-                  <span className="text-sm font-normal opacity-90">(SA + L) limited to 110% of SA</span>
-                </div>
-              </th>
-              {!disabled && <th className="p-4 text-left font-semibold w-20">Actions</th>}
+              <th className="p-4 text-left font-semibold w-48">Academic Performance</th>
+              <th className="p-4 text-center font-semibold">CAY</th>
+              <th className="p-4 text-center font-semibold">CAYm1</th>
+              <th className="p-4 text-center font-semibold">CAYm2</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
-              <tr key={row.id} className={`border-b hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold">
-                      {index + 1}
+            {rows.map((row) => (
+              <tr key={row.id} className={`border-b ${getRowStyle(row)}`}>
+                <td className="p-4 font-medium text-gray-800">
+                  {row.label}
+                  {row.isCalculated && (
+                    <span className="ml-2 text-xs text-gray-500">(Calculated)</span>
+                  )}
+                </td>
+                
+                {row.type === "average" ? (
+                  // Average row shows same value in all columns
+                  <td colSpan="3" className="p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-700">
+                      {row.cay || "0.00"}:1
                     </div>
-                    <span className="font-medium">{row.case}</span>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <input
-                    type="number"
-                    min="0"
-                    value={row.firstYear}
-                    onChange={(e) => handleChange(index, 'firstYear', e.target.value)}
-                    disabled={disabled}
-                    className="w-full max-w-32 px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter number"
-                  />
-                </td>
-                <td className="p-4">
-                  <input
-                    type="number"
-                    min="0"
-                    value={row.leftover}
-                    onChange={(e) => handleChange(index, 'leftover', e.target.value)}
-                    disabled={disabled}
-                    className="w-full max-w-32 px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter number"
-                  />
-                </td>
-                <td className="p-4">
-                  <input
-                    type="number"
-                    min="0"
-                    value={row.secondYear}
-                    onChange={(e) => handleChange(index, 'secondYear', e.target.value)}
-                    disabled={disabled}
-                    className="w-full max-w-32 px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter number"
-                  />
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className={`px-4 py-2 rounded-lg border font-bold text-lg min-w-20 text-center ${
-                      row.considered && parseInt(row.considered) > parseInt(sanctionedIntake) * 1.10
-                        ? 'bg-red-100 text-red-800 border-red-300'
-                        : 'bg-green-100 text-green-800 border-green-300'
-                    }`}>
-                      {row.considered || "0"}
+                    <div className="text-sm text-gray-600 mt-1">
+                      Average Student-Faculty Ratio
                     </div>
-                    {row.firstYear && row.secondYear && (
-                      <div className="text-sm text-gray-500">
-                        ({sanctionedIntake} + {row.secondYear || "0"})
-                      </div>
-                    )}
-                  </div>
-                </td>
-                {!disabled && (
-                  <td className="p-4">
-                    <button
-                      onClick={() => deleteRow(index)}
-                      disabled={rows.length <= 1}
-                      className={`p-2 rounded-lg transition-colors ${
-                        rows.length <= 1 
-                          ? 'text-gray-400 cursor-not-allowed' 
-                          : 'text-red-600 hover:bg-red-50'
-                      }`}
-                      title={rows.length <= 1 ? "Cannot delete the last row" : "Delete this case"}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </td>
+                ) : row.isCalculated ? (
+                  // Calculated rows (read-only)
+                  <>
+                    <td className="p-4 text-center">
+                      <div className={`px-3 py-2 rounded-lg font-bold ${
+                        row.type === "sfr" ? "text-blue-700 bg-blue-100" : ""
+                      }`}>
+                        {row.cay || "0"}
+                        {row.type === "sfr" && ":1"}
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className={`px-3 py-2 rounded-lg font-bold ${
+                        row.type === "sfr" ? "text-blue-700 bg-blue-100" : ""
+                      }`}>
+                        {row.caym1 || "0"}
+                        {row.type === "sfr" && ":1"}
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className={`px-3 py-2 rounded-lg font-bold ${
+                        row.type === "sfr" ? "text-blue-700 bg-blue-100" : ""
+                      }`}>
+                        {row.caym2 || "0"}
+                        {row.type === "sfr" && ":1"}
+                      </div>
+                    </td>
+                  </>
+                ) : (
+                  // Editable rows
+                  <>
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        min="0"
+                        value={row.cay || ""}
+                        onChange={(e) => handleChange(row.id, 'cay', e.target.value)}
+                        disabled={disabled}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        min="0"
+                        value={row.caym1 || ""}
+                        onChange={(e) => handleChange(row.id, 'caym1', e.target.value)}
+                        disabled={disabled}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="p-4">
+                      <input
+                        type="number"
+                        min="0"
+                        value={row.caym2 || ""}
+                        onChange={(e) => handleChange(row.id, 'caym2', e.target.value)}
+                        disabled={disabled}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                    </td>
+                  </>
                 )}
               </tr>
             ))}
@@ -241,456 +364,18 @@ const SpecialTable5_1_1 = ({ data, onChange, disabled }) => {
         </table>
       </div>
       
-      {!disabled && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <button
-              onClick={addRow}
-              className="px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-md"
-            >
-              <Plus className="w-4 h-4" /> Add Case
-            </button>
-            
-            <div className="text-sm text-gray-600">
-              <div className="font-medium mb-1">Current Status:</div>
-              <div className="space-y-1">
-                <div>Sanctioned Intake: <span className="font-bold">{sanctionedIntake}</span></div>
-                <div>10% of SA: <span className="font-bold">{Math.round(parseInt(sanctionedIntake || 0) * 0.10)}</span></div>
-                <div>110% of SA: <span className="font-bold">{Math.round(parseInt(sanctionedIntake || 0) * 1.10)}</span></div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <div className="text-amber-600 font-bold mt-0.5">*</div>
-              <div className="text-sm text-amber-800">
-                <span className="font-semibold">Note:</span> If the number of students admitted in 2nd year via lateral entry including left over seats (L) is more than 10% of the sanctioned intake (SA), then ST = SA + (10% of SA). ST cannot exceed 110% of SA.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Complex Table for 5.1.2 - Student Faculty Ratio
-const StudentFacultyRatioTable = ({ data, onChange, disabled, initialFacultyData = null }) => {
-  const initialData = data.length > 0 ? data : [
-    { 
-      id: "ug1", 
-      program: "UG Program 1", 
-      type: "ug",
-      year: "CAY",
-      b: "", c: "", d: "", total: ""
-    },
-    { 
-      id: "pg1", 
-      program: "PG Program 1", 
-      type: "pg", 
-      year: "CAY",
-      a: "", b: "", total: ""
-    }
-  ];
-
-  const [rows, setRows] = useState(initialData);
-  const [facultyData, setFacultyData] = useState(initialFacultyData || {
-    df: { cay: "", caym1: "", caym2: "" },
-    af: { cay: "", caym1: "", caym2: "" },
-    ff: { cay: "", caym1: "", caym2: "" }
-  });
-
-  useEffect(() => {
-    if (initialFacultyData) {
-      setFacultyData(initialFacultyData);
-    }
-  }, [initialFacultyData]);
-
-  const calculateTotal = (type, values) => {
-    if (type === "ug") {
-      const b = parseInt(values.b) || 0;
-      const c = parseInt(values.c) || 0;
-      const d = parseInt(values.d) || 0;
-      return (b + c + d).toString();
-    } else {
-      const a = parseInt(values.a) || 0;
-      const b = parseInt(values.b) || 0;
-      return (a + b).toString();
-    }
-  };
-
-  const handleProgramChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index] = { ...updatedRows[index], [field]: value };
-    
-    if (['a', 'b', 'c', 'd'].includes(field)) {
-      const total = calculateTotal(updatedRows[index].type, {
-        a: updatedRows[index].a || "0",
-        b: updatedRows[index].b || "0",
-        c: updatedRows[index].c || "0",
-        d: updatedRows[index].d || "0"
-      });
-      updatedRows[index].total = total;
-    }
-    
-    setRows(updatedRows);
-    onChange(updatedRows, facultyData);
-  };
-
-  const handleFacultyChange = (category, year, value) => {
-    const updated = { ...facultyData };
-    updated[category][year] = value;
-    setFacultyData(updated);
-    onChange(rows, updated);
-  };
-
-  const addProgram = (type) => {
-    const newId = `${type}-${Date.now()}-${Math.random()}`;
-    const newProgram = {
-      id: newId,
-      program: type === "ug" ? `UG Program ${rows.filter(r => r.type === "ug").length + 1}` : `PG Program ${rows.filter(r => r.type === "pg").length + 1}`,
-      type: type,
-      year: "CAY",
-      ...(type === "ug" ? { b: "", c: "", d: "", total: "" } : { a: "", b: "", total: "" })
-    };
-    const newRows = [...rows, newProgram];
-    setRows(newRows);
-    onChange(newRows, facultyData);
-  };
-
-  const deleteProgram = (index) => {
-    if (rows.length <= 1) return;
-    const updated = rows.filter((_, i) => i !== index);
-    setRows(updated);
-    onChange(updated, facultyData);
-  };
-
-  const calculateSummary = () => {
-    let ds = { cay: 0, caym1: 0, caym2: 0 };
-    let as = { cay: 0, caym1: 0, caym2: 0 };
-    
-    rows.forEach(row => {
-      if (row.type === "ug") {
-        ds.cay += parseInt(row.b || 0) + parseInt(row.c || 0) + parseInt(row.d || 0);
-      } else {
-        ds.cay += parseInt(row.a || 0) + parseInt(row.b || 0);
-      }
-    });
-    
-    ds.caym1 = ds.cay;
-    ds.caym2 = ds.cay;
-    as.cay = ds.cay * 0.5;
-    as.caym1 = as.cay;
-    as.caym2 = as.cay;
-    
-    const s = {
-      cay: ds.cay + as.cay,
-      caym1: ds.caym1 + as.caym1,
-      caym2: ds.caym2 + as.caym2
-    };
-    
-    const f = {
-      cay: (parseInt(facultyData.df.cay) || 0) + (parseInt(facultyData.af.cay) || 0),
-      caym1: (parseInt(facultyData.df.caym1) || 0) + (parseInt(facultyData.af.caym1) || 0),
-      caym2: (parseInt(facultyData.df.caym2) || 0) + (parseInt(facultyData.af.caym2) || 0)
-    };
-    
-    const ff = {
-      cay: parseInt(facultyData.ff.cay) || 0,
-      caym1: parseInt(facultyData.ff.caym1) || 0,
-      caym2: parseInt(facultyData.ff.caym2) || 0
-    };
-    
-    const sfr = {
-      cay: f.cay - ff.cay > 0 ? (s.cay / (f.cay - ff.cay)).toFixed(2) : "N/A",
-      caym1: f.caym1 - ff.caym1 > 0 ? (s.caym1 / (f.caym1 - ff.caym1)).toFixed(2) : "N/A",
-      caym2: f.caym2 - ff.caym2 > 0 ? (s.caym2 / (f.caym2 - ff.caym2)).toFixed(2) : "N/A"
-    };
-    
-    const avgSFR = sfr.cay !== "N/A" && sfr.caym1 !== "N/A" && sfr.caym2 !== "N/A" 
-      ? ((parseFloat(sfr.cay) + parseFloat(sfr.caym1) + parseFloat(sfr.caym2)) / 3).toFixed(2)
-      : "N/A";
-    
-    let marks = 0;
-    if (avgSFR !== "N/A") {
-      const sfrValue = parseFloat(avgSFR);
-      if (sfrValue <= 15) marks = 30;
-      else if (sfrValue <= 17) marks = 26;
-      else if (sfrValue <= 19) marks = 22;
-      else if (sfrValue <= 21) marks = 18;
-      else if (sfrValue <= 23) marks = 14;
-      else if (sfrValue <= 25) marks = 10;
-    }
-    
-    return { ds, as, s, f, ff, sfr, avgSFR, marks };
-  };
-
-  const summary = calculateSummary();
-
-  return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h4 className="text-lg font-bold text-gray-800">Programs Data</h4>
-          {!disabled && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => addProgram("ug")}
-                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Plus className="w-3 h-3" /> Add UG Program
-              </button>
-              <button
-                onClick={() => addProgram("pg")}
-                className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <Plus className="w-3 h-3" /> Add PG Program
-              </button>
-            </div>
-          )}
-        </div>
-        
-        <div className="overflow-x-auto rounded-lg border border-gray-300">
-          <table className="w-full bg-white">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-3 text-left font-medium">Program</th>
-                <th className="p-3 text-left font-medium">Type</th>
-                <th className="p-3 text-left font-medium">Year</th>
-                <th className="p-3 text-left font-medium">
-                  <div>Students</div>
-                  <div className="text-xs font-normal">(UG: B,C,D / PG: A,B)</div>
-                </th>
-                <th className="p-3 text-left font-medium">Total</th>
-                {!disabled && <th className="p-3 text-left font-medium">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, index) => (
-                <tr key={row.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">
-                    <input
-                      type="text"
-                      value={row.program}
-                      onChange={(e) => handleProgramChange(index, 'program', e.target.value)}
-                      disabled={disabled}
-                      className="w-full px-2 py-1 border rounded"
-                      placeholder="Program name"
-                    />
-                  </td>
-                  <td className="p-3">
-                    <select
-                      value={row.type}
-                      onChange={(e) => handleProgramChange(index, 'type', e.target.value)}
-                      disabled={disabled}
-                      className="w-full px-2 py-1 border rounded"
-                    >
-                      <option value="ug">UG</option>
-                      <option value="pg">PG</option>
-                    </select>
-                  </td>
-                  <td className="p-3">
-                    <select
-                      value={row.year}
-                      onChange={(e) => handleProgramChange(index, 'year', e.target.value)}
-                      disabled={disabled}
-                      className="w-full px-2 py-1 border rounded"
-                    >
-                      <option value="CAY">CAY</option>
-                      <option value="CAYm1">CAYm1</option>
-                      <option value="CAYm2">CAYm2</option>
-                    </select>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex gap-2">
-                      {row.type === "ug" ? (
-                        <>
-                          <input
-                            type="number"
-                            placeholder="B"
-                            value={row.b}
-                            onChange={(e) => handleProgramChange(index, 'b', e.target.value)}
-                            disabled={disabled}
-                            className="w-16 px-2 py-1 border rounded text-center"
-                          />
-                          <input
-                            type="number"
-                            placeholder="C"
-                            value={row.c}
-                            onChange={(e) => handleProgramChange(index, 'c', e.target.value)}
-                            disabled={disabled}
-                            className="w-16 px-2 py-1 border rounded text-center"
-                          />
-                          <input
-                            type="number"
-                            placeholder="D"
-                            value={row.d}
-                            onChange={(e) => handleProgramChange(index, 'd', e.target.value)}
-                            disabled={disabled}
-                            className="w-16 px-2 py-1 border rounded text-center"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <input
-                            type="number"
-                            placeholder="A"
-                            value={row.a}
-                            onChange={(e) => handleProgramChange(index, 'a', e.target.value)}
-                            disabled={disabled}
-                            className="w-16 px-2 py-1 border rounded text-center"
-                          />
-                          <input
-                            type="number"
-                            placeholder="B"
-                            value={row.b}
-                            onChange={(e) => handleProgramChange(index, 'b', e.target.value)}
-                            disabled={disabled}
-                            className="w-16 px-2 py-1 border rounded text-center"
-                          />
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <div className="px-3 py-1 bg-blue-50 text-blue-700 font-bold rounded text-center">
-                      {row.total || "0"}
-                    </div>
-                  </td>
-                  {!disabled && (
-                    <td className="p-3">
-                      <button
-                        onClick={() => deleteProgram(index)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                        title="Delete program"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div className="space-y-4">
-        <h4 className="text-lg font-bold text-gray-800">Faculty Data</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {["df", "af", "ff"].map((category) => (
-            <div key={category} className="p-4 bg-white rounded-lg border border-gray-300 shadow-sm">
-              <div className="font-medium text-gray-700 mb-3">
-                {category === "df" ? "DF = Faculty in Department" : 
-                 category === "af" ? "AF = Faculty in Allied Departments" : 
-                 "FF = First Year Faculty"}
-              </div>
-              <div className="space-y-3">
-                {["cay", "caym1", "caym2"].map((year) => (
-                  <div key={year} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{year.toUpperCase()}:</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={facultyData[category][year]}
-                      onChange={(e) => handleFacultyChange(category, year, e.target.value)}
-                      disabled={disabled}
-                      className="w-20 px-2 py-1 border rounded text-center"
-                      placeholder="0"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-        <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <Calculator className="w-5 h-5" /> SFR Calculation Summary
-        </h4>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="p-3 bg-white rounded-lg border">
-            <div className="text-sm text-gray-500 mb-1">Total Students (S)</div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span>CAY:</span>
-                <span className="font-bold">{summary.s.cay}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm1:</span>
-                <span className="font-bold">{summary.s.caym1}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm2:</span>
-                <span className="font-bold">{summary.s.caym2}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-3 bg-white rounded-lg border">
-            <div className="text-sm text-gray-500 mb-1">Total Faculty (F-FF)</div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span>CAY:</span>
-                <span className="font-bold">{summary.f.cay - summary.ff.cay}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm1:</span>
-                <span className="font-bold">{summary.f.caym1 - summary.ff.caym1}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm2:</span>
-                <span className="font-bold">{summary.f.caym2 - summary.ff.caym2}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-3 bg-white rounded-lg border">
-            <div className="text-sm text-gray-500 mb-1">Student-Faculty Ratio</div>
-            <div className="space-y-1">
-              <div className="flex justify-between">
-                <span>CAY:</span>
-                <span className="font-bold">{summary.sfr.cay}:1</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm1:</span>
-                <span className="font-bold">{summary.sfr.caym1}:1</span>
-              </div>
-              <div className="flex justify-between">
-                <span>CAYm2:</span>
-                <span className="font-bold">{summary.sfr.caym2}:1</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-3 bg-white rounded-lg border border-blue-300">
-            <div className="text-2xl text-blue-800 mb-1">Average SFR (3 years)</div>
-            <div className="text-2xl font-bold text-blue-800 mb-2">
-              {summary.avgSFR}:1
-            </div>
-            <div className="text-sm">
-              <div className="flex justify-between mb-1">
-                <span>Marks:</span>
-                <span className="font-bold">{summary.marks}/30</span>
-              </div>
-              <div className="text-xs text-gray-600">
-                {summary.avgSFR !== "N/A" && (
-                  <>
-                    {summary.avgSFR <= 15 ? "≤ 15 = 30 marks" :
-                     summary.avgSFR <= 17 ? "≤ 17 = 26 marks" :
-                     summary.avgSFR <= 19 ? "≤ 19 = 22 marks" :
-                     summary.avgSFR <= 21 ? "≤ 21 = 18 marks" :
-                     summary.avgSFR <= 23 ? "≤ 23 = 14 marks" :
-                     summary.avgSFR <= 25 ? "≤ 25 = 10 marks" :
-                     "> 25 = 0 marks"}
-                  </>
-                )}
-              </div>
-            </div>
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-start gap-2">
+          <div className="text-amber-600 font-bold mt-0.5">📝 Notes:</div>
+          <div className="text-sm text-amber-800 space-y-2">
+            <p><strong>All faculty whether regular or contractual</strong> (except part-time or hourly based), will be considered.</p>
+            <p><strong>Contractual faculty</strong> who have taught for 2 consecutive semesters with or without break between the 2 semesters in corresponding academic year on full-time basis shall be considered.</p>
+            <p><strong>Requirements for contractual faculty:</strong></p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Shall have the CoA prescribed qualifications and experience</li>
+              <li>Shall be appointed on full-time basis and worked for consecutive two semesters</li>
+              <li>Should have gone through an appropriate process of selection</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -698,10 +383,10 @@ const StudentFacultyRatioTable = ({ data, onChange, disabled, initialFacultyData
   );
 };
 
-// Main Component
+// Main Component - FIXED
 const GenericCriteriaForm5_1 = ({
   title = "NBA Section",
-  marks = 30,
+  marks = 20,
   fields = [],
   initialData = null,
   onSave,
@@ -709,8 +394,6 @@ const GenericCriteriaForm5_1 = ({
   isCompleted = false,
   isContributorEditable = true,
   saving = false,
-  facultyData = null,
-  onFacultyDataChange = () => {}
 }) => {
   const [isEditMode, setIsEditMode] = useState(!isCompleted);
 
@@ -733,26 +416,22 @@ const GenericCriteriaForm5_1 = ({
   const [tableData, setTableData] = useState(safeTableData);
   const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
   const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
-  
-  const [localFacultyData, setLocalFacultyData] = useState(facultyData || {
-    df: { cay: "", caym1: "", caym2: "" },
-    af: { cay: "", caym1: "", caym2: "" },
-    ff: { cay: "", caym1: "", caym2: "" }
-  });
 
+  // 🔥 FIX: Update state when initialData changes
   useEffect(() => {
-    if (facultyData) {
-      setLocalFacultyData(facultyData);
+    if (initialData?.content) {
+      setFormValues(initialData.content);
     }
-  }, [facultyData]);
+    if (initialData?.tableData) {
+      setTableData(initialData.tableData);
+    }
+    if (initialData?.filesByField) {
+      setFilesByField(initialData.filesByField);
+    }
+  }, [initialData]);
 
-  const handleTableChange = (tableKey, newData, facultyDataFromTable = null) => {
+  const handleTableChange = (tableKey, newData) => {
     setTableData(prev => ({ ...prev, [tableKey]: newData }));
-    
-    if (facultyDataFromTable) {
-      setLocalFacultyData(facultyDataFromTable);
-      onFacultyDataChange(facultyDataFromTable);
-    }
   };
 
   const addFileRow = (fieldName) => {
@@ -796,10 +475,7 @@ const GenericCriteriaForm5_1 = ({
       }
 
       const resData = await nbaDashboardService.uploadFile(formData);
-      // Handle different response formats - sometimes it's a direct string, sometimes an object
       const s3Url = typeof resData === 'string' ? resData : (resData || resData || "");
-      console.log("📤 Upload response:", resData);
-      console.log("🔗 Extracted S3 URL:", s3Url);
 
       setFilesByField(prev => ({
         ...prev,
@@ -836,7 +512,7 @@ const GenericCriteriaForm5_1 = ({
       content: formValues,
       tableData,
       filesByField,
-    }, localFacultyData);
+    });
     setIsEditMode(false);
   };
 
@@ -854,7 +530,7 @@ const GenericCriteriaForm5_1 = ({
                 <div className="px-3 py-1 bg-white/20 rounded-full text-sm">
                   {marks} Marks
                 </div>
-                <div className="text-sm opacity-90">Criterion 5.1</div>
+                <div className="text-sm opacity-90">Criterion 5.1 - Department Level Calculation</div>
               </div>
             </div>
           </div>
@@ -877,11 +553,7 @@ const GenericCriteriaForm5_1 = ({
           <div key={field.name} className="space-y-6">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-3">
-                {field.name.includes('5.1.1') ? (
-                  <Calculator className="w-6 h-6 text-blue-600" />
-                ) : (
-                  <Users className="w-6 h-6 text-green-600" />
-                )}
+                <Calculator className="w-6 h-6 text-blue-600" />
                 <h3 className="text-xl font-bold text-gray-800">{field.label}</h3>
               </div>
               {field.marks && (
@@ -892,20 +564,11 @@ const GenericCriteriaForm5_1 = ({
             </div>
 
             {field.hasTable ? (
-              field.tableKey === "lateralEntryCalculation" ? (
-                <SpecialTable5_1_1
-                  data={tableData[field.tableKey] || []}
-                  onChange={(newData) => handleTableChange(field.tableKey, newData)}
-                  disabled={!isEditMode}
-                />
-              ) : field.tableKey === "studentFacultyRatio" ? (
-                <StudentFacultyRatioTable
-                  data={tableData[field.tableKey] || []}
-                  onChange={(newData, facultyDataFromTable) => handleTableChange(field.tableKey, newData, facultyDataFromTable)}
-                  disabled={!isEditMode}
-                  initialFacultyData={localFacultyData}
-                />
-              ) : null
+              <SFRTable
+                data={tableData[field.tableKey] || []}
+                onChange={(newData) => handleTableChange(field.tableKey, newData)}
+                disabled={!isEditMode}
+              />
             ) : (
               <div className="border-2 border-gray-300 rounded-b-lg bg-white">
                 <Editor
@@ -918,160 +581,159 @@ const GenericCriteriaForm5_1 = ({
               </div>
             )}
 
-            {/* Supporting Documents Section - Fixed UI */}
-           {/* Supporting Documents Section - Always Show File Upload */}
-{isEditMode && !isCompleted && (
-  <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-    <div className="flex justify-between items-center mb-4">
-      <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-        <Upload className="w-6 h-6" /> Supporting Documents
-      </h4>
-      {filesByField[field.name]?.some((f) => f.filename?.toLowerCase().endsWith(".pdf")) && (
-        <button
-          onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })}
-          className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
-        >
-          <FileText className="w-5 h-5" /> Merge PDFs
-        </button>
-      )}
-    </div>
-
-    <div className="space-y-4">
-      {/* Always show the first file upload row */}
-      <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Document description"
-            value={(filesByField[field.name]?.[0]?.description) || ""}
-            onChange={(e) => {
-              if (!filesByField[field.name]?.[0]) {
-                addFileRow(field.name);
-              }
-              updateFileDescription(field.name, 0, e.target.value);
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="w-64">
-          {filesByField[field.name]?.[0]?.uploading ? (
-            <div className="flex items-center gap-2 text-gray-500">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-              <span>Uploading...</span>
-            </div>
-          ) : filesByField[field.name]?.[0]?.filename ? (
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <button
-                onClick={() => setPreviewModal({ isOpen: true, file: filesByField[field.name][0] })}
-                className="text-blue-600 font-medium hover:underline truncate max-w-48"
-                title={filesByField[field.name][0].filename}
-              >
-                {filesByField[field.name][0].filename}
-              </button>
-            </div>
-          ) : (
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onChange={(e) => {
-                if (!filesByField[field.name]?.[0]) {
-                  addFileRow(field.name);
-                }
-                handleFileChange(field.name, 0, e.target.files?.[0]);
-              }}
-              className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
-            />
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => addFileRow(field.name)}
-            className="text-green-600 hover:bg-green-50 p-2 rounded transition"
-            title="Add another document"
-          >
-            <Plus className="w-5 h-5" />
-          </button>
-          {filesByField[field.name]?.[0] && (
-            <button
-              onClick={() => removeFileRow(field.name, 0)}
-              className="text-red-500 hover:bg-red-50 p-2 rounded transition"
-              title="Remove document"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Show additional document rows if any */}
-      {(filesByField[field.name] || []).slice(1).map((file, index) => {
-        const actualIndex = index + 1;
-        return (
-          <div key={file.id || `file-${actualIndex}`} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={file.description || ""}
-                onChange={(e) => updateFileDescription(field.name, actualIndex, e.target.value)}
-                placeholder="Document description"
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="w-64">
-              {file.uploading ? (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                  <span>Uploading...</span>
+            {/* Supporting Documents Section */}
+            {isEditMode && !isCompleted && (
+              <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                    <Upload className="w-6 h-6" /> Supporting Documents
+                  </h4>
+                  {filesByField[field.name]?.some((f) => f.filename?.toLowerCase().endsWith(".pdf")) && (
+                    <button
+                      onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })}
+                      className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
+                    >
+                      <FileText className="w-5 h-5" /> Merge PDFs
+                    </button>
+                  )}
                 </div>
-              ) : file.filename ? (
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <button
-                    onClick={() => setPreviewModal({ isOpen: true, file })}
-                    className="text-blue-600 font-medium hover:underline truncate max-w-48"
-                    title={file.filename}
-                  >
-                    {file.filename}
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={(e) => handleFileChange(field.name, actualIndex, e.target.files?.[0])}
-                    className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
-                  />
-                </div>
-              )}
-            </div>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => addFileRow(field.name)}
-                className="text-green-600 hover:bg-green-50 p-2 rounded transition"
-                title="Add another document"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => removeFileRow(field.name, actualIndex)}
-                className="text-red-500 hover:bg-red-50 p-2 rounded transition"
-                title="Remove document"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+                <div className="space-y-4">
+                  {/* Always show the first file upload row */}
+                  <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Document description"
+                        value={(filesByField[field.name]?.[0]?.description) || ""}
+                        onChange={(e) => {
+                          if (!filesByField[field.name]?.[0]) {
+                            addFileRow(field.name);
+                          }
+                          updateFileDescription(field.name, 0, e.target.value);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="w-64">
+                      {filesByField[field.name]?.[0]?.uploading ? (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                          <span>Uploading...</span>
+                        </div>
+                      ) : filesByField[field.name]?.[0]?.filename ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <button
+                            onClick={() => setPreviewModal({ isOpen: true, file: filesByField[field.name][0] })}
+                            className="text-blue-600 font-medium hover:underline truncate max-w-48"
+                            title={filesByField[field.name][0].filename}
+                          >
+                            {filesByField[field.name][0].filename}
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            if (!filesByField[field.name]?.[0]) {
+                              addFileRow(field.name);
+                            }
+                            handleFileChange(field.name, 0, e.target.files?.[0]);
+                          }}
+                          className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => addFileRow(field.name)}
+                        className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                        title="Add another document"
+                      >
+                        <Plus className="w-5 h-5" />
+                      </button>
+                      {filesByField[field.name]?.[0] && (
+                        <button
+                          onClick={() => removeFileRow(field.name, 0)}
+                          className="text-red-500 hover:bg-red-50 p-2 rounded transition"
+                          title="Remove document"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Show additional document rows if any */}
+                  {(filesByField[field.name] || []).slice(1).map((file, index) => {
+                    const actualIndex = index + 1;
+                    return (
+                      <div key={file.id || `file-${actualIndex}`} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            value={file.description || ""}
+                            onChange={(e) => updateFileDescription(field.name, actualIndex, e.target.value)}
+                            placeholder="Document description"
+                            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div className="w-64">
+                          {file.uploading ? (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                              <span>Uploading...</span>
+                            </div>
+                          ) : file.filename ? (
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              <button
+                                onClick={() => setPreviewModal({ isOpen: true, file })}
+                                className="text-blue-600 font-medium hover:underline truncate max-w-48"
+                                title={file.filename}
+                              >
+                                {file.filename}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                onChange={(e) => handleFileChange(field.name, actualIndex, e.target.files?.[0])}
+                                className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => addFileRow(field.name)}
+                            className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                            title="Add another document"
+                          >
+                            <Plus className="w-5 h-5" />
+                          </button>
+                          <button
+                            onClick={() => removeFileRow(field.name, actualIndex)}
+                            className="text-red-500 hover:bg-red-50 p-2 rounded transition"
+                            title="Remove document"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         ))}
 

@@ -9,6 +9,10 @@ import Criterion5_2Form from "./Criterion5_2Form";
 import Criterion5_3Form from "./Criterion5_3Form";
 import Criterion5_4Form from "./Criterion5_4Form";
 import Criterion5_5Form from "./Criterion5_5Form";
+import Criterion5_6Form from "./Criterion5_6Form";
+import Criterion5_7Form from "./Criterion5_7Form";
+import Criterion5_8Form from "./Criterion5_8Form";
+import Criterion5_9Form from "./Criterion5_9Form";
 import Criterion5_AForm from "./Criterion5_AForm"; // Corrected import name if needed
 const CriterionForm5 = ({
   section,
@@ -32,6 +36,10 @@ const CriterionForm5 = ({
     "5.3": Criterion5_3Form,
     "5.4": Criterion5_4Form,
     "5.5": Criterion5_5Form,
+    "5.6": Criterion5_6Form,
+    "5.7": Criterion5_7Form,
+    "5.8": Criterion5_8Form,
+    "5.9": Criterion5_9Form,
     "5A": Criterion5_AForm,
   };
   console.log("section",section)

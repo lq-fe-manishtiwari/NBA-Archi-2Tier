@@ -7,160 +7,106 @@ import { toast } from "react-toastify";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 import {
   Trash2, Plus, FileText, Save, CheckCircle,
-  Upload, X, Edit, Calculator, Eye, Clock, Check,
-  Download, ExternalLink
+  Upload, X, Edit, Calculator, Eye, Clock, Check, AlertCircle
 } from "lucide-react";
 Modal.setAppElement("#root");
 
-// Faculty Qualification Table Component
-const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tableConfig, approvalStatus }) => {
+// Faculty Cadre Proportion Table Component
+const FacultyCadreTable = ({ columns, data = [], onChange, disabled, tableConfig, approvalStatus }) => {
   const [rows, setRows] = useState(() => {
-    if (data && data.length > 0) return data;
-    
+    if (data.length > 0) return data;
+
     // Initialize with empty data for each year
     return (tableConfig?.years || ["CAY", "CAYm1", "CAYm2"]).map((year, index) => ({
       id: `row-${index}`,
       year: year,
-      X: "",
-      Y: "",
-      RF: "",
-      FQI: ""
+      RF1: "",
+      AF1: "",
+      RF2: "",
+      AF2: "",
+      RF3: "",
+      AF3: ""
     }));
   });
-
-  // Calculate FQI for a given row
-  const calculateFQI = (X, Y, RF) => {
-    const xNum = parseFloat(X) || 0;
-    const yNum = parseFloat(Y) || 0;
-    const rfNum = parseFloat(RF) || 1;
-    
-    if (rfNum === 0) return "0.00";
-    
-    // FQI = 2.5 * [(10X + 4Y)/RF]
-    const fqi = 2.5 * ((10 * xNum + 4 * yNum) / rfNum);
-    return fqi.toFixed(2);
-  };
 
   const handleChange = (rowId, field, value) => {
     const updatedRows = rows.map(row => {
       if (row.id === rowId) {
-        const updatedRow = { ...row, [field]: value };
-        
-        // If X, Y, or RF changed, recalculate FQI
-        if (field === 'X' || field === 'Y' || field === 'RF') {
-          updatedRow.FQI = calculateFQI(
-            field === 'X' ? value : row.X,
-            field === 'Y' ? value : row.Y,
-            field === 'RF' ? value : row.RF
-          );
-        }
-        
-        return updatedRow;
+        return { ...row, [field]: value };
       }
       return row;
     });
-    
+
     setRows(updatedRows);
     onChange(updatedRows);
   };
 
-  // Initialize rows when data prop changes
-  useEffect(() => {
-    if (data && data.length > 0) {
-      setRows(data);
-    }
-  }, [data]);
-
   // Calculate average row
   const calculateAverage = () => {
-    const numericRows = rows.filter(row => {
-      const hasData = row.X !== "" || row.Y !== "" || row.RF !== "";
-      const hasFQI = parseFloat(row.FQI) >= 0;
-      return hasData && hasFQI;
-    });
-    
+    const numericRows = rows.filter(row =>
+      parseFloat(row.RF1) >= 0 && parseFloat(row.RF2) >= 0 && parseFloat(row.RF3) >= 0
+    );
+
     if (numericRows.length === 0) return null;
-    
+
     const average = {
       id: "average",
-      year: "Average Assessment",
-      X: (numericRows.reduce((sum, row) => sum + parseFloat(row.X || 0), 0) / numericRows.length).toFixed(2),
-      Y: (numericRows.reduce((sum, row) => sum + parseFloat(row.Y || 0), 0) / numericRows.length).toFixed(2),
-      RF: (numericRows.reduce((sum, row) => sum + parseFloat(row.RF || 0), 0) / numericRows.length).toFixed(2),
-      FQI: (numericRows.reduce((sum, row) => sum + parseFloat(row.FQI || 0), 0) / numericRows.length).toFixed(2),
+      year: "Average Numbers",
+      RF1: (numericRows.reduce((sum, row) => sum + parseFloat(row.RF1 || 0), 0) / numericRows.length).toFixed(2),
+      AF1: (numericRows.reduce((sum, row) => sum + parseFloat(row.AF1 || 0), 0) / numericRows.length).toFixed(2),
+      RF2: (numericRows.reduce((sum, row) => sum + parseFloat(row.RF2 || 0), 0) / numericRows.length).toFixed(2),
+      AF2: (numericRows.reduce((sum, row) => sum + parseFloat(row.AF2 || 0), 0) / numericRows.length).toFixed(2),
+      RF3: (numericRows.reduce((sum, row) => sum + parseFloat(row.RF3 || 0), 0) / numericRows.length).toFixed(2),
+      AF3: (numericRows.reduce((sum, row) => sum + parseFloat(row.AF3 || 0), 0) / numericRows.length).toFixed(2),
     };
-    
+
     return average;
   };
 
-  // Calculate marks based on average FQI
+  // Calculate marks based on average values
   const calculateMarks = (averageRow) => {
-    if (!averageRow || !averageRow.FQI) return 0;
-    
-    const fqi = parseFloat(averageRow.FQI);
-    // Marks = FQI (capped at 25)
-    return Math.min(fqi, 25);
+    if (!averageRow) return 0;
+
+    const AF1 = parseFloat(averageRow.AF1) || 0;
+    const RF1 = parseFloat(averageRow.RF1) || 1;
+    const AF2 = parseFloat(averageRow.AF2) || 0;
+    const RF2 = parseFloat(averageRow.RF2) || 1;
+    const AF3 = parseFloat(averageRow.AF3) || 0;
+    const RF3 = parseFloat(averageRow.RF3) || 1;
+
+    // If both AF1 and AF2 are 0, then zero marks
+    if (AF1 === 0 && AF2 === 0) return 0;
+
+    // Calculate marks based on formula: ⌈ AF1/RF1 + (AF2/RF2 × 0.6) + (AF3/RF3 × 0.4) ⌉ × 12.5
+    const calculation = (AF1 / RF1) + (AF2 / RF2 * 0.6) + (AF3 / RF3 * 0.4);
+    const marks = Math.ceil(calculation * 100) / 100 * 12.5;
+
+    // Limit to maximum 25 marks
+    return Math.min(Math.round(marks * 100) / 100, 25);
   };
 
   const averageRow = calculateAverage();
   const marks = calculateMarks(averageRow);
 
-  // Handle download template
-  const handleDownloadTemplate = () => {
-    // Create CSV template
-    const headers = ["Year", "X (Ph.D Faculty)", "Y (M.Tech/M.E Faculty)", "RF (Required Faculty)", "FQI"];
-    const years = ["CAY", "CAYm1", "CAYm2"];
-    const templateData = years.map(year => [year, "", "", "", ""]);
-    
-    const csvContent = [
-      headers.join(","),
-      ...templateData.map(row => row.join(","))
-    ].join("\n");
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'faculty_qualification_template.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-    
-    toast.success("Template downloaded!");
-  };
-
   return (
     <div className="space-y-6">
       {/* Approval status badge */}
       {approvalStatus && (
-        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-          approvalStatus === 'APPROVED' ? 'bg-green-100 text-green-800' :
+        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${approvalStatus === 'APPROVED' || approvalStatus === 'APPROVED_BY_SUB_COORDINATOR' ? 'bg-green-100 text-green-800' :
           approvalStatus === 'REJECTED' ? 'bg-red-100 text-red-800' :
-          'bg-yellow-100 text-yellow-800'
-        }`}>
-          {approvalStatus === 'APPROVED' ? <Check className="w-4 h-4 mr-1" /> :
-           approvalStatus === 'REJECTED' ? <X className="w-4 h-4 mr-1" /> :
-           <Clock className="w-4 h-4 mr-1" />}
+            'bg-yellow-100 text-yellow-800'
+          }`}>
+          {approvalStatus === 'APPROVED' || approvalStatus === 'APPROVED_BY_SUB_COORDINATOR' ? <Check className="w-4 h-4 mr-1" /> :
+            approvalStatus === 'REJECTED' ? <X className="w-4 h-4 mr-1" /> :
+              <Clock className="w-4 h-4 mr-1" />}
           {approvalStatus}
         </div>
       )}
-      
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-600">
-          <strong>Formula:</strong> {tableConfig?.description || "FQI = 2.5 × [(10X + 4Y)/RF]"}
-        </div>
-        {!disabled && (
-          <button
-            onClick={handleDownloadTemplate}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
-          >
-            <Download className="w-4 h-4" />
-            Download CSV Template
-          </button>
-        )}
+
+      <div className="text-sm text-gray-600 mb-4">
+        <strong>Note:</strong> {tableConfig?.description || "Faculty Cadre Proportion is 1(RF1): 2(RF2): 6(RF3)"}
       </div>
-      
+
       {/* Main Table */}
       <div className="overflow-x-auto">
         <table className="w-full table-auto bg-white rounded-lg shadow border border-gray-300">
@@ -169,9 +115,6 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
               {columns.map((col) => (
                 <th key={col.field} className="p-3 text-center font-medium whitespace-pre-line align-middle">
                   {col.header}
-                  {col.tooltip && (
-                    <div className="text-xs font-normal opacity-90 mt-1">{col.tooltip}</div>
-                  )}
                 </th>
               ))}
             </tr>
@@ -186,10 +129,22 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
                 <td className="p-3">
                   <input
                     type="number"
+                    step="0.01"
+                    min="0"
+                    value={row.RF1 || ""}
+                    onChange={(e) => handleChange(row.id, "RF1", e.target.value)}
+                    disabled={disabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    placeholder="0.00"
+                  />
+                </td>
+                <td className="p-3">
+                  <input
+                    type="number"
                     step="1"
                     min="0"
-                    value={row.X || ""}
-                    onChange={(e) => handleChange(row.id, "X", e.target.value)}
+                    value={row.AF1 || ""}
+                    onChange={(e) => handleChange(row.id, "AF1", e.target.value)}
                     disabled={disabled}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     placeholder="0"
@@ -198,10 +153,22 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
                 <td className="p-3">
                   <input
                     type="number"
+                    step="0.01"
+                    min="0"
+                    value={row.RF2 || ""}
+                    onChange={(e) => handleChange(row.id, "RF2", e.target.value)}
+                    disabled={disabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    placeholder="0.00"
+                  />
+                </td>
+                <td className="p-3">
+                  <input
+                    type="number"
                     step="1"
                     min="0"
-                    value={row.Y || ""}
-                    onChange={(e) => handleChange(row.id, "Y", e.target.value)}
+                    value={row.AF2 || ""}
+                    onChange={(e) => handleChange(row.id, "AF2", e.target.value)}
                     disabled={disabled}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     placeholder="0"
@@ -210,38 +177,53 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
                 <td className="p-3">
                   <input
                     type="number"
+                    step="0.01"
+                    min="0"
+                    value={row.RF3 || ""}
+                    onChange={(e) => handleChange(row.id, "RF3", e.target.value)}
+                    disabled={disabled}
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    placeholder="0.00"
+                  />
+                </td>
+                <td className="p-3">
+                  <input
+                    type="number"
                     step="1"
                     min="0"
-                    value={row.RF || ""}
-                    onChange={(e) => handleChange(row.id, "RF", e.target.value)}
+                    value={row.AF3 || ""}
+                    onChange={(e) => handleChange(row.id, "AF3", e.target.value)}
                     disabled={disabled}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     placeholder="0"
                   />
-                </td>
-                <td className="p-3 text-center font-bold text-blue-700 bg-blue-50">
-                  {row.FQI || "0.00"}
                 </td>
               </tr>
             ))}
-            
+
             {/* Average Row */}
             {averageRow && (
-              <tr className="border-b bg-green-50 font-bold">
-                <td className="p-3 text-center text-green-700">
+              <tr className="border-b bg-blue-50 font-bold">
+                <td className="p-3 text-center text-blue-700">
                   {averageRow.year}
                 </td>
-                <td className="p-3 text-center text-green-700">
-                  {averageRow.X}
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.RF1}
                 </td>
-                <td className="p-3 text-center text-green-700">
-                  {averageRow.Y}
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.AF1}
                 </td>
-                <td className="p-3 text-center text-green-700">
-                  {averageRow.RF}
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.RF2}
                 </td>
-                <td className="p-3 text-center text-green-700">
-                  {averageRow.FQI}
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.AF2}
+                </td>
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.RF3}
+                </td>
+                <td className="p-3 text-center text-blue-700">
+                  {averageRow.AF3}
                 </td>
               </tr>
             )}
@@ -249,85 +231,79 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
         </table>
       </div>
 
-      {/* Formula Explanation */}
-      <div className="bg-gray-50 p-4 rounded-lg border">
-        <h4 className="font-bold text-blue-700 mb-2">Formula Explanation:</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <strong>X (Ph.D. Faculty):</strong>
-            <div className="mt-1">Number of faculty members with Ph.D. degree or equivalent as per AICTE/UGC norms.</div>
-          </div>
-          <div>
-            <strong>Y (PG Faculty):</strong>
-            <div className="mt-1">Number of faculty members with M.Tech or M.E. degree or equivalent as per AICTE/UGC norms.</div>
-          </div>
-          <div>
-            <strong>RF (Required Faculty):</strong>
-            <div className="mt-1">RF = S/20, where S = Total number of students (as per section 5.1)</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Detailed Calculation for each year */}
-      <div className="space-y-4">
-        <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-          <Calculator className="w-5 h-5" /> Detailed FQI Calculation for Each Year
+      {/* Marks Calculation */}
+      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-300 rounded-lg">
+        <h4 className="text-lg font-bold text-blue-700 mb-3 flex items-center gap-2">
+          <Calculator className="w-5 h-5" /> Marks Calculation
         </h4>
-        
-        {rows.map((row) => {
-          const X = parseFloat(row.X) || 0;
-          const Y = parseFloat(row.Y) || 0;
-          const RF = parseFloat(row.RF) || 1;
-          const FQI = parseFloat(row.FQI) || 0;
-          
-          return (
-            <div key={row.id} className="bg-white p-4 rounded-lg border">
-              <div className="font-bold mb-2">{row.year}:</div>
-              <div className="text-sm font-mono bg-gray-100 p-3 rounded">
-                <div>FQI = 2.5 × [ (10×{X}) + (4×{Y}) ] / {RF}</div>
-                <div>    = 2.5 × [ {10*X} + {4*Y} ] / {RF}</div>
-                <div>    = 2.5 × [ {10*X + 4*Y} ] / {RF}</div>
-                <div>    = 2.5 × {RF === 0 ? "Undefined" : ((10*X + 4*Y)/RF).toFixed(2)}</div>
-                <div className="font-bold text-green-600 mt-1">
-                  = {FQI.toFixed(2)}
+
+        {averageRow && (
+          <div className="space-y-4">
+            {/* Formula Display */}
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="font-mono text-sm bg-gray-100 p-3 rounded">
+                <div className="font-bold mb-2">Formula:</div>
+                <div>Marks = ⌈ AF1/RF1 + (AF2/RF2 × 0.6) + (AF3/RF3 × 0.4) ⌉ × 12.5</div>
+                <div className="text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  Note: If AF1 = AF2 = 0, then zero mark
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
 
-      {/* Marks Calculation */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-300 rounded-lg">
-        <h4 className="text-lg font-bold text-blue-700 mb-3">Marks Calculation</h4>
-        
-        {averageRow && (
-          <div className="space-y-4">
+            {/* Step-by-step Calculation */}
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="font-bold mb-2">Step-by-step calculation:</div>
+              <div className="space-y-2 text-sm">
+                <div>1. AF1/RF1 = {averageRow.AF1} / {averageRow.RF1} = {(parseFloat(averageRow.AF1) / parseFloat(averageRow.RF1) || 0).toFixed(2)}</div>
+                <div>2. AF2/RF2 × 0.6 = ({averageRow.AF2} / {averageRow.RF2}) × 0.6 = {((parseFloat(averageRow.AF2) / parseFloat(averageRow.RF2)) * 0.6 || 0).toFixed(2)}</div>
+                <div>3. AF3/RF3 × 0.4 = ({averageRow.AF3} / {averageRow.RF3}) × 0.4 = {((parseFloat(averageRow.AF3) / parseFloat(averageRow.RF3)) * 0.4 || 0).toFixed(2)}</div>
+                <div className="border-t pt-2 mt-2 font-bold">
+                  4. Sum = {(parseFloat(averageRow.AF1) / parseFloat(averageRow.RF1) || 0).toFixed(2)} + {((parseFloat(averageRow.AF2) / parseFloat(averageRow.RF2)) * 0.6 || 0).toFixed(2)} + {((parseFloat(averageRow.AF3) / parseFloat(averageRow.RF3)) * 0.4 || 0).toFixed(2)} =
+                  <span className="text-green-600 ml-2">
+                    {(
+                      (parseFloat(averageRow.AF1) / parseFloat(averageRow.RF1) || 0) +
+                      ((parseFloat(averageRow.AF2) / parseFloat(averageRow.RF2)) * 0.6 || 0) +
+                      ((parseFloat(averageRow.AF3) / parseFloat(averageRow.RF3)) * 0.4 || 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+                <div className="font-bold">
+                  5. Multiply by 12.5 =
+                  <span className="text-green-600 ml-2">
+                    {(
+                      ((parseFloat(averageRow.AF1) / parseFloat(averageRow.RF1) || 0) +
+                        ((parseFloat(averageRow.AF2) / parseFloat(averageRow.RF2)) * 0.6 || 0) +
+                        ((parseFloat(averageRow.AF3) / parseFloat(averageRow.RF3)) * 0.4 || 0)) * 12.5
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {/* Final Marks */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-100 p-4 rounded-lg border border-green-300">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="font-bold text-lg">Average FQI: {averageRow.FQI}</div>
-                  <div className="text-sm text-gray-600">Average of {rows.map(r => r.year).join(", ")}</div>
+                  <div className="font-bold text-lg">Final Marks</div>
+                  <div className="text-sm text-gray-600">Capped at maximum 25 marks</div>
                 </div>
                 <div className="text-3xl font-bold text-green-700">
                   {marks.toFixed(2)} / 25
                 </div>
               </div>
-              
-              <div className="mt-3 text-sm">
-                <strong>Note:</strong> Marks = Average FQI (capped at maximum 25 marks)
-              </div>
-            </div>
 
-            {/* Average Calculation */}
-            <div className="bg-white p-4 rounded-lg border">
-              <div className="font-bold mb-2">Average Calculation:</div>
-              <div className="text-sm font-mono bg-gray-100 p-3 rounded">
-                <div>Average FQI = ( {rows.map(r => r.FQI || "0.00").join(" + ")} ) / {rows.length}</div>
-                <div>              = {rows.reduce((sum, row) => sum + parseFloat(row.FQI || 0), 0).toFixed(2)} / {rows.length}</div>
-                <div>              = {averageRow.FQI}</div>
-              </div>
+              {/* Warning if AF1 and AF2 are both zero */}
+              {parseFloat(averageRow.AF1) === 0 && parseFloat(averageRow.AF2) === 0 && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+                  <div className="font-bold text-red-700 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" /> Zero Marks Condition Met
+                  </div>
+                  <div className="text-sm text-red-600">
+                    AF1 = {averageRow.AF1} and AF2 = {averageRow.AF2} are both zero. According to the formula, this results in zero marks.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -336,7 +312,7 @@ const FacultyQualificationTable = ({ columns, data = [], onChange, disabled, tab
   );
 };
 
-// Main Component for 5.2
+// Main Component for 5.3
 const GenericCriteriaForm5_2 = ({
   title = "NBA Section",
   marks = 25,
@@ -357,7 +333,7 @@ const GenericCriteriaForm5_2 = ({
   const [filesByField, setFilesByField] = useState(() => {
     // Initialize with existing files
     const init = {};
-    
+
     // Initialize for all fields
     fields.forEach((field) => {
       if (safeFilesByField[field.name]) {
@@ -367,6 +343,7 @@ const GenericCriteriaForm5_2 = ({
           description: file.description || "",
           filename: file.filename || "",
           url: file.url || file.s3Url || "",
+          s3Url: file.s3Url || file.url || "",
           uploading: false,
           file: null
         }));
@@ -375,7 +352,7 @@ const GenericCriteriaForm5_2 = ({
         init[field.name] = [];
       }
     });
-    
+
     return init;
   });
 
@@ -389,7 +366,7 @@ const GenericCriteriaForm5_2 = ({
     if (initialData) {
       setFormValues(initialData.content || {});
       setTableData(initialData.tableData || []);
-      
+
       // Update filesByField
       const updatedFiles = {};
       fields.forEach((field) => {
@@ -399,6 +376,7 @@ const GenericCriteriaForm5_2 = ({
             description: file.description || "",
             filename: file.filename || "",
             url: file.url || file.s3Url || "",
+            s3Url: file.s3Url || file.url || "",
             uploading: false,
             file: null
           }));
@@ -415,13 +393,13 @@ const GenericCriteriaForm5_2 = ({
       ...prev,
       [fieldName]: [
         ...(prev[fieldName] || []),
-        { 
-          id: `file-${Date.now()}-${fieldName}-${Math.random()}`, 
-          description: "", 
-          file: null, 
-          filename: "", 
-          url: "", 
-          uploading: false 
+        {
+          id: `file-${Date.now()}-${fieldName}-${Math.random()}`,
+          description: "",
+          file: null,
+          filename: "",
+          s3Url: "",
+          uploading: false
         },
       ],
     }));
@@ -430,9 +408,7 @@ const GenericCriteriaForm5_2 = ({
   const updateFileDescription = (fieldName, index, value) => {
     setFilesByField((prev) => ({
       ...prev,
-      [fieldName]: prev[fieldName].map((f, i) => 
-        i === index ? { ...f, description: value } : f
-      ),
+      [fieldName]: prev[fieldName].map((f, i) => (i === index ? { ...f, description: value } : f)),
     }));
   };
 
@@ -442,66 +418,39 @@ const GenericCriteriaForm5_2 = ({
       return;
     }
 
-    const currentRow = filesByField[fieldName][index];
+    // Check if the row exists, if not we'll handle it differently
+    const currentRow = filesByField[fieldName]?.[index];
+
+    // If row doesn't exist yet, we need to ensure the array exists first
+    if (!currentRow) {
+      console.warn("File row doesn't exist yet, creating it first");
+      // The row will be created by addFileRow, so we'll just proceed without description
+    }
 
     // Optimistic UI update
     setFilesByField(prev => ({
       ...prev,
-      [fieldName]: prev[fieldName].map((f, i) =>
-        i === index ? { 
-          ...f, 
-          file: newFile, 
-          filename: newFile.name, 
-          uploading: true 
-        } : f
+      [fieldName]: (prev[fieldName] || []).map((f, i) =>
+        i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
       )
     }));
 
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      
-      if (currentRow.description?.trim()) {
+
+      if (currentRow?.description?.trim()) {
         formData.append("description", currentRow.description.trim());
       }
 
       const resData = await nbaDashboardService.uploadFile(formData);
-      
-      // Handle response based on API structure
-      let fileUrl = "";
-      if (typeof resData === 'string') {
-        // If response is a direct URL string
-        fileUrl = resData;
-      } else if (resData?.url) {
-        // If response has url property
-        fileUrl = resData.url;
-      } else if (resData?.file_url) {
-        // If response has file_url property (snake_case)
-        fileUrl = resData.file_url;
-      } else if (resData?.downloadPath) {
-        // If response has downloadPath property
-        fileUrl = resData.downloadPath;
-      } else if (resData?.data?.url) {
-        // If response is wrapped in data object
-        fileUrl = resData.data.url;
-      } else if (resData?.data?.file_url) {
-        // If response is wrapped in data object with snake_case
-        fileUrl = resData.data.file_url;
-      }
-
-      console.log("📤 Upload response:", resData);
-      console.log("🔗 Extracted URL:", fileUrl);
+      const s3Url = resData?.downloadPath || resData || "";
 
       setFilesByField(prev => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
           i === index
-            ? { 
-                ...f, 
-                url: fileUrl,
-                filename: newFile.name, 
-                uploading: false 
-              }
+            ? { ...f, s3Url: s3Url, url: s3Url, filename: newFile.name, uploading: false }
             : f
         )
       }));
@@ -509,18 +458,12 @@ const GenericCriteriaForm5_2 = ({
       toast.success("Uploaded successfully!");
     } catch (err) {
       console.error("Upload failed:", err);
-      toast.error("Upload failed. Please try again.");
+      toast.error("Upload failed");
 
       setFilesByField(prev => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
-          i === index ? { 
-            ...f, 
-            uploading: false, 
-            file: null, 
-            filename: "", 
-            url: "" 
-          } : f
+          i === index ? { ...f, uploading: false, file: null, filename: "", s3Url: "" } : f
         )
       }));
     }
@@ -533,42 +476,17 @@ const GenericCriteriaForm5_2 = ({
     }));
   };
 
-  const handleTableChange = (newTableData) => {
-    setTableData(newTableData);
-  };
-
   const handleSave = () => {
-    // Prepare data for save
-    const saveData = {
+    onSave({
       content: formValues,
-      tableData: tableData,
-      filesByField: filesByField
-    };
-    
-    console.log("💾 Saving data:", saveData);
-    onSave(saveData);
+      tableData,
+      filesByField,
+    });
     setIsEditMode(false);
   };
 
-  const handleDownloadFile = (fileUrl, filename) => {
-    if (!fileUrl) {
-      toast.error("No file available to download");
-      return;
-    }
-    
-    // Create a temporary link to trigger download
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.download = filename || 'download';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   // Determine if editing should be disabled
-  const isEditingDisabled = approvalStatus === 'APPROVED' || approvalStatus === 'REJECTED' || !isContributorEditable;
+  const isEditingDisabled = approvalStatus === 'APPROVED' || approvalStatus === 'APPROVED_BY_SUB_COORDINATOR' || approvalStatus === 'REJECTED' || !isContributorEditable;
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -582,9 +500,8 @@ const GenericCriteriaForm5_2 = ({
           {!isEditingDisabled && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${
-                isEditMode ? "bg-red-500 hover:bg-red-600 text-white" : "bg-white hover:bg-gray-100 text-[#2163c1]"
-              }`}
+              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
+                }`}
               title={isEditMode ? "Cancel Editing" : "Edit Section"}
             >
               {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
@@ -602,10 +519,10 @@ const GenericCriteriaForm5_2 = ({
             </h3>
 
             {field.hasTable ? (
-              <FacultyQualificationTable
+              <FacultyCadreTable
                 columns={field.tableConfig.columns}
                 data={tableData}
-                onChange={handleTableChange}
+                onChange={setTableData}
                 disabled={!isEditMode || isEditingDisabled}
                 tableConfig={field.tableConfig}
                 approvalStatus={approvalStatus}
@@ -622,134 +539,143 @@ const GenericCriteriaForm5_2 = ({
               </div>
             )}
 
-            {/* Supporting Documents Section */}
-            <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
-                  <Upload className="w-6 h-6" /> Supporting Documents
-                </h4>
-                {isEditMode && !isEditingDisabled && filesByField[field.name]?.some((f) => f.filename?.toLowerCase().endsWith(".pdf")) && (
-                  <button
-                    onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })}
-                    className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
-                  >
-                    <FileText className="w-5 h-5" /> Merge PDFs
-                  </button>
-                )}
-              </div>
+            {isEditMode && !isEditingDisabled && (
+              <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
+                    <Upload className="w-6 h-6" /> Supporting Documents
+                  </h4>
+                  {filesByField[field.name]?.some((f) => f.filename?.toLowerCase().endsWith(".pdf")) && (
+                    <button
+                      onClick={() => setMergeModal({ isOpen: true, fieldName: field.name })}
+                      className="px-5 py-2.5 bg-[#2163c1] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2"
+                    >
+                      <FileText className="w-5 h-5" /> Merge PDFs
+                    </button>
+                  )}
+                </div>
 
-              <div className="space-y-3">
-                {/* Show existing files even in view mode */}
-                {(filesByField[field.name] || []).map((file, index) => {
-                  const hasFile = file.url || file.filename;
-                  
-                  return (
-                    <div key={file.id || index} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-                      <div className="flex-1">
+                <div className="space-y-3">
+                  {(filesByField[field.name] || []).map((file, index) => {
+                    if (!file.id) {
+                      file.id = `file-${Date.now()}-${field.name}-${Math.random()}`;
+                    }
+                    return (
+                      <div key={file.id} className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
                         <input
                           type="text"
                           value={file.description || ""}
                           onChange={(e) => updateFileDescription(field.name, index, e.target.value)}
-                          placeholder="Document description"
-                          disabled={!isEditMode || isEditingDisabled}
-                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          placeholder="Description"
+                          disabled={!isEditMode}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                         />
-                      </div>
 
-                      <div className="w-64">
-                        {file.uploading ? (
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                            <span>Uploading...</span>
-                          </div>
-                        ) : hasFile ? (
-                          <div className="flex items-center gap-2">
-                            <div className="flex flex-col">
+                        <div className="w-64">
+                          {file.uploading ? (
+                            <span className="text-gray-500 italic">Uploading...</span>
+                          ) : file.filename && file.s3Url ? (
+                            <div className="flex items-center gap-2">
                               <button
                                 onClick={() => setPreviewModal({ isOpen: true, file })}
-                                className="text-blue-600 font-medium hover:underline flex items-center gap-2 text-left"
+                                className="text-blue-600 font-medium hover:underline flex items-center gap-2"
                                 title="Preview"
                               >
-                                <Eye className="w-4 h-4 flex-shrink-0" />
-                                <span className="truncate max-w-32">{file.filename}</span>
+                                <Eye className="w-4 h-4" /> {file.filename}
                               </button>
-                             
+                              <span className="text-green-600">
+                                <CheckCircle className="w-4 h-4" />
+                              </span>
                             </div>
-                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          </div>
-                        ) : (
-                          isEditMode && !isEditingDisabled && (
+                          ) : (
                             <input
                               type="file"
                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                               onChange={(e) => handleFileChange(field.name, index, e.target.files?.[0])}
-                              className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                              disabled={!isEditMode}
+                              className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white disabled:opacity-50"
                             />
-                          )
-                        )}
-                      </div>
+                          )}
+                        </div>
 
-                      {isEditMode && !isEditingDisabled && (
                         <div className="flex gap-2">
                           <button
                             onClick={() => addFileRow(field.name)}
-                            className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                            disabled={!isEditMode}
+                            className="text-green-600 hover:bg-green-50 p-2 rounded transition disabled:opacity-50"
                             title="Add another document"
                           >
                             <Plus className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => removeFileRow(field.name, index)}
-                            className="text-red-500 hover:bg-red-50 p-2 rounded transition"
+                            disabled={!isEditMode}
+                            className="text-red-500 hover:bg-red-50 p-2 rounded transition disabled:opacity-50"
                             title="Remove document"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  })}
 
-                {/* Add first file row if none exists */}
-                {(!filesByField[field.name] || filesByField[field.name].length === 0) && isEditMode && !isEditingDisabled && (
-                  <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
-                    <div className="flex-1">
+                  {/* Add first file row if none exists */}
+                  {(!filesByField[field.name] || filesByField[field.name].length === 0) && (
+                    <div className="flex items-center gap-3 p-4 bg-white rounded-lg border border-gray-300">
                       <input
                         type="text"
                         placeholder="Document description"
-                        value=""
-                        onChange={(e) => {
-                          addFileRow(field.name);
-                          updateFileDescription(field.name, 0, e.target.value);
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onFocus={() => {
+                          // Add a row when user focuses on description field
+                          if (!filesByField[field.name] || filesByField[field.name].length === 0) {
+                            addFileRow(field.name);
+                          }
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="w-64">
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                         onChange={(e) => {
-                          addFileRow(field.name);
-                          handleFileChange(field.name, 0, e.target.files?.[0]);
+                          // Update description if row exists
+                          if (filesByField[field.name] && filesByField[field.name].length > 0) {
+                            updateFileDescription(field.name, 0, e.target.value);
+                          }
                         }}
-                        className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
                       />
+                      <div className="w-64">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+
+                            // Ensure row exists before uploading
+                            if (!filesByField[field.name] || filesByField[field.name].length === 0) {
+                              // Add the row first
+                              addFileRow(field.name);
+                              // Wait a tick for state to update, then upload
+                              setTimeout(() => handleFileChange(field.name, 0, file), 100);
+                            } else {
+                              // Row already exists, upload directly
+                              handleFileChange(field.name, 0, file);
+                            }
+                          }}
+                          className="block w-full text-sm border-0 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:bg-[#2163c1] file:text-white"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => addFileRow(field.name)}
+                          className="text-green-600 hover:bg-green-50 p-2 rounded transition"
+                          title="Add another document"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => addFileRow(field.name)}
-                        className="text-green-600 hover:bg-green-50 p-2 rounded transition"
-                        title="Add another document"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ))}
 
@@ -758,18 +684,13 @@ const GenericCriteriaForm5_2 = ({
             <button
               onClick={handleSave}
               disabled={saving}
-              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${
-                saving
-                  ? "bg-[#2163c1] opacity-60 cursor-not-allowed"
-                  : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
-              }`}
+              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${saving
+                ? "bg-[#2163c1] opacity-60 cursor-not-allowed"
+                : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
+                }`}
               title={saving ? "Saving..." : "Save"}
             >
-              {saving ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <Save className="w-6 h-6" />
-              )}
+              <Save className="w-6 h-6" />
             </button>
 
             <button
@@ -793,7 +714,7 @@ const GenericCriteriaForm5_2 = ({
         )}
       </div>
 
-      {/* Preview Modal */}
+      {/* Preview & Merge Modals */}
       <Modal
         isOpen={previewModal.isOpen}
         onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}
@@ -803,59 +724,16 @@ const GenericCriteriaForm5_2 = ({
         {previewModal.file && (
           <div className="flex flex-col h-full">
             <div className="flex justify-between items-center p-6 bg-gradient-to-r from-blue-600 to-blue-400 text-white">
-              <div className="flex items-center gap-3">
-                <FileText className="w-6 h-6" />
-                <h3 className="text-xl font-bold truncate">{previewModal.file.filename}</h3>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleDownloadFile(previewModal.file.url, previewModal.file.filename)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition"
-                  title="Download"
-                >
-                  <Download className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => setPreviewModal({ isOpen: false, file: null })}
-                  className="p-2 hover:bg-white/20 rounded-lg transition"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+              <h3 className="text-xl font-bold">{previewModal.file.filename}</h3>
+              <button onClick={() => setPreviewModal({ isOpen: false, file: null })}>
+                <X className="w-6 h-6" />
+              </button>
             </div>
-            
-            <div className="flex-1 p-4">
-              {previewModal.file.filename?.toLowerCase().endsWith('.pdf') ? (
-                <iframe
-                  src={previewModal.file.url}
-                  title={previewModal.file.filename}
-                  className="w-full h-full border-0"
-                  style={{ minHeight: 'calc(100vh - 200px)' }}
-                />
-              ) : previewModal.file.filename?.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i) ? (
-                <div className="flex items-center justify-center h-full">
-                  <img
-                    src={previewModal.file.url}
-                    alt={previewModal.file.filename}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                  <FileText className="w-20 h-20 mb-4" />
-                  <p className="text-lg">Preview not available for this file type</p>
-                  <a
-                    href={previewModal.file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Open in new tab
-                  </a>
-                </div>
-              )}
-            </div>
+            <iframe
+              src={previewModal.file.s3Url}
+              title={previewModal.file.filename}
+              className="flex-1 w-full"
+            />
           </div>
         )}
       </Modal>
@@ -869,7 +747,7 @@ const GenericCriteriaForm5_2 = ({
             id: mergedDocument.id,
             filename: mergedDocument.filename,
             description: mergedDocument.description,
-            url: mergedDocument.url,
+            s3Url: mergedDocument.s3Url,
             uploading: false,
             isMerged: true,
           };
