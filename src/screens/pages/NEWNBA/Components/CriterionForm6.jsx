@@ -4,6 +4,9 @@ import { toast } from "react-toastify";
 import GenericCriteriaForm from "./GenericCriteriaForm";
 import Criterion6_1Form from "../Components/Criteria6/Criterion6_1Form";
 import Criterion6_2Form from "../Components/Criteria6/Criterion6_2Form";
+import Criterion6_3Form from "../Components/Criteria6/Criterion6_3Form";
+import Criterion6_4Form from "../Components/Criteria6/Criterion6_4Form";
+import Criterion6_5Form from "../Components/Criteria6/Criterion6_5Form";
 
 const CriterionForm = ({
   section,
@@ -51,6 +54,57 @@ const CriterionForm = ({
 
     return (
       <Criterion6_2Form
+        nba_accredited_program_id={nba_accredited_program_id}
+        academic_year={academic_year}
+        nba_criteria_sub_level2_id={nba_criteria_sub_level2_id}
+        contributor_allocation_id={nba_contributor_allocation_id}
+        completed={completed}
+        isContributorEditable={isContributorEditable}
+        otherStaffId={otherStaffId}
+        editMode={editMode}
+        developmentActivitiesId={developmentActivitiesId}
+        isSubCoordinator={isSubCoordinator}
+      />
+    );
+  }
+   if (section === "6.3") {
+
+    return (
+      <Criterion6_3Form
+        nba_accredited_program_id={nba_accredited_program_id}
+        academic_year={academic_year}
+        nba_criteria_sub_level2_id={nba_criteria_sub_level2_id}
+        contributor_allocation_id={nba_contributor_allocation_id}
+        completed={completed}
+        isContributorEditable={isContributorEditable}
+        otherStaffId={otherStaffId}
+        editMode={editMode}
+        developmentActivitiesId={developmentActivitiesId}
+        isSubCoordinator={isSubCoordinator}
+      />
+    );
+  }
+  if (section === "6.4") {
+
+    return (
+      <Criterion6_4Form
+        nba_accredited_program_id={nba_accredited_program_id}
+        academic_year={academic_year}
+        nba_criteria_sub_level2_id={nba_criteria_sub_level2_id}
+        contributor_allocation_id={nba_contributor_allocation_id}
+        completed={completed}
+        isContributorEditable={isContributorEditable}
+        otherStaffId={otherStaffId}
+        editMode={editMode}
+        developmentActivitiesId={developmentActivitiesId}
+        isSubCoordinator={isSubCoordinator}
+      />
+    );
+  }
+    if (section === "6.5") {
+
+    return (
+      <Criterion6_5Form
         nba_accredited_program_id={nba_accredited_program_id}
         academic_year={academic_year}
         nba_criteria_sub_level2_id={nba_criteria_sub_level2_id}
