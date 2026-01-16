@@ -216,7 +216,7 @@ const groupMappingByPEO = (rawMappingData) => {
         peo_statement: d.peo_statement,
         process_of_defining_vmp: d.process_of_defining_vmp,
         dissemination_of_vmp: d.dissemination_of_vmp,
-        vision_mission_documents: d.vision_mission_documents,
+        vision_mission_document: d.vision_mission_document,
         peo_documents: d.peo_documents,
         mapping_peos_mission:d.mapping_peos_mission,
       });
@@ -302,8 +302,8 @@ const groupMappingByPEO = (rawMappingData) => {
       tableData: mappingTableData,
       vision_mission_id: vision_mission_id,
       filesByField: {
-        "1.1.1": (d.vision_mission_documents || []).length > 0 
-          ? (d.vision_mission_documents || []).map((f, i) => ({
+        "1.1.1": (d.vision_mission_document || []).length > 0 
+          ? (d.vision_mission_document || []).map((f, i) => ({
               id: `file-1.1.1-${i}`,
               name: f.name || f.file_name || "",
               filename: f.name || f.file_name || "",
@@ -390,7 +390,7 @@ const groupMappingByPEO = (rawMappingData) => {
 
 
   const getFileCategory = (url, data) => {
-    if (data.vision_mission_documents?.some((f) => f.file_url === url))
+    if (data.vision_mission_document?.some((f) => f.file_url === url))
       return "Vision & Mission";
     if (data.peo_documents?.some((f) => f.file_url === url)) return "PEOs";
     if (data.process_documents?.some((f) => f.file_url === url)) return "Process";
@@ -467,7 +467,7 @@ const handleSave = async (formData) => {
       // }),
 
       // Existing files (with url)
-      vision_mission_documents: filesWithCategory
+      vision_mission_document: filesWithCategory
         .filter(f => f.category === "Vision & Mission" && (f.url || f.s3Url))
         .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
 

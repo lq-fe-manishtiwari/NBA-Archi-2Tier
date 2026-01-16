@@ -134,6 +134,13 @@ const cancelDeallocate = () => {
       alert("Please select at least one contributor to allocate.");
       return;
     }
+      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+      const assignedById = userInfo?.other_staff_id;
+
+       if (!assignedById) {
+        alert("User information is missing. Please login again.");
+        return;
+      }
 
     setSaving(true);
     try {
@@ -142,7 +149,7 @@ const cancelDeallocate = () => {
         await allocateUsersModalService.allocateUsers({
           cycle_sub_category_id: parseInt(criteriaId),
           contributor_id: parseInt(userId),
-          assigned_by_id: 20,
+          assigned_by_id: assignedById,
           remarks: "Allocated via modal",
         });
       }
