@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
-import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import { newnbaCriteria2Service } from "../../Services/NewNBA-Criteria2.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
 
@@ -26,7 +26,7 @@ const Criterion2_1Form = ({
     content: {},
     tableData: {},
     files: [],
-    curriculum_structure_id: null,
+    id: null,
   });
   const [cardLoading, setCardLoading] = useState(false);
 
@@ -38,7 +38,7 @@ const Criterion2_1Form = ({
 
     {
       name: "2.1.1",
-      label: "2.1.1 Processes for Designing the Program Curriculum (20)",
+      label: "2.1.1  State the Process for Designing the Program Curriculum (20)",
       marks: 20,
       type: "textarea",
       hasFile: true,
@@ -48,9 +48,10 @@ const Criterion2_1Form = ({
 
     {
       name: "2.1.2",
-      label: "2.1.2 Components of the Program Curriculum (05)",
+      label: "2.1.2 State the Components of the Program Curriculum (05)",
       marks: 5,
       hasTable: true,
+      hasFile: true,
       addInlineRow: true,
       tableConfig: {
         type: "curriculum-components-2-1",
@@ -66,34 +67,30 @@ const Criterion2_1Form = ({
           },
           {
             field: "curriculum_content",
-            header: "Curriculum Content (%)",
+            header: "Curriculum Content (% of total number of credits of the program)",
             type: "number",
-            width: "w-40",
+            width: "w-48",
           },
           {
             field: "contact_hours",
-            header: "Total Contact Hours",
+            header: "Total number of contact hours",
             type: "number",
             width: "w-40",
           },
           {
             field: "credits",
-            header: "Total Credits",
+            header: "Total number of credits",
             type: "number",
             width: "w-32",
           },
         ],
         presetRows: [
-          { component: "Basic Sciences" },
-          { component: "Basic Engineering Sciences" },
-          { component: "Humanities and Social Sciences" },
-          { component: "Program Core Courses" },
+          { component: "Program Core" },
           { component: "Program Electives" },
-          { component: "Open / Multidisciplinary Electives" },
-          { component: "Projects" },
-          { component: "Internship / Seminar" },
-          { component: "Any Other (Specify)" },
-          { component: "Total" },
+          { component: "Open Electives" },
+          { component: "Seminar / Project work / Internships / Industrial training / Visits" },
+          { component: "Any other (Specify)" },
+          { component: "Total number of credits" },
         ],
         autoCalculate: true,
       },
@@ -106,6 +103,7 @@ const Criterion2_1Form = ({
   label: "2.1.3 Transaction of the Program Curriculum (05)",
   marks: 5,
   hasTable: true,
+  hasFile: true,
   tableConfig: {
     type: "curriculum-structure",
     title: "Table No.2.1.3.1: Details of Courses and Teaching Scheme",
@@ -174,7 +172,7 @@ const Criterion2_1Form = ({
     {
       name: "2.1.4",
       label:
-        "2.1.4 Process to Identify Extent of Compliance of Curriculum with Program Outcomes (POs) and Program Specific Outcomes (PSOs) (05)",
+        "2.1.4 State the Process Used to Identify Extent of Compliance of the Program Curriculum for attaining the Program Outcomes (PSOs) (05)",
       marks: 5,
       type: "textarea",
       hasFile: true,
@@ -185,7 +183,7 @@ const Criterion2_1Form = ({
     {
       name: "2.1.5",
       label:
-        "2.1.5 Initiatives Towards the Education Policy (NEP) at Program Level (05)",
+        "2.1.5 Initiatives Towards the Education Policy at Program Level (05)",
       marks: 5,
       type: "textarea",
       hasFile: true,
@@ -215,32 +213,38 @@ const Criterion2_1Form = ({
     setLoading(true);
 
     try {
-      const res = await newnbaCriteria1Service.getCriteria1_2_Data(
+      const res = await newnbaCriteria2Service.getCriteria2_1_Data(
         cycle_sub_category_id,
         currentOtherStaffId
       );
       const rawResponse = res?.data || res || [];
       d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : {};
-      console.log("🟢 Loaded Criterion 1.2 data:", d);
+      console.log("🟢 Loaded Criterion 2.1 data:", d);
     } catch (err) {
-      console.error("❌ Failed to load Criterion 1.2 data:", err);
-      toast.error("Failed to load Criterion 1.2 data");
+      console.error("❌ Failed to load Criterion 2.1 data:", err);
+      toast.error("Failed to load Criterion 2.1 data");
       d = {};
     }
 
     setInitialData({
       content: {
-        "1.2.3": d.process_compliance || "",
+        "2.1.1": d.process_designing_program_curriculum || "",
+        "2.1.4": d.compliance_program_curriculum || "",
+        "2.1.5": d.initiative_education_policy_autonomous || "",
       },
       tableData: {
-        "1.2.1": (d.curriculum_structure || []).map((r, i) => {
+        "2.1.2": (d.components_program_curriculum || []).map((r, i) => ({
+          id: r.id || `component-${i}-${Date.now()}`,
+          ...r
+        })),
+        "2.1.3": (d.transaction_program_curriculum || []).map((r, i) => {
           const L = parseInt(r.L) || 0;
           const T = parseInt(r.T) || 0;
           const P = parseInt(r.P) || 0;
           const SL = parseInt(r.SL) || 0;
           const totalHours = L + T + P + SL;
           return {
-            id: r.id || `curriculum-${i}-${Date.now()}`,
+            id: r.id || `transaction-${i}-${Date.now()}`,
             course_code: r.course_code || "",
             course_title: r.course_title || "",
             L: L.toString(),
@@ -251,112 +255,9 @@ const Criterion2_1Form = ({
             credits: (Math.round((totalHours / 30) * 10) / 10).toString(),
           };
         }),
-        "1.2.2": (d.curriculum_components && d.curriculum_components.length > 0) 
-          ? d.curriculum_components.map((r, i) => ({
-              id: r.id || `component-${i}-${Date.now()}`,
-              component: r.component,
-              contact_hours: r.contact_hours,
-              percentage: r.percentage,
-              credits: r.credits,
-            }))
-          : [],
-        "1.2.4.1": (d.caym1_events || []).map((r, i) => ({
-          id: r.id || `caym1-${i}-${Date.now()}`,
-          sn: r.sn,
-          event_name: r.event_name,
-          po_pso_gap_identified:r.po_pso_gap_identified,
-          event_date: r.event_date,
-          resource_person: r.resource_person,
-          relevance: r.relevance,
-        })) || [{ id: `caym1-0-${Date.now()}`, sn: 1,po_pso_gap_identified: "", event_name: "", event_date: "", resource_person: "", relevance: "" }],
-        "1.2.4.2": (d.caym2_events || []).map((r, i) => ({
-          id: r.id || `caym2-${i}-${Date.now()}`,
-          sn: r.sn,
-          event_name: r.event_name,
-          po_pso_gap_identified:r.po_pso_gap_identified,
-          event_date: r.event_date,
-          resource_person: r.resource_person,
-          relevance: r.relevance,
-        })) || [{ id: `caym2-0-${Date.now()}`, sn: 1, po_pso_gap_identified: "",event_name: "", event_date: "", resource_person: "", relevance: "" }],
-        "1.2.4.3": (d.caym3_events || []).map((r, i) => ({
-          id: r.id || `caym3-${i}-${Date.now()}`,
-          sn: r.sn,
-          event_name: r.event_name,
-          po_pso_gap_identified:r.po_pso_gap_identified,
-          event_date: r.event_date,
-          resource_person: r.resource_person,
-          relevance: r.relevance,
-        })) || [{ id: `caym3-0-${Date.now()}`, sn: 1, po_pso_gap_identified: "",event_name: "", event_date: "", resource_person: "", relevance: "" }],
       },
-      curriculum_structure_id: d.curriculum_structure_id || null,
-      filesByField: {
-        "1.2.1": (d.curriculum_documents || []).length > 0 
-          ? (d.curriculum_documents || []).map((f, i) => ({
-              id: `file-1.2.1-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "1.2.2": (d.components_documents || []).length > 0
-          ? (d.components_documents || []).map((f, i) => ({
-              id: `file-1.2.2-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "1.2.3": (d.process_documents || []).length > 0
-          ? (d.process_documents || []).map((f, i) => ({
-              id: `file-1.2.3-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "1.2.4.1": (d.caym1_documents || []).length > 0
-          ? (d.caym1_documents || []).map((f, i) => ({
-              id: `file-1.2.4.1-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "1.2.4.2": (d.caym2_documents || []).length > 0
-          ? (d.caym2_documents || []).map((f, i) => ({
-              id: `file-1.2.4.2-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.4.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "1.2.4.3": (d.caym3_documents || []).length > 0
-          ? (d.caym3_documents || []).map((f, i) => ({
-              id: `file-1.2.4.3-${i}`,
-              name: f.name || f.file_name || "",
-              filename: f.name || f.file_name || "",
-              url: f.url || f.file_url || "",
-              s3Url: f.url || f.file_url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-1.2.4.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-      }
+      id: d.program_curriculum_id || null,
+      filesByField: {}
     });
 
     console.log("✅ Criterion2_1Form: Data loaded and set successfully");
@@ -369,8 +270,7 @@ const Criterion2_1Form = ({
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria1_2_Data?.(cycle_sub_category_id);
-      // Handle the response through parent component
+      const contributorsResponse = await newnbaCriteria2Service.getAllCriteria2_1_Data?.(cycle_sub_category_id);
       if (onStatusChange) {
         onStatusChange(contributorsResponse || []);
       }
@@ -383,7 +283,7 @@ const Criterion2_1Form = ({
 
   // Delete function that calls API
   const handleDelete = async () => {
-    if (!initialData?.curriculum_structure_id) {
+    if (!initialData?.id) {
       setAlert(
         <SweetAlert
           warning
@@ -409,7 +309,7 @@ const Criterion2_1Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria1_2_Data(initialData.curriculum_structure_id);
+            await newnbaCriteria2Service.deleteCriteria2_1Data(initialData.id);
             
             setAlert(
               <SweetAlert
@@ -418,11 +318,11 @@ const Criterion2_1Form = ({
                 confirmBtnCssClass="btn-confirm"
                 onConfirm={async () => {
                   setAlert(null);
-                  await loadData(); // Reload data after delete
+                  await loadData();
                   onSaveSuccess?.();
                 }}
               >
-                Criterion 1.2 data has been deleted successfully.
+                Criterion 2.1 data has been deleted successfully.
               </SweetAlert>
             );
           } catch (err) {
@@ -441,7 +341,7 @@ const Criterion2_1Form = ({
         }}
         onCancel={() => setAlert(null)}
       >
-        This will permanently delete all Criterion 1.2 data!
+        This will permanently delete all Criterion 2.1 data!
       </SweetAlert>
     );
   };
@@ -463,71 +363,26 @@ const Criterion2_1Form = ({
     setSaving(true);
 
     try {
-      // Transform filesByField → flat files with correct category
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
-        return (formData.filesByField[fieldName] || []).map(file => {
-          let category = "Other";
-          if (fieldName === "1.2.1") category = "Curriculum Structure";
-          if (fieldName === "1.2.2") category = "Curriculum Components";
-          if (fieldName === "1.2.3") category = "Process Compliance";
-          if (fieldName === "1.2.4.1") category = "CAYm1 Events";
-          if (fieldName === "1.2.4.2") category = "CAYm2 Events";
-          if (fieldName === "1.2.4.3") category = "CAYm3 Events";
-
-          return { ...file, category };
-        });
-      });
-
       const payload = {
         other_staff_id: currentOtherStaffId,
         cycle_sub_category_id,
-        process_compliance: formData.content["1.2.3"] || "",
-        curriculum_structure: formData.tableData["1.2.1"] || [],
-        curriculum_components: formData.tableData["1.2.2"] || [],
-        caym1_events: formData.tableData["1.2.4.1"] || [],
-        caym2_events: formData.tableData["1.2.4.2"] || [],
-        caym3_events: formData.tableData["1.2.4.3"] || [],
-        
-        // Document arrays
-        curriculum_documents: filesWithCategory
-          .filter(f => f.category === "Curriculum Structure" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
-        
-        components_documents: filesWithCategory
-          .filter(f => f.category === "Curriculum Components" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
-        
-        process_documents: filesWithCategory
-          .filter(f => f.category === "Process Compliance" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
-        
-        caym1_documents: filesWithCategory
-          .filter(f => f.category === "CAYm1 Events" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
-        
-        caym2_documents: filesWithCategory
-          .filter(f => f.category === "CAYm2 Events" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
-        
-        caym3_documents: filesWithCategory
-          .filter(f => f.category === "CAYm3 Events" && (f.url || f.s3Url) && f.filename)
-          .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
+        process_designing_program_curriculum: formData.content["2.1.1"] || "",
+        components_program_curriculum: formData.tableData["2.1.2"] || [],
+        transaction_program_curriculum: formData.tableData["2.1.3"] || [],
+        compliance_program_curriculum: formData.content["2.1.4"] || "",
+        initiative_education_policy_autonomous: formData.content["2.1.5"] || "",
       };
 
       console.log("FINAL API CALL → payload:", payload);
-      console.log("Files with category:", filesWithCategory);
-      
-      const newFiles = filesWithCategory.filter(f => f.file);
-      console.log("New files to upload:", newFiles.length);
 
-      // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.curriculum_structure_id) {
-        await newnbaCriteria1Service.putCriteria1_2_Data(
-          initialData.curriculum_structure_id,
+      if (initialData?.id) {
+        await newnbaCriteria2Service.putCriteria2_1_Data(
+          initialData.id,
+          currentOtherStaffId,
           payload
         );
       } else {
-        await newnbaCriteria1Service.saveCriteria1_2_Data(currentOtherStaffId, payload);
+        await newnbaCriteria2Service.saveCriteria2_1_Data(currentOtherStaffId, payload);
       }
 
       setAlert(
@@ -541,7 +396,7 @@ const Criterion2_1Form = ({
             onSaveSuccess?.();
           }}
         >
-          Criterion 1.2 saved successfully!
+          Criterion 2.1 saved successfully!
         </SweetAlert>
       );
     } catch (err) {
@@ -555,7 +410,7 @@ const Criterion2_1Form = ({
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 1.2...
+        Loading Criterion 2.1...
       </div>
     );
   }
@@ -625,4 +480,4 @@ const Criterion2_1Form = ({
   );
 };
 
-export default Criterion2_1Form;
+export default Criterion2_1Form; 

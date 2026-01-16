@@ -1,4 +1,4 @@
-// src/screens/pages/NEWNBA/NEWNBA-Criterion2/Criterion2_1Form.jsx
+// src/screens/pages/NEWNBA/NEWNBA-Criterion2/Criterion2_2Form.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm from "../GenericCriteriaForm";
@@ -57,7 +57,7 @@ const config = {
       },
       {
         name: "2.2.5",
-        label: "2.2.5 Initiatives Related to Skill Development / Internships / Summer Training",
+        label: "2.2.5 Initiatives Related to Skill Development Programs/Professional Internships / Summer Training",
         marks: 20,
         type: "editor",
       },
@@ -97,7 +97,7 @@ const config = {
       console.log("  - userIsContributor:", userIsContributor);
       
       // Call API with staff ID
-      const res = await newnbaCriteria2Service.getCriteria2_1_Data(cycle_sub_category_id, currentOtherStaffId);
+      const res = await newnbaCriteria2Service.getCriteria2_2_Data(cycle_sub_category_id, currentOtherStaffId);
       
       // Handle both array and object responses like Criterion1_1Form
       const rawResponse = res?.data || res || [];
@@ -107,23 +107,20 @@ const config = {
       console.log("🟢 Criterion2_2Form - Processed Data:", d);
 
       // If API returns nothing, show blank form
-      setTeachingLearningQualityId(d.teaching_learning_quality_id || null);
+      setTeachingLearningQualityId(d.teaching_learning_process_id || null);
 
       setInitialData({
-        content: { "2.2": d.quality_processes_description || "" },
+        content: {
+          "2.2.1": d.initiatives_teaching_learning_process || "",
+          "2.2.2": d.quality_internal_semester_question_papers || "",
+          "2.2.3": d.quality_student_projects || "",
+          "2.2.4": d.initiatives_industry_interaction || "",
+          "2.2.5": d.initiatives_skill_development || "",
+          "2.2.6": d.quality_experiments || "",
+        },
         tableData: [],
         filesByField: {
-          "2.2": (d.quality_process_documents || []).length > 0
-            ? (d.quality_process_documents || []).map((f, i) => ({
-                id: `file-2.2-${i}`,
-                filename: f.file_name || f.name || "",
-                s3Url: f.file_url || f.url || "",
-                 url: f.file_url || f.url || "",
-                
-                description: f.description || "",
-                uploading: false
-              }))
-            : [{ id: `file-2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "2.2": [{ id: `file-2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
 
@@ -131,7 +128,14 @@ const config = {
       console.warn("❌ Criterion2_2Form - API failed or returned 404, showing blank form", err);
       setTeachingLearningQualityId(null);
       setInitialData({
-        content: { "2.2": "" },
+        content: {
+          "2.2.1": "",
+          "2.2.2": "",
+          "2.2.3": "",
+          "2.2.4": "",
+          "2.2.5": "",
+          "2.2.6": "",
+        },
         tableData: [],
         filesByField: {
           "2.2": [{ id: `file-2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
@@ -166,14 +170,12 @@ const config = {
       const payload = {
         other_staff_id: staffId,
         cycle_sub_category_id,
-        quality_processes_description: formData.content["2.2"] || "",
-        quality_process_documents: filesWithCategory
-          .filter((f) => f.url || f.s3Url)
-          .map((f) => ({
-            file_name: f.filename,
-            file_url: f.s3Url || f.url,
-            description: f.description || "",
-          })),
+        initiatives_teaching_learning_process: formData.content["2.2.1"] || "",
+        quality_internal_semester_question_papers: formData.content["2.2.2"] || "",
+        quality_student_projects: formData.content["2.2.3"] || "",
+        initiatives_industry_interaction: formData.content["2.2.4"] || "",
+        initiatives_skill_development: formData.content["2.2.5"] || "",
+        quality_experiments: formData.content["2.2.6"] || "",
       };
       console.log("🟠 Criterion2_2Form - Save payload:", payload);
       console.log("🟠 staffId to save:", staffId);
@@ -183,10 +185,10 @@ const config = {
       // Call appropriate API based on whether record exists
       if (teachingLearningQualityId) {
         console.log("🟠 Updating existing record with ID:", teachingLearningQualityId);
-        await newnbaCriteria2Service.putCriteria2_1_Data(teachingLearningQualityId, staffId, payload);
+        await newnbaCriteria2Service.putCriteria2_2_Data(teachingLearningQualityId, staffId, payload);
       } else {
         console.log("🟠 Creating new record");
-        await newnbaCriteria2Service.saveCriteria2_1_Data(staffId, payload);
+        await newnbaCriteria2Service.saveCriteria2_2_Data(staffId, payload);
       }
 
       setAlert(
@@ -253,17 +255,10 @@ const config = {
           setAlert(null);
 
           try {
-            // Call appropriate API based on user role
-            let res;
-            if (isContributor) {
-              res = await newnbaCriteria2Service.deleteStageCriteria2_1Data(
-                teachingLearningQualityId
-              );
-            } else {
-              res = await newnbaCriteria2Service.deleteCriteria2_1Data(
-                teachingLearningQualityId
-              );
-            }
+            // Call delete API
+            const res = await newnbaCriteria2Service.deleteCriteria2_2Data(
+              teachingLearningQualityId
+            );
 
           // Handle plain text response
             let message = "Record deleted successfully.";
