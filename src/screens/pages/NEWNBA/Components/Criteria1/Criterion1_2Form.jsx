@@ -26,7 +26,7 @@ const Criterion1_2Form = ({
     content: {},
     tableData: {},
     files: [],
-    curriculum_structure_id: null,
+    new_peo_id: null,
   });
   const [cardLoading, setCardLoading] = useState(false);
 
@@ -267,7 +267,7 @@ const Criterion1_2Form = ({
           relevance: r.relevance,
         })) || [{ id: `caym3-0-${Date.now()}`, sn: 1, po_pso_gap_identified: "",event_name: "", event_date: "", resource_person: "", relevance: "" }],
       },
-      curriculum_structure_id: d.curriculum_structure_id || null,
+      new_peo_id: d.new_peo_id || null,
       filesByField: {
         "1.2.1": (d.curriculum_documents || []).length > 0 
           ? (d.curriculum_documents || []).map((f, i) => ({
@@ -362,7 +362,7 @@ const Criterion1_2Form = ({
 
   // Delete function that calls API
   const handleDelete = async () => {
-    if (!initialData?.curriculum_structure_id) {
+    if (!initialData?.new_peo_id) {
       setAlert(
         <SweetAlert
           warning
@@ -388,7 +388,7 @@ const Criterion1_2Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria1_2_Data(initialData.curriculum_structure_id);
+            await newnbaCriteria1Service.deleteCriteria1_2_Data(initialData.new_peo_id);
             
             setAlert(
               <SweetAlert
@@ -460,12 +460,12 @@ const Criterion1_2Form = ({
       const payload = {
         other_staff_id: currentOtherStaffId,
         cycle_sub_category_id,
-        process_compliance: formData.content["1.2.3"] || "",
-        curriculum_structure: formData.tableData["1.2.1"] || [],
-        curriculum_components: formData.tableData["1.2.2"] || [],
-        caym1_events: formData.tableData["1.2.4.1"] || [],
-        caym2_events: formData.tableData["1.2.4.2"] || [],
-        caym3_events: formData.tableData["1.2.4.3"] || [],
+        // process_compliance: formData.content["1.2.3"] || "",
+        program_edu_objectives: formData.tableData["1.2.1"] || [],
+        // curriculum_components: formData.tableData["1.2.2"] || [],
+        // caym1_events: formData.tableData["1.2.4.1"] || [],
+        // caym2_events: formData.tableData["1.2.4.2"] || [],
+        // caym3_events: formData.tableData["1.2.4.3"] || [],
         
         // Document arrays
         curriculum_documents: filesWithCategory
@@ -500,9 +500,10 @@ const Criterion1_2Form = ({
       console.log("New files to upload:", newFiles.length);
 
       // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.curriculum_structure_id) {
+      if (initialData?.new_peo_id) {
         await newnbaCriteria1Service.putCriteria1_2_Data(
-          initialData.curriculum_structure_id,
+          initialData.new_peo_id,
+          currentOtherStaffId,
           payload
         );
       } else {

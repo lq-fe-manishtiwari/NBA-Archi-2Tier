@@ -197,7 +197,7 @@ const groupMappingByPEO = (rawMappingData) => {
 
     let d = {};
     let mappingTableData = [];
-    let vision_mission_peo_id = null;
+    let vision_mission_id = null;
 
     setLoading(true);
 
@@ -232,7 +232,7 @@ const groupMappingByPEO = (rawMappingData) => {
 
       // Group by PEO
       mappingTableData = rawData.length > 0 ? groupMappingByPEO(rawData) : [];
-      vision_mission_peo_id = d.vision_mission_peo_id || null;
+      vision_mission_id = d.vision_mission_id || null;
     } 
     catch (err) {
       console.error("❌ Failed to load Criterion 1.1 data:", err);
@@ -300,7 +300,7 @@ const groupMappingByPEO = (rawMappingData) => {
         "1.1.4": d.dissemination_of_vmp || "",
       },
       tableData: mappingTableData,
-      vision_mission_peo_id: vision_mission_peo_id,
+      vision_mission_id: vision_mission_id,
       filesByField: {
         "1.1.1": (d.vision_mission_documents || []).length > 0 
           ? (d.vision_mission_documents || []).map((f, i) => ({
@@ -429,63 +429,63 @@ const handleSave = async (formData) => {
 
     const payload = {
       cycle_sub_category_id,
-      // id: initialData?.vision_mission_peo_id || null,
+      // id: initialData?.vision_mission_id || null,
       other_staff_id: currentOtherStaffId,
       vision_mission_statement: formData.content["1.1.1"] || "",
-      peo_statement: formData.content["1.1.2"] || "",
-      process_of_defining_vmp: formData.content["1.1.3"] || "",
-      dissemination_of_vmp: formData.content["1.1.4"] || "",
+      // peo_statement: formData.content["1.1.2"] || "",
+      // process_of_defining_vmp: formData.content["1.1.3"] || "",
+      // dissemination_of_vmp: formData.content["1.1.4"] || "",
       // Extract unique PEO statements
-      peo_statements: [...new Map(formData.tableData.map(row => [
-        row.peo_id || row.peo_name,
-        {
-          peo_id: row.peo_id || null,
-          peo_name: row.peo_name || "",
-          peo_statement: row.peo_statement || ""
-        }
-      ])).values()],
+      // peo_statements: [...new Map(formData.tableData.map(row => [
+      //   row.peo_id || row.peo_name,
+      //   {
+      //     peo_id: row.peo_id || null,
+      //     peo_name: row.peo_name || "",
+      //     peo_statement: row.peo_statement || ""
+      //   }
+      // ])).values()],
       
-      mapping_peos_mission: formData.tableData.flatMap(groupedRow => {
-        // Each grouped row has mission_details array with individual missions
-        if (groupedRow.mission_details && Array.isArray(groupedRow.mission_details)) {
-          return groupedRow.mission_details.map(mission => ({
-            peo_id: groupedRow.peo_id || null,
-            peo_name: groupedRow.peo_name || "",
-            peo_statement: groupedRow.peo_statement || "",
-            mission_name: mission.mission_name || "",
-            correlation_level: mission.correlation_level || "-",
-            id: mission.id || null,
-          }));
-        }
-        // Fallback for non-grouped data
-        return [{
-          peo_name: groupedRow.peo_name || "",
-          mission_name: groupedRow.mission_name || "",
-          correlation_level: groupedRow.correlation_level || "-",
-          peo_statement: groupedRow.peo_statement || ""
-        }];
-      }),
+      // mapping_peos_mission: formData.tableData.flatMap(groupedRow => {
+      //   // Each grouped row has mission_details array with individual missions
+      //   if (groupedRow.mission_details && Array.isArray(groupedRow.mission_details)) {
+      //     return groupedRow.mission_details.map(mission => ({
+      //       peo_id: groupedRow.peo_id || null,
+      //       peo_name: groupedRow.peo_name || "",
+      //       peo_statement: groupedRow.peo_statement || "",
+      //       mission_name: mission.mission_name || "",
+      //       correlation_level: mission.correlation_level || "-",
+      //       id: mission.id || null,
+      //     }));
+      //   }
+      //   // Fallback for non-grouped data
+      //   return [{
+      //     peo_name: groupedRow.peo_name || "",
+      //     mission_name: groupedRow.mission_name || "",
+      //     correlation_level: groupedRow.correlation_level || "-",
+      //     peo_statement: groupedRow.peo_statement || ""
+      //   }];
+      // }),
 
       // Existing files (with url)
       vision_mission_documents: filesWithCategory
         .filter(f => f.category === "Vision & Mission" && (f.url || f.s3Url))
         .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
 
-      peo_documents: filesWithCategory
-        .filter(f => f.category === "PEOs" && (f.url || f.s3Url))
-        .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
+      // peo_documents: filesWithCategory
+      //   .filter(f => f.category === "PEOs" && (f.url || f.s3Url))
+      //   .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
 
-      process_documents: filesWithCategory
-        .filter(f => f.category === "Process" && (f.url || f.s3Url))
-        .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
+      // process_documents: filesWithCategory
+      //   .filter(f => f.category === "Process" && (f.url || f.s3Url))
+      //   .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
 
-      dissemination_documents: filesWithCategory
-        .filter(f => f.category === "Dissemination" && (f.url || f.s3Url))
-        .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
+      // dissemination_documents: filesWithCategory
+      //   .filter(f => f.category === "Dissemination" && (f.url || f.s3Url))
+      //   .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
 
-      mapping_peos_documents: filesWithCategory
-        .filter(f => f.category === "PEO-Mission Mapping" && (f.url || f.s3Url))
-        .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
+      // mapping_peos_documents: filesWithCategory
+      //   .filter(f => f.category === "PEO-Mission Mapping" && (f.url || f.s3Url))
+      //   .map(f => ({ name: f.filename || f.name, url: f.s3Url || f.url, description: f.description || "" })),
       
       is_submit: false,
       remarks: "Saving draft for review"
@@ -498,9 +498,9 @@ const handleSave = async (formData) => {
     console.log("New files to upload:", newFiles.length);
 
     // Use PUT for update if ID exists, otherwise POST for create
-    if (initialData?.vision_mission_peo_id) {
+    if (initialData?.vision_mission_id) {
       await newnbaCriteria1Service.putCriteria1_1_Data(
-        initialData.vision_mission_peo_id,
+        initialData.vision_mission_id,
         currentOtherStaffId,
         payload
       );
@@ -533,7 +533,7 @@ const handleSave = async (formData) => {
 
 // Delete function that calls API
 const handleDelete = async () => {
-  if (!initialData?.vision_mission_peo_id) {
+  if (!initialData?.vision_mission_id) {
     setAlert(
       <SweetAlert
         warning
@@ -559,7 +559,7 @@ const handleDelete = async () => {
       onConfirm={async () => {
         setAlert(null);
         try {
-          await newnbaCriteria1Service.deleteCriteria1_1Data(initialData.vision_mission_peo_id);
+          await newnbaCriteria1Service.deleteCriteria1_1Data(initialData.vision_mission_id);
           
           setAlert(
             <SweetAlert
@@ -621,7 +621,7 @@ const handleDelete = async () => {
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "vision_mission_peo_id",
+            idField: "vision_mission_id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
