@@ -730,7 +730,7 @@ const fetchMoMarks = async (subLevel2Id) => {
 
                 <Link
                   onClick={() => {
-                    navigate("/ nba/view-part-b", { state: stateFromRoute });
+                    navigate("view-part-b", { state: stateFromRoute });
                   }}
                   className="flex items-center gap-2 bg-[#2163c1] hover:bg-[#1a4f9a] text-white font-medium px-4 py-2 rounded-md shadow-md transition-all hover:shadow-lg cursor-pointer"
                 >

@@ -104,7 +104,7 @@ const groupMappingByPEO = (rawMappingData) => {
     fields: [
       {
         name: "1.1.1",
-        label: "1.1.1. State the Vision and Mission of the Institute and Department",
+        label: "1.1.1. Vision statement typically indicates aspirations and Mission statement states the broad approach to achieve aspirations",
         marks: 5,
         type: "textarea",
       },

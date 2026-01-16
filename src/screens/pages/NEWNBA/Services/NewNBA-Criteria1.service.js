@@ -264,14 +264,12 @@ function updateCriteria1_4_Status(approverStaffId, payload) {
   }).then(handleResponse);
 }
 
-//
 // =====================================================================
-// Criteria 1.5 – Program Articulation Matrix
+// Criteria 1.5 – Consistency PEO Mission
 // =====================================================================
-//
 
-function saveCriteria1_5_Data(values) {
-  const url = `/admin/nba/1.5/program-articulation-matrix`;
+function saveCriteria1_5_Data(currentUserStaffId, values) {
+  const url = `/admin/nba/1.5/new-consistency-peo-mission?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -280,17 +278,15 @@ function saveCriteria1_5_Data(values) {
 }
 
 function getCriteria1_5_Data(cycleSubCategoryId, otherStaffId) {
-  const url = `/admin/nba/1.5/program-articulation-matrix/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
-  return apiNBARequest(url, { method: 'GET', headers: authHeader() }).then(handleResponse);
+  const url = `/admin/nba/1.5/new-consistency-peo-mission/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
 }
 
-function deleteCriteria1_5_Data(id) {
-  const url = `/admin/nba/1.5/program-articulation-matrix/${id}`;
-  return apiNBARequest(url, { method: 'DELETE', headers: authHeader() }).then(handleResponse);
-}
-
-function putCriteria1_5_Data(id, values) {
-  const url = `/admin/nba/1.5/program-articulation-matrix/${id}`;
+function putCriteria1_5_Data(id, currentUserStaffId, values) {
+  const url = `/admin/nba/1.5/new-consistency-peo-mission/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -298,13 +294,24 @@ function putCriteria1_5_Data(id, values) {
   }).then(handleResponse);
 }
 
+function deleteCriteria1_5_Data(id) {
+  const url = `/admin/nba/1.5/new-consistency-peo-mission/${id}`;
+  return apiNBARequest(url, {
+    method: 'DELETE',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
 function getAllCriteria1_5_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/1.5/program-articulation-matrix/cycle-subcategory/${cycleSubCategoryId}/contributors`;
-  return apiNBARequest(url, { method: 'GET', headers: authHeader() }).then(handleResponse);
+  const url = `/admin/nba/1.5/new-consistency-peo-mission/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
 }
 
 function updateCriteria1_5_Status(approverStaffId, payload) {
-  const url = `/admin/nba/1.5/program-articulation-matrix/approval-status?approverStaffId=${approverStaffId}`;
+  const url = `/admin/nba/1.5/new-consistency-peo-mission/approval-status?approverStaffId=${approverStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),

@@ -31,7 +31,7 @@ const Criterion1_2Form = ({
   const [cardLoading, setCardLoading] = useState(false);
 
   const config = {
-    title: "1.2. Curriculum Structure and Features",
+    title: "1.2. State the Program Educational Objectives (PEOs)",
     totalMarks: 30,
     fields: [
       // {
@@ -90,7 +90,7 @@ const Criterion1_2Form = ({
 
       {
         name: "1.2.1",
-        label: "1.2.1 Process to Identify PO/PSO Compliance",
+        label: "1.2.1 State the Program Educational Objectives (3 to 5) of the program seeking accreditation",
         marks: 10,
         type: "textarea",
       },
@@ -209,7 +209,7 @@ const Criterion1_2Form = ({
 
     setInitialData({
       content: {
-        "1.2.3": d.process_compliance || "",
+        "1.2.1": d.program_edu_objectives || "",
       },
       tableData: {
         "1.2.1": (d.curriculum_structure || []).map((r, i) => {
@@ -460,8 +460,8 @@ const Criterion1_2Form = ({
       const payload = {
         other_staff_id: currentOtherStaffId,
         cycle_sub_category_id,
-        // process_compliance: formData.content["1.2.3"] || "",
-        program_edu_objectives: formData.tableData["1.2.1"] || [],
+        program_edu_objectives: formData.content["1.2.1"] || "",
+        // program_edu_objectives: formData.tableData["1.2.1"] || [],
         // curriculum_components: formData.tableData["1.2.2"] || [],
         // caym1_events: formData.tableData["1.2.4.1"] || [],
         // caym2_events: formData.tableData["1.2.4.2"] || [],
