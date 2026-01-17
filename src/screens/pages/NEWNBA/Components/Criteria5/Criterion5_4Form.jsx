@@ -17,17 +17,22 @@ const Criterion5_4Form = ({
   const [saving, setSaving] = useState(false);
   const [recordId, setRecordId] = useState(null);
   
-  // Default empty data - इसे अलग variable में रखें
+  // Default empty data for Faculty Retention
   const defaultInitialData = {
     content: { 
-      "5.4": "5.4. Visiting/Adjunct Faculty/Professor of Practice (10)\n\n(Provide details of participation and contributions in teaching, learning, or practical work by visiting, adjunct, emeritus faculty, professors of practice, etc., from industry, research organizations & reputed institutions as well as retired professors, during the assessment period.)\n\n- Provision of visiting or adjunct faculty/emeritus professor/professor of practice etc. (01)\n- Minimum 50 hours per year of interaction with adjunct faculty from industry or research organization, retired professors, etc. (09)\n- A minimum of 50 hours of interaction in a year will result in 3 marks for that year (3 marks * 3 years = 9 marks)."
+      "5.4": "5.4 Faculty Retention (20)\n\n(Calculate the percentage of required full-time faculty members retained during the assessment period keeping CAYm2 as base year.)\n\nMarks Distribution:\n• ≥90% retained: 20 marks\n• ≥75% retained: 16 marks\n• ≥60% retained: 12 marks\n• ≥50% retained: 8 marks\n• <50% retained: 0 marks"
     },
     tableData: [],
     filesByField: {},
+    retentionData: {
+      facultyRetainedCAY: "",
+      facultyRetainedCAYm1: "",
+      totalRequiredFaculty: ""
+    }
   };
 
   const [initialData, setInitialData] = useState(defaultInitialData);
-  const [formKey, setFormKey] = useState(0); // 🔑 Add this for force re-render
+  const [formKey, setFormKey] = useState(0);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState(null);
@@ -38,30 +43,24 @@ const Criterion5_4Form = ({
     setUserRole(userInfo);
   }, []);
 
-  // ---------------- CONFIG FOR 5.4 VISITING/ADJUNCT FACULTY ----------------
+  // ---------------- CONFIG FOR 5.4 FACULTY RETENTION ----------------
   const config = {
-    title: "5.4. Visiting/Adjunct Faculty/Professor of Practice",
-    totalMarks: 10,
+    title: "5.4 Faculty Retention",
+    totalMarks: 20,
     fields: [
       {
         name: "5.4",
-        label: "5.4. Visiting/Adjunct Faculty/Professor of Practice",
-        marks: 10,
+        label: "5.4 Faculty Retention",
+        marks: 20,
         hasTable: true,
         tableConfig: {
-          title: "Table No. 5.4.1: List of visiting/adjunct faculty/professor of practice and their teaching and practical loads.",
+          type: "faculty_retention",
+          title: "Table No. 5.4. Faculty retention ratio.",
           columns: [
-            { field: "sn", header: "S.N.", type: "autoNumber" },
-            { field: "name", header: "Name of the Person", type: "text" },
-            { field: "designation", header: "Designation & Organization", type: "text" },
-            { field: "course", header: "Name of the Course", type: "text" },
-            { field: "hours", header: "No. of hours handled", type: "number" },
-          ],
-          yearSections: [
-            { year: "CAYm1", label: "CAYm1" },
-            { year: "CAYm2", label: "CAYm2" },
-            { year: "CAYm3", label: "CAYm3" }
-          ],
+            { field: "item", header: "Item", type: "text" },
+            { field: "cay", header: "CAY", type: "number" },
+            { field: "caym1", header: "CAYm1", type: "number" }
+          ]
         }
       }
     ],
@@ -86,7 +85,7 @@ const Criterion5_4Form = ({
       const data = Array.isArray(response) ? response[0] : response;
 
       if (data) {
-        setRecordId(data.visiting_faculty_id || data.visitingFacultyId || data.id);
+        setRecordId(data.faculty_retention_id || data.id);
         
         const statusData = cardItem || data;
         if (statusData.approval_status) {
@@ -101,19 +100,28 @@ const Criterion5_4Form = ({
           setApprovalStatus(null);
         }
 
-        // Format table data from API response
-        let formattedTableData = [];
-        if (data.visiting_faculty_table && data.visiting_faculty_table.length > 0) {
-          formattedTableData = data.visiting_faculty_table.map((item, index) => ({
-            id: `row-${Date.now()}-${index}`,
-            sn: index + 1,
-            name: item.name || "",
-            designation: item.designation || "",
-            course: item.course || "",
-            hours: item.hours?.toString() || "",
-            year: item.year || "CAYm1",
-          }));
-        }
+        // Format retention data from API response
+        const retentionData = {
+          facultyRetainedCAY: data.faculty_retained_cay?.toString() || "",
+          facultyRetainedCAYm1: data.faculty_retained_caym1?.toString() || "",
+          totalRequiredFaculty: data.total_required_faculty?.toString() || ""
+        };
+
+        // Format table data for display
+        const formattedTableData = [
+          {
+            id: "retained-row",
+            item: "No of Faculty Retained",
+            cay: data.faculty_retained_cay?.toString() || "",
+            caym1: data.faculty_retained_caym1?.toString() || ""
+          },
+          {
+            id: "total-row",
+            item: "Total No. of Required Faculty in CAYm2",
+            cay: data.total_required_faculty?.toString() || "",
+            caym1: ""
+          }
+        ];
 
         // Format files from API response
         const formattedFiles = (data.supporting_documents || []).map((doc, index) => ({
@@ -121,15 +129,16 @@ const Criterion5_4Form = ({
           filename: doc.file_name || "",
           url: doc.file_url || "",
           description: doc.description || "",
-          category: doc.category || "Visiting Faculty Documents",
+          category: doc.category || "Faculty Retention Documents",
           s3Url: doc.file_url || "",
         }));
 
         setInitialData({
           content: { 
-            "5.4": data.visiting_faculty_description || config.fields[0].content || defaultInitialData.content["5.4"]
+            "5.4": data.faculty_retention_description || defaultInitialData.content["5.4"]
           },
           tableData: formattedTableData,
+          retentionData: retentionData,
           filesByField: {
             "5.4": formattedFiles, 
           },
@@ -158,7 +167,7 @@ const Criterion5_4Form = ({
 
   useEffect(() => {
     if (cycle_sub_category_id && other_staff_id) {
-      console.log("🚀 Loading data for 5.4...");
+      console.log("🚀 Loading data for 5.4 Faculty Retention...");
       loadData();
     }
   }, [cycle_sub_category_id, other_staff_id, loadData]);
@@ -175,15 +184,14 @@ const Criterion5_4Form = ({
     setSaving(true);
   
     try {
-      // Format table data for API in snake_case
-      const formattedTableData = (formData.tableData || []).map((row) => ({
-        name: row.name || "",
-        designation: row.designation || "",
-        course: row.course || "",
-        hours: parseInt(row.hours) || 0,
-        year: row.year || "CAYm1",
-      }));
-  
+      // Extract retention data from table data
+      const retainedRow = formData.tableData.find(row => row.item === "No of Faculty Retained");
+      const totalRow = formData.tableData.find(row => row.item === "Total No. of Required Faculty in CAYm2");
+      
+      const facultyRetainedCAY = parseInt(retainedRow?.cay) || 0;
+      const facultyRetainedCAYm1 = parseInt(retainedRow?.caym1) || 0;
+      const totalRequiredFaculty = parseInt(totalRow?.cay) || 0;
+
       // Format files for API in snake_case
       console.log("formData.filesByField:", formData.filesByField);
       
@@ -191,12 +199,12 @@ const Criterion5_4Form = ({
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: "Visiting Faculty Documents",
+            category: "Faculty Retention Documents",
           }))
       );
       
       console.log("filesWithCategory:", filesWithCategory);
-  
+
       const supporting_documents = filesWithCategory
         .filter((f) => {
           console.log("Checking file:", f, "has s3Url:", !!f.s3Url, "has filename:", !!f.filename);
@@ -206,21 +214,23 @@ const Criterion5_4Form = ({
           file_name: f.filename,
           file_url: f.s3Url,
           description: f.description || "",
-          category: f.category || "Visiting Faculty Documents",
+          category: f.category || "Faculty Retention Documents",
         }));
         
       console.log("supporting_documents:", supporting_documents);
-  
+
       const payload = {
         other_staff_id: other_staff_id,
         cycle_sub_category_id: cycle_sub_category_id,
-        visiting_faculty_description: formData.content["5.4"] || "",
-        visiting_faculty_table: formattedTableData,
+        faculty_retention_description: formData.content["5.4"] || "",
+        faculty_retained_cay: facultyRetainedCAY,
+        faculty_retained_caym1: facultyRetainedCAYm1,
+        total_required_faculty: totalRequiredFaculty,
         supporting_documents: supporting_documents,
       };
-  
+
       console.log("Sending payload to API:", payload);
-  
+
       let result;
       if (recordId) {
         // Update existing record
@@ -229,16 +239,21 @@ const Criterion5_4Form = ({
         // Create new record
         result = await newnbaCriteria5Service.saveCriteria5_4_Data(payload);
       }
-  
-      const newRecordId = result.visiting_faculty_id || result.visitingFacultyId || result.id;
+
+      const newRecordId = result.faculty_retention_id || result.id;
       if (newRecordId) {
         setRecordId(newRecordId);
       }
-  
+
       // 🔥 IMMEDIATELY UPDATE LOCAL STATE
       setInitialData({
         content: formData.content,
         tableData: formData.tableData || [],
+        retentionData: {
+          facultyRetainedCAY: facultyRetainedCAY.toString(),
+          facultyRetainedCAYm1: facultyRetainedCAYm1.toString(),
+          totalRequiredFaculty: totalRequiredFaculty.toString()
+        },
         filesByField: formData.filesByField || {},
       });
       
@@ -300,7 +315,7 @@ const Criterion5_4Form = ({
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 5.4 (Visiting/Adjunct Faculty)...
+        Loading Criterion 5.4 (Faculty Retention)...
       </div>
     );
   }
@@ -369,7 +384,7 @@ const Criterion5_4Form = ({
         >
           <div className="text-left">
             <p className="mb-3">Are you sure you want to delete all data for Criterion 5.4?</p>
-            <p className="text-sm text-gray-600">This will delete all visiting/adjunct faculty data including uploaded documents.</p>
+            <p className="text-sm text-gray-600">This will delete all faculty retention data including uploaded documents.</p>
           </div>
         </SweetAlert>
       )}

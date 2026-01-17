@@ -5,6 +5,8 @@ import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
 import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
+import { POService } from "../../../OBE/Settings/Services/po.service";
+import { PSOService } from "../../../OBE/Settings/Services/pso.service";
 
 const Criterion5_9Form = ({
   cycle_sub_category_id,
@@ -17,6 +19,7 @@ const Criterion5_9Form = ({
   onStatusChange = null,
   cardData = [],
   editMode = false,
+  poMappingId = null,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -24,90 +27,27 @@ const Criterion5_9Form = ({
     content: {},
     tableData: {},
     files: [],
-    visiting_faculty_id: null,
+    po_pso_id: null,
   });
   const [cardLoading, setCardLoading] = useState(false);
   const [alert, setAlert] = useState(null);
   
-  // Visiting faculty data
-  const [visitingFacultyList, setVisitingFacultyList] = useState([]);
-  const [yearlyInteractions, setYearlyInteractions] = useState([
-    { 
-      year: "2023-2024", 
-      hours: 0, 
-      exceedsThreshold: false, 
-      facultyCount: 0,
-      details: "",
-      documents: [] 
-    },
-    { 
-      year: "2022-2023", 
-      hours: 0, 
-      exceedsThreshold: false, 
-      facultyCount: 0,
-      details: "",
-      documents: [] 
-    },
-    { 
-      year: "2021-2022", 
-      hours: 0, 
-      exceedsThreshold: false, 
-      facultyCount: 0,
-      details: "",
-      documents: [] 
-    },
-    { 
-      year: "2020-2021", 
-      hours: 0, 
-      exceedsThreshold: false, 
-      facultyCount: 0,
-      details: "",
-      documents: [] 
-    },
-    { 
-      year: "2019-2020", 
-      hours: 0, 
-      exceedsThreshold: false, 
-      facultyCount: 0,
-      details: "",
-      documents: [] 
-    },
-  ]);
+  // OBE Data states
+  const [pos, setPos] = useState([]);
+  const [psos, setPsos] = useState([]);
+  const [poCourseMappingData, setPoCourseMappingData] = useState([]);
 
   const config = {
     title: "5.9 Visiting/Adjunct Faculty/Emeritus Faculty, etc. (25)",
     totalMarks: 25,
     fields: [
-      {
-        name: "provision_details",
-        label: "Provision Details of Visiting/Adjunct Faculty",
-        marks: 5,
-        type: "richText",
-        placeholder: "Describe the provisions and arrangements for visiting/adjunct/emeritus faculty...",
-      },
-      {
-        name: "contribution_details",
-        label: "Contribution Details in Teaching, Learning and Research",
-        marks: 5,
-        type: "richText",
-        placeholder: "Describe the contributions made by visiting faculty in teaching, learning, and research...",
+        {
+        name: "5.9",
+        label: "5.9 Visiting/Adjunct Faculty/Emeritus Faculty, etc. (25)",
+        marks: 25,
+        type: "textarea",
       },
     ]
-  };
-
-  // Calculate marks
-  const calculateMarks = () => {
-    let provisionMarks = 5; // Fixed for provision details
-    
-    // Calculate interaction marks (4 marks per year with >= 50 hours, max 20 marks)
-    const interactionYears = yearlyInteractions.filter(year => year.hours >= 50).length;
-    const interactionMarks = Math.min(interactionYears * 4, 20);
-    
-    return {
-      provisionMarks,
-      interactionMarks,
-      totalMarks: provisionMarks + interactionMarks
-    };
   };
 
   // Load data from API function
@@ -119,6 +59,7 @@ const Criterion5_9Form = ({
     console.log("🟠 Criterion5_9Form - useEffect triggered:");
     console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
     console.log("  - currentOtherStaffId:", currentOtherStaffId);
+    console.log("  - isEditable:", isEditable);
 
     if (!cycle_sub_category_id) {
       console.log("❌ Criterion5_9Form: cycle_sub_category_id is missing, exiting");
@@ -130,95 +71,49 @@ const Criterion5_9Form = ({
     setLoading(true);
 
     try {
-      // Replace with actual service call for 5.9
-      const res = await newnbaCriteria1Service.getCriteria5_9_Data?.(cycle_sub_category_id, currentOtherStaffId) || { data: {} };
-      const rawResponse = res?.data || res || {};
-      d = rawResponse;
-      console.log("🟢 Loaded Criterion 5.9 data:", d);
+      const res = await newnbaCriteria1Service.getCriteria1_3_Data(
+        cycle_sub_category_id,
+        currentOtherStaffId
+      );
+      const rawResponse = res?.data || res || [];
+      d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : {};
+      console.log("🟢 Loaded Criterion 1.3 data:", d);
     } catch (err) {
-      console.error("❌ Failed to load Criterion 5.9 data:", err);
-      toast.error("Failed to load Criterion 5.9 data");
+      console.error("❌ Failed to load Criterion 1.3 data:", err);
+      toast.error("Failed to load Criterion 1.3 data");
       d = {};
-    }
-
-    // Parse visiting faculty list
-    if (d.visiting_faculty_list && Array.isArray(d.visiting_faculty_list)) {
-      setVisitingFacultyList(d.visiting_faculty_list);
-    } else {
-      // Default sample data
-      setVisitingFacultyList([
-        {
-          id: 1,
-          name: "Dr. Rajesh Kumar",
-          designation: "Visiting Professor",
-          organization: "IIT Bombay",
-          expertise: "Machine Learning & AI",
-          years_involved: ["2023-2024", "2022-2023"],
-          contribution_type: ["Teaching", "Research Guidance"],
-          hours_per_year: 60
-        },
-        {
-          id: 2,
-          name: "Prof. Meena Sharma",
-          designation: "Adjunct Faculty",
-          organization: "TCS Research",
-          expertise: "Cloud Computing",
-          years_involved: ["2023-2024", "2021-2022"],
-          contribution_type: ["Guest Lectures", "Project Evaluation"],
-          hours_per_year: 45
-        }
-      ]);
-    }
-
-    // Parse yearly interactions
-    if (d.yearly_interactions && Array.isArray(d.yearly_interactions)) {
-      setYearlyInteractions(d.yearly_interactions.map(item => ({
-        ...item,
-        exceedsThreshold: item.hours >= 50
-      })));
     }
 
     setInitialData({
       content: {
-        provision_details: d.provision_details || "The institution has established comprehensive provisions for engaging visiting/adjunct/emeritus faculty from various sectors including industry, research organizations, and government bodies. The engagement framework includes formal MoUs, clear role definitions, and structured contribution plans aligned with academic objectives.",
-        contribution_details: d.contribution_details || "Visiting faculty contribute significantly through guest lectures, specialized workshops, research collaborations, project guidance, and curriculum development. They bring real-world expertise, industry insights, and research experience that enrich the teaching-learning process and enhance research output.",
+        course_code: d.course_code || "",
+        course_name: d.course_name || "",
       },
       tableData: {},
-      visiting_faculty_id: d.visiting_faculty_id || null,
+      po_pso_id: d.po_pso_id || null,
       filesByField: {
-        "provision_documents": (d.provision_documents || []).length > 0 
-          ? (d.provision_documents || []).map((f, i) => ({
-              id: `file-provision-${i}`,
+        "5.91": (d.course_documents || []).length > 0 
+          ? (d.course_documents || []).map((f, i) => ({
+              id: `file-5.91-${i}`,
               name: f.document_name || f.name || "",
               filename: f.document_name || f.name || "",
               url: f.document_url || f.url || "",
               s3Url: f.document_url || f.url || "",
-              description: f.description || "Provision Policy Document",
+              description: f.description || "",
               uploading: false
             }))
-          : [{ id: `file-provision-0`, description: "Visiting Faculty Policy", file: null, filename: "", s3Url: "", uploading: false }],
-        "contribution_documents": (d.contribution_documents || []).length > 0 
-          ? (d.contribution_documents || []).map((f, i) => ({
-              id: `file-contribution-${i}`,
+          : [{ id: `file-5.91-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "5.9": (d.mapping_documents || []).length > 0 
+          ? (d.mapping_documents || []).map((f, i) => ({
+              id: `file-5.9-${i}`,
               name: f.document_name || f.name || "",
               filename: f.document_name || f.name || "",
               url: f.document_url || f.url || "",
               s3Url: f.document_url || f.url || "",
-              description: f.description || "Contribution Report",
+              description: f.description || "",
               uploading: false
             }))
-          : [{ id: `file-contribution-0`, description: "Annual Contribution Report", file: null, filename: "", s3Url: "", uploading: false }],
-        "interaction_documents": (d.interaction_documents || []).length > 0 
-          ? (d.interaction_documents || []).map((f, i) => ({
-              id: `file-interaction-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "Interaction Records",
-              uploading: false
-            }))
-          : [{ id: `file-interaction-0`, description: "Interaction Logs", file: null, filename: "", s3Url: "", uploading: false }],
+          : [{ id: `file-5.9-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
       }
     });
 
@@ -232,7 +127,7 @@ const Criterion5_9Form = ({
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria5_9_Data?.(cycle_sub_category_id);
+      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria1_3_Data?.(cycle_sub_category_id);
       if (onStatusChange) {
         onStatusChange(contributorsResponse || []);
       }
@@ -245,7 +140,7 @@ const Criterion5_9Form = ({
 
   // Delete function that calls API
   const handleDelete = async () => {
-    if (!initialData?.visiting_faculty_id) {
+    if (!initialData?.po_pso_id) {
       setAlert(
         <SweetAlert
           warning
@@ -271,7 +166,7 @@ const Criterion5_9Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria5_9_Data?.(initialData.visiting_faculty_id);
+            await newnbaCriteria1Service.deleteCriteria1_3_Data(initialData.po_pso_id);
             
             setAlert(
               <SweetAlert
@@ -284,7 +179,7 @@ const Criterion5_9Form = ({
                   onSaveSuccess?.();
                 }}
               >
-                Criterion 5.9 data has been deleted successfully.
+                Criterion 1.3 data has been deleted successfully.
               </SweetAlert>
             );
           } catch (err) {
@@ -303,7 +198,7 @@ const Criterion5_9Form = ({
         }}
         onCancel={() => setAlert(null)}
       >
-        This will permanently delete all Criterion 5.9 data!
+        This will permanently delete all Criterion 1.3 data!
       </SweetAlert>
     );
   };
@@ -316,50 +211,77 @@ const Criterion5_9Form = ({
     }
   }, [cycle_sub_category_id, showCardView, otherStaffId]);
 
-  // Handle yearly interaction changes
-  const handleHoursChange = (index, hours) => {
-    const newInteractions = [...yearlyInteractions];
-    newInteractions[index].hours = parseInt(hours) || 0;
-    newInteractions[index].exceedsThreshold = newInteractions[index].hours >= 50;
-    setYearlyInteractions(newInteractions);
+  // Fetch PO/PSO and PO-Course mapping when programId is available
+  useEffect(() => {
+    if (programId) {
+      fetchPOsByProgram(programId);
+      fetchPSOsByProgram(programId);
+      fetchPOCourseMapping(programId);
+    }
+  }, [programId]);
+
+  const fetchPOsByProgram = async (programId) => {
+    try {
+      const data = await POService.getPObyProgramId(programId);
+      setPos(data || []);
+    } catch (err) {
+      console.error("Failed to fetch POs:", err);
+      setPos([]);
+    }
   };
 
-  const handleDetailsChange = (index, details) => {
-    const newInteractions = [...yearlyInteractions];
-    newInteractions[index].details = details;
-    setYearlyInteractions(newInteractions);
+  const fetchPSOsByProgram = async (programId) => {
+    try {
+      const data = await PSOService.getPSOByProgramId(programId);
+      setPsos(data || []);
+    } catch (err) {
+      console.error("Failed to fetch PSOs:", err);
+      setPsos([]);
+    }
   };
 
-  const handleFacultyCountChange = (index, count) => {
-    const newInteractions = [...yearlyInteractions];
-    newInteractions[index].facultyCount = parseInt(count) || 0;
-    setYearlyInteractions(newInteractions);
-  };
 
-  // Add new visiting faculty
-  const handleAddFaculty = () => {
-    const newFaculty = {
-      id: Date.now(),
-      name: "",
-      designation: "",
-      organization: "",
-      expertise: "",
-      years_involved: [],
-      contribution_type: [],
-      hours_per_year: 0
-    };
-    setVisitingFacultyList([...visitingFacultyList, newFaculty]);
-  };
 
-  const handleFacultyChange = (index, field, value) => {
-    const newList = [...visitingFacultyList];
-    newList[index][field] = value;
-    setVisitingFacultyList(newList);
-  };
+  const fetchPOCourseMapping = async (progId) => {
+    if (!progId) return;
+    
+    try {
+      const response = await newnbaCriteria1Service.getCoPoMappingsByProgram(progId);
+      const mappings = response?.content || [];
 
-  const handleRemoveFaculty = (index) => {
-    const newList = visitingFacultyList.filter((_, i) => i !== index);
-    setVisitingFacultyList(newList);
+      const poMappingMap = {};
+      
+      mappings.forEach(mapping => {
+        if (mapping.po) {
+          const poId = mapping.po.poId;
+          if (!poMappingMap[poId]) {
+            poMappingMap[poId] = {
+              po_id: poId,
+              po_code: mapping.po.poCode,
+              po_statement: mapping.po.poStatement,
+              mapped_courses: []
+            };
+          }
+          
+          const courseExists = poMappingMap[poId].mapped_courses.some(
+            c => c.subject_id === mapping.subject.subjectId
+          );
+          
+          if (!courseExists) {
+            poMappingMap[poId].mapped_courses.push({
+              course_code: mapping.subject.subjectCode,
+              course_name: mapping.subject.name,
+              subject_id: mapping.subject.subjectId
+            });
+          }
+        }
+      });
+
+      setPoCourseMappingData(Object.values(poMappingMap));
+    } catch (err) {
+      console.error("Error fetching PO-course mapping:", err);
+      setPoCourseMappingData([]);
+    }
   };
 
   const handleSave = async (formData) => {
@@ -375,40 +297,36 @@ const Criterion5_9Form = ({
       const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
         return (formData.filesByField[fieldName] || []).map(file => {
           let category = "Other";
-          if (fieldName === "provision_documents") category = "Provision Documents";
-          if (fieldName === "contribution_documents") category = "Contribution Documents";
-          if (fieldName === "interaction_documents") category = "Interaction Documents";
+          if (fieldName === "5.9") category = "Course Information";
+          if (fieldName === "5.9") category = "PO-PSO Mapping";
           return { ...file, category };
         });
       });
-
-      const marks = calculateMarks();
 
       const payload = {
         cycle_sub_category_id,
         other_staff_id: currentOtherStaffId,
         program_id: programId,
-        provision_details: formData.content.provision_details || "",
-        contribution_details: formData.content.contribution_details || "",
-        visiting_faculty_list: visitingFacultyList,
-        yearly_interactions: yearlyInteractions,
-        calculated_marks: marks,
-        provision_documents: filesWithCategory
-          .filter(f => f.category === "Provision Documents" && (f.url || f.s3Url))
+        po_data: pos.map(po => ({
+          po_id: po.po_id,
+          po_code: po.po_code,
+          po_statement: po.po_statement
+        })),
+        pso_data: psos.map(pso => ({
+          pso_id: pso.pso_id,
+          pso_code: pso.pso_code,
+          pso_statement: pso.pso_statement
+        })),
+        po_course_mapping: poCourseMappingData || [],
+        course_documents: filesWithCategory
+          .filter(f => f.category === "Course Information" && (f.url || f.s3Url))
           .map(f => ({ 
             document_name: f.filename, 
             document_url: f.s3Url || f.url,
             description: f.description || ""
           })),
-        contribution_documents: filesWithCategory
-          .filter(f => f.category === "Contribution Documents" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-        interaction_documents: filesWithCategory
-          .filter(f => f.category === "Interaction Documents" && (f.url || f.s3Url))
+        mapping_documents: filesWithCategory
+          .filter(f => f.category === "PO-PSO Mapping" && (f.url || f.s3Url))
           .map(f => ({ 
             document_name: f.filename, 
             document_url: f.s3Url || f.url,
@@ -422,14 +340,14 @@ const Criterion5_9Form = ({
       console.log("New files to upload:", newFiles.length);
 
       // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.visiting_faculty_id) {
-        await newnbaCriteria1Service.putCriteria5_9_Data?.(
-          initialData.visiting_faculty_id,
+      if (initialData?.po_pso_id) {
+        await newnbaCriteria1Service.putCriteria1_3_Data(
+          initialData.po_pso_id,
           currentOtherStaffId,
           payload
         );
       } else {
-        await newnbaCriteria1Service.saveCriteria5_9_Data?.(currentOtherStaffId, payload);
+        await newnbaCriteria1Service.saveCriteria1_3_Data(currentOtherStaffId, payload);
       }
 
       setAlert(
@@ -443,7 +361,7 @@ const Criterion5_9Form = ({
             onSaveSuccess?.();
           }}
         >
-          Criterion 5.9 saved successfully!
+          Criterion 1.3 saved successfully!
         </SweetAlert>
       );
     } catch (err) {
@@ -462,7 +380,7 @@ const Criterion5_9Form = ({
     );
   }
 
-  const marks = calculateMarks();
+  console.log("🎯 Criterion5_9Form rendering with initialData:", initialData);
 
   // Show card view for coordinators
   if (showCardView) {
@@ -477,8 +395,7 @@ const Criterion5_9Form = ({
                   <div>
                     <h4 className="font-medium">{card.firstname} {card.lastname}</h4>
                     <p className="text-sm text-gray-600">Staff ID: {card.other_staff_id}</p>
-                    <p className="text-sm text-gray-600">Total Faculty: {card.total_faculty || 0}</p>
-                    <p className="text-sm text-gray-600">Calculated Marks: {card.calculated_marks?.totalMarks || 0}/25</p>
+                    <p className="text-sm text-gray-600">Course: {card.course_code} - {card.course_name}</p>
                   </div>
                   <div className="text-right">
                     <span className={`px-2 py-1 rounded text-xs ${
@@ -515,313 +432,121 @@ const Criterion5_9Form = ({
         isContributorEditable={isEditable}
         onDelete={handleDelete}
         customContent={{
-          "visiting_faculty_table": (
+          "5.91": (
             <div className="space-y-6">
-              {/* Marks Calculation Summary */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                <div className="flex justify-between items-center">
+              <div className="space-y-8">
+                  {/* Program Outcomes (POs) */}
                   <div>
-                    <h5 className="font-semibold text-blue-700">Marks Calculation</h5>
-                    <p className="text-sm text-gray-700">
-                      Provision Details: <span className="font-bold">{marks.provisionMarks}/5</span> | 
-                      Interaction Hours: <span className="font-bold">{marks.interactionMarks}/20</span>
-                    </p>
+                    <h4 className="text-lg font-semibold text-blue-600 mb-4">Program Outcomes (POs)</h4>
+                    {pos.length > 0 ? (
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-blue-50">
+                            <tr>
+                              <th className="border px-3 py-2 text-center w-20">PO Code</th>
+                              <th className="border px-3 py-2 text-left">PO Statement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pos.map((po, idx) => (
+                              <tr key={po.po_id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                <td className="border px-3 py-2 text-center font-medium">{po.po_code}</td>
+                                <td className="border px-3 py-2 text-sm">{po.po_statement}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 border rounded-lg">
+                        No POs found for selected program
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-blue-700">Total: {marks.totalMarks}/25</p>
-                    <p className="text-xs text-gray-600">
-                      {marks.interactionMarks === 20 ? "✓ Maximum interaction marks achieved" : 
-                       `${Math.floor((20 - marks.interactionMarks)/4)} more year(s) needed for full marks`}
-                    </p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Yearly Interaction Table */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-[#2163c1] text-white px-4 py-2">
-                  <div className="flex justify-between items-center">
-                    <h5 className="font-semibold">Yearly Interaction Details</h5>
-                    <div className="text-sm">
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded mr-2">
-                        ✓ 50+ hours = 4 marks/year
-                      </span>
-                      <span className="text-yellow-100">Maximum: 20 marks (5 years × 4 marks)</span>
-                    </div>
+                  {/* Program Specific Outcomes (PSOs) */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-green-600 mb-4">Program Specific Outcomes (PSOs)</h4>
+                    {psos.length > 0 ? (
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-green-50">
+                            <tr>
+                              <th className="border px-3 py-2 text-center w-20">PSO Code</th>
+                              <th className="border px-3 py-2 text-left">PSO Statement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {psos.map((pso, idx) => (
+                              <tr key={pso.pso_id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                <td className="border px-3 py-2 text-center font-medium">{pso.pso_code}</td>
+                                <td className="border px-3 py-2 text-sm">{pso.pso_statement}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 border rounded-lg">
+                        No PSOs found for selected program
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full border text-sm">
-                    <thead className="bg-blue-100">
-                      <tr>
-                        <th className="border px-3 py-2 w-32">Assessment Year</th>
-                        <th className="border px-3 py-2 w-24">Hours of Interaction</th>
-                        <th className="border px-3 py-2 w-20">Status</th>
-                        <th className="border px-3 py-2 w-24">No. of Faculty</th>
-                        <th className="border px-3 py-2">Contribution Details</th>
-                        <th className="border px-3 py-2 w-20">Marks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {yearlyInteractions.map((year, idx) => (
-                        <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="border px-3 py-2 text-center font-medium">
-                            {year.year}
-                          </td>
-                          <td className="border px-3 py-2">
-                            <input
-                              type="number"
-                              value={year.hours}
-                              onChange={(e) => handleHoursChange(idx, e.target.value)}
-                              className="w-full p-1 border rounded text-center"
-                              min="0"
-                              disabled={!isEditable}
-                            />
-                          </td>
-                          <td className="border px-3 py-2 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              year.hours >= 50 
-                                ? 'bg-green-100 text-green-800' 
-                                : year.hours > 0 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : 'bg-red-100 text-red-800'
-                            }`}>
-                              {year.hours >= 50 ? '✓ Eligible' : year.hours > 0 ? 'In Progress' : 'No Data'}
-                            </span>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {year.hours}/50 hours
-                            </div>
-                          </td>
-                          <td className="border px-3 py-2">
-                            <input
-                              type="number"
-                              value={year.facultyCount}
-                              onChange={(e) => handleFacultyCountChange(idx, e.target.value)}
-                              className="w-full p-1 border rounded text-center"
-                              min="0"
-                              disabled={!isEditable}
-                            />
-                          </td>
-                          <td className="border px-3 py-2">
-                            <textarea
-                              value={year.details}
-                              onChange={(e) => handleDetailsChange(idx, e.target.value)}
-                              placeholder="Enter contribution details..."
-                              className="w-full p-2 border rounded text-sm"
-                              rows="2"
-                              disabled={!isEditable}
-                            />
-                          </td>
-                          <td className="border px-3 py-2 text-center font-bold">
-                            {year.hours >= 50 ? (
-                              <span className="text-green-600">4</span>
-                            ) : (
-                              <span className="text-red-500">0</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot className="bg-gray-100">
-                      <tr>
-                        <td colSpan="5" className="border px-3 py-2 text-right font-medium">
-                          Total Interaction Marks:
-                        </td>
-                        <td className="border px-3 py-2 text-center font-bold text-blue-600">
-                          {marks.interactionMarks}/20
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {/* Visiting Faculty List */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-[#2163c1] text-white px-4 py-2 flex justify-between items-center">
-                  <h5 className="font-semibold">Visiting/Adjunct/Emeritus Faculty Details</h5>
-                  {isEditable && (
-                    <button
-                      onClick={handleAddFaculty}
-                      className="px-3 py-1 bg-white text-blue-600 rounded text-sm font-medium hover:bg-gray-100"
-                    >
-                      + Add Faculty
-                    </button>
-                  )}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full border text-sm">
-                    <thead className="bg-blue-50">
-                      <tr>
-                        <th className="border px-3 py-2">Name</th>
-                        <th className="border px-3 py-2">Designation</th>
-                        <th className="border px-3 py-2">Organization</th>
-                        <th className="border px-3 py-2">Expertise</th>
-                        <th className="border px-3 py-2">Years Involved</th>
-                        <th className="border px-3 py-2">Contribution Type</th>
-                        <th className="border px-3 py-2 w-24">Hours/Year</th>
-                        {isEditable && <th className="border px-3 py-2 w-20">Actions</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visitingFacultyList.length > 0 ? (
-                        visitingFacultyList.map((faculty, idx) => (
-                          <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="text"
-                                value={faculty.name}
-                                onChange={(e) => handleFacultyChange(idx, 'name', e.target.value)}
-                                className="w-full p-1 border rounded"
-                                disabled={!isEditable}
-                                placeholder="Faculty Name"
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                value={faculty.designation}
-                                onChange={(e) => handleFacultyChange(idx, 'designation', e.target.value)}
-                                className="w-full p-1 border rounded"
-                                disabled={!isEditable}
-                              >
-                                <option value="">Select Designation</option>
-                                <option value="Visiting Professor">Visiting Professor</option>
-                                <option value="Adjunct Faculty">Adjunct Faculty</option>
-                                <option value="Emeritus Professor">Emeritus Professor</option>
-                                <option value="Industry Expert">Industry Expert</option>
-                                <option value="Research Scientist">Research Scientist</option>
-                                <option value="Government Official">Government Official</option>
-                              </select>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="text"
-                                value={faculty.organization}
-                                onChange={(e) => handleFacultyChange(idx, 'organization', e.target.value)}
-                                className="w-full p-1 border rounded"
-                                disabled={!isEditable}
-                                placeholder="Organization"
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="text"
-                                value={faculty.expertise}
-                                onChange={(e) => handleFacultyChange(idx, 'expertise', e.target.value)}
-                                className="w-full p-1 border rounded"
-                                disabled={!isEditable}
-                                placeholder="Area of Expertise"
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                multiple
-                                value={faculty.years_involved}
-                                onChange={(e) => {
-                                  const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                  handleFacultyChange(idx, 'years_involved', selected);
-                                }}
-                                className="w-full p-1 border rounded h-24"
-                                disabled={!isEditable}
-                              >
-                                <option value="2023-2024">2023-2024</option>
-                                <option value="2022-2023">2022-2023</option>
-                                <option value="2021-2022">2021-2022</option>
-                                <option value="2020-2021">2020-2021</option>
-                                <option value="2019-2020">2019-2020</option>
-                              </select>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {faculty.years_involved?.length || 0} year(s) selected
-                              </div>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                multiple
-                                value={faculty.contribution_type}
-                                onChange={(e) => {
-                                  const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                  handleFacultyChange(idx, 'contribution_type', selected);
-                                }}
-                                className="w-full p-1 border rounded h-24"
-                                disabled={!isEditable}
-                              >
-                                <option value="Teaching">Teaching</option>
-                                <option value="Guest Lectures">Guest Lectures</option>
-                                <option value="Research Guidance">Research Guidance</option>
-                                <option value="Project Evaluation">Project Evaluation</option>
-                                <option value="Workshop/Seminar">Workshop/Seminar</option>
-                                <option value="Curriculum Development">Curriculum Development</option>
-                                <option value="Mentoring">Mentoring</option>
-                                <option value="Industry Collaboration">Industry Collaboration</option>
-                              </select>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {faculty.contribution_type?.length || 0} contribution(s)
-                              </div>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="number"
-                                value={faculty.hours_per_year}
-                                onChange={(e) => handleFacultyChange(idx, 'hours_per_year', e.target.value)}
-                                className="w-full p-1 border rounded text-center"
-                                min="0"
-                                disabled={!isEditable}
-                              />
-                            </td>
-                            {isEditable && (
-                              <td className="border px-3 py-2 text-center">
-                                <button
-                                  onClick={() => handleRemoveFaculty(idx)}
-                                  className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200"
-                                >
-                                  Remove
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))
-                      ) : (
+            </div>
+          ),
+          "5.9": (
+            <div className="space-y-6">
+              {programId && poCourseMappingData.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-[#2163c1] text-white px-4 py-2">
+                    <h5 className="font-semibold">PO-Course Mapping</h5>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border text-sm">
+                      <thead className="bg-blue-100">
                         <tr>
-                          <td colSpan={isEditable ? 8 : 7} className="border px-3 py-8 text-center text-gray-500">
-                            No visiting faculty details added. Click "Add Faculty" to add details.
-                          </td>
+                          <th className="border px-3 py-2 w-24">PO Code</th>
+                          <th className="border px-3 py-2">PO Statement</th>
+                          <th className="border px-3 py-2">Mapped Courses</th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Source Categories */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h6 className="font-semibold text-gray-700 mb-3">Categories of Visiting/Adjunct Faculty Experts:</h6>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-blue-600 mb-1">Industry Professionals</h6>
-                    <p className="text-xs text-gray-600">Experts from corporate sector, tech companies, business organizations</p>
-                  </div>
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-green-600 mb-1">Research Organizations</h6>
-                    <p className="text-xs text-gray-600">Scientists from research labs, R&D centers, scientific institutions</p>
-                  </div>
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-purple-600 mb-1">Universities/Institutes</h6>
-                    <p className="text-xs text-gray-600">Faculty from other universities, eminent professors, academic experts</p>
-                  </div>
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-orange-600 mb-1">Government Organizations</h6>
-                    <p className="text-xs text-gray-600">Officials from government departments, regulatory bodies, PSUs</p>
-                  </div>
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-teal-600 mb-1">Emeritus Faculty</h6>
-                    <p className="text-xs text-gray-600">Retired professors continuing academic contributions</p>
-                  </div>
-                  <div className="bg-white p-3 rounded border">
-                    <h6 className="font-medium text-pink-600 mb-1">International Experts</h6>
-                    <p className="text-xs text-gray-600">Foreign faculty, NRI professionals, global consultants</p>
+                      </thead>
+                      <tbody>
+                        {poCourseMappingData.map((item, idx) => (
+                          <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                            <td className="border px-3 py-2 text-center font-medium">
+                              {item.po_code}
+                            </td>
+                            <td className="border px-3 py-2">
+                              {item.po_statement}
+                            </td>
+                            <td className="border px-3 py-2">
+                              {item.mapped_courses && item.mapped_courses.length > 0 ? (
+                                <div className="space-y-1">
+                                  {item.mapped_courses.map((course, courseIdx) => (
+                                    <div key={courseIdx} className="text-sm p-2 bg-blue-50 rounded">
+                                      <div className="font-medium text-blue-800">{course.course_code}</div>
+                                      <div className="text-gray-700">{course.course_name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 italic">No courses mapped</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
+              )}
+              
+              {programId && poCourseMappingData.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No PO-course mapping data found for this program.
+                </div>
+              )}
             </div>
           )
         }}

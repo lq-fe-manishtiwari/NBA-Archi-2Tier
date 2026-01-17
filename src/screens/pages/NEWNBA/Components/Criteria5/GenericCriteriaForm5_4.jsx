@@ -1,4 +1,4 @@
-// GenericCriteriaForm5_4.jsx
+// src/screens/pages/NEWNBA/Components/Criteria3/GenericCriteriaForm5_4.jsx
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Editor } from "react-editor";
@@ -8,102 +8,77 @@ import { toast } from "react-toastify";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 import {
   GripVertical, Trash2, Plus, FileText, Save, CheckCircle,
-  Upload, X, Edit, Clock, Check, Eye, AlertCircle
+  Upload, X, Edit, Clock, Check, Eye, AlertCircle, Percent, Users
 } from "lucide-react";
 
 Modal.setAppElement("#root");
 
-// Visiting/Adjunct Faculty Table Component
-const VisitingFacultyTable = ({ columns, data = [], onChange, disabled, tableConfig, approvalStatus }) => {
-  const [yearRows, setYearRows] = useState(() => {
+// Faculty Retention Table Component
+const FacultyRetentionTable = ({ columns, data = [], onChange, disabled, tableConfig, approvalStatus }) => {
+  const [tableRows, setTableRows] = useState(() => {
     if (data.length > 0) {
-      const groupedData = {};
-      data.forEach(item => {
-        const year = item.year || "CAYm1";
-        if (!groupedData[year]) groupedData[year] = [];
-        groupedData[year].push(item);
-      });
-
-      return (tableConfig?.yearSections || []).map(yearSection => ({
-        id: `year-${yearSection.year}`,
-        type: "yearHeader",
-        year: yearSection.year,
-        label: yearSection.label,
-        rows: groupedData[yearSection.year] || []
-      }));
+      return data;
     }
-
-    return (tableConfig?.yearSections || []).map(yearSection => ({
-      id: `year-${yearSection.year}`,
-      type: "yearHeader",
-      year: yearSection.year,
-      label: yearSection.label,
-      rows: []
-    }));
+    
+    // Default rows based on the image
+    return [
+      {
+        id: "retained-row",
+        item: "No of Faculty Retained",
+        cay: "",
+        caym1: ""
+      },
+      {
+        id: "total-row", 
+        item: "Total No. of Required Faculty in CAYm2",
+        cay: "",
+        caym1: ""
+      }
+    ];
   });
 
-  const handleAddRow = (year) => {
-    const updated = [...yearRows];
-    const yearIndex = updated.findIndex(y => y.year === year);
-
-    if (yearIndex !== -1) {
-      const newRow = {
-        id: `row-${Date.now()}-${Math.random()}`,
-        sn: updated[yearIndex].rows.length + 1,
-        name: "",
-        designation: "",
-        course: "",
-        hours: "",
-        year
-      };
-
-      updated[yearIndex].rows = [...updated[yearIndex].rows, newRow];
-      setYearRows(updated);
-      onChange(flattenData(updated));
-    }
-  };
-
-  const handleRemoveRow = (year, rowId) => {
-    const updated = [...yearRows];
-    const yearIndex = updated.findIndex(y => y.year === year);
-
-    if (yearIndex !== -1) {
-      updated[yearIndex].rows = updated[yearIndex].rows
-        .filter(row => row.id !== rowId)
-        .map((row, idx) => ({ ...row, sn: idx + 1 }));
-
-      setYearRows(updated);
-      onChange(flattenData(updated));
-    }
-  };
-
-  const handleRowChange = (year, rowId, field, value) => {
-    const updated = [...yearRows];
-    const yearIndex = updated.findIndex(y => y.year === year);
-
-    if (yearIndex !== -1) {
-      const rowIndex = updated[yearIndex].rows.findIndex(row => row.id === rowId);
-      if (rowIndex !== -1) {
-        updated[yearIndex].rows[rowIndex] = {
-          ...updated[yearIndex].rows[rowIndex],
-          [field]: value
-        };
-        setYearRows(updated);
-        onChange(flattenData(updated));
-      }
-    }
-  };
-
-  const flattenData = (yearData) =>
-    yearData.flatMap(yearSection =>
-      yearSection.rows.map(row => ({ ...row, year: yearSection.year }))
+  const handleRowChange = (rowId, field, value) => {
+    const updatedRows = tableRows.map(row => 
+      row.id === rowId ? { ...row, [field]: value } : row
     );
+    setTableRows(updatedRows);
+    onChange(updatedRows);
+  };
 
-  const calculateTotalHours = (rows) =>
-    rows.reduce((sum, row) => sum + (parseInt(row.hours) || 0), 0);
+  // Calculate percentages based on the image formula
+  const calculatePercentages = () => {
+    const retainedRow = tableRows.find(row => row.item === "No of Faculty Retained");
+    const totalRow = tableRows.find(row => row.item === "Total No. of Required Faculty in CAYm2");
+    
+    const cayRetained = parseInt(retainedRow?.cay) || 0;
+    const caym1Retained = parseInt(retainedRow?.caym1) || 0;
+    const totalRequired = parseInt(totalRow?.cay) || 1; // Avoid division by zero
+    
+    const cayPercentage = totalRequired > 0 ? (cayRetained / totalRequired * 100) : 0;
+    const caym1Percentage = totalRequired > 0 ? (caym1Retained / totalRequired * 100) : 0;
+    const overallPercentage = (cayPercentage + caym1Percentage) / 2;
+    
+    return {
+      cayPercentage: Math.round(cayPercentage * 10) / 10,
+      caym1Percentage: Math.round(caym1Percentage * 10) / 10,
+      overallPercentage: Math.round(overallPercentage * 10) / 10
+    };
+  };
+
+  // Calculate marks based on overall percentage
+  const calculateMarks = (percentage) => {
+    if (percentage >= 90) return 20;
+    if (percentage >= 75) return 16;
+    if (percentage >= 60) return 12;
+    if (percentage >= 50) return 8;
+    return 0;
+  };
+
+  const percentages = calculatePercentages();
+  const marks = calculateMarks(percentages.overallPercentage);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Approval status badge */}
       {approvalStatus && (
         <div
@@ -122,187 +97,222 @@ const VisitingFacultyTable = ({ columns, data = [], onChange, disabled, tableCon
         </div>
       )}
 
-      <div className="text-sm text-gray-600 mb-4">
-        <strong>Note:</strong> Marks calculation: Provision of visiting faculty (1 mark) + Minimum 50 hours/year interaction (9 marks, 3 marks per year)
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <h4 className="text-lg font-bold text-blue-700 mb-2">{tableConfig.title}</h4>
+        <p className="text-sm text-gray-600 mb-4">
+          <strong>Note:</strong> Calculate the percentage of required full-time faculty members retained during the assessment period keeping CAYm2 as base year.
+        </p>
       </div>
 
-      {yearRows.map((yearSection) => (
-        <div key={yearSection.id} className="space-y-4">
-          {/* Year Header */}
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-4">
-            <h4 className="text-lg font-bold text-blue-700">{yearSection.label}</h4>
-          </div>
+      {/* Input Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full table-auto bg-white rounded-lg shadow border border-gray-300">
+          <thead>
+            <tr className="bg-[#2163c1] text-white">
+              {columns.map((col) => (
+                <th key={col.field} className="p-3 text-left font-medium">
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row) => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-medium bg-gray-50">{row.item}</td>
+                <td className="p-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={row.cay || ""}
+                    onChange={(e) => handleRowChange(row.id, "cay", e.target.value)}
+                    disabled={disabled}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      row.item === "Total No. of Required Faculty in CAYm2" ? "font-bold" : ""
+                    }`}
+                    placeholder="Enter number"
+                  />
+                </td>
+                <td className="p-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={row.item === "Total No. of Required Faculty in CAYm2" ? row.cay || "" : row.caym1 || ""}
+                    onChange={(e) => {
+                      if (row.item === "Total No. of Required Faculty in CAYm2") {
+                        // For total row, update both columns
+                        handleRowChange(row.id, "cay", e.target.value);
+                        handleRowChange(row.id, "caym1", e.target.value);
+                      } else {
+                        handleRowChange(row.id, "caym1", e.target.value);
+                      }
+                    }}
+                    disabled={disabled}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      row.item === "Total No. of Required Faculty in CAYm2" ? "text-gray-400 bg-gray-100" : ""
+                    }`}
+                    placeholder="Enter number"
+                    readOnly={row.item === "Total No. of Required Faculty in CAYm2"}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto bg-white rounded-lg shadow border border-gray-300">
-              <thead>
-                <tr className="bg-[#2163c1] text-white">
-                  {columns.map((col) => (
-                    <th key={col.field} className="p-3 text-left font-medium">
-                      {col.header}
-                    </th>
-                  ))}
-                  {!disabled && <th className="w-20">Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {yearSection.rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 text-center font-medium">{row.sn}</td>
-                    <td className="p-3">
-                      <input
-                        type="text"
-                        value={row.name || ""}
-                        onChange={(e) => handleRowChange(yearSection.year, row.id, "name", e.target.value)}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter name"
-                      />
+      {/* Calculated Results Table */}
+      <div className="overflow-x-auto mt-6">
+        <table className="w-full table-auto bg-white rounded-lg shadow border border-gray-300">
+          <thead>
+            <tr className="bg-green-600 text-white">
+              <th className="p-3 text-left font-medium">Item</th>
+              <th className="p-3 text-left font-medium">CAY</th>
+              <th className="p-3 text-left font-medium">CAYm1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b hover:bg-gray-50">
+              <td className="p-3 font-medium bg-gray-50">% of Faculty Retained</td>
+              <td className="p-3 text-center font-bold text-blue-700">
+                {percentages.cayPercentage}%
+              </td>
+              <td className="p-3 text-center font-bold text-blue-700">
+                {percentages.caym1Percentage}%
+              </td>
+            </tr>
+            <tr className="bg-green-50 hover:bg-green-100">
+              <td className="p-3 font-medium">Faculty Retained (overall)</td>
+              <td colSpan="2" className="p-3 text-center font-bold text-green-700 text-lg">
+                {percentages.overallPercentage}% = ({percentages.cayPercentage} + {percentages.caym1Percentage}) / 2
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Marks Calculation Section */}
+      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-300 rounded-lg">
+        <h4 className="text-lg font-bold text-blue-700 mb-4 flex items-center gap-2">
+          <Percent className="w-5 h-5" /> Marks Calculation
+        </h4>
+
+        {/* Marks Distribution Table */}
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full table-auto bg-white rounded-lg shadow border border-gray-300">
+            <thead>
+              <tr className="bg-blue-600 text-white">
+                <th className="p-3 text-left font-medium">Retention Percentage</th>
+                <th className="p-3 text-left font-medium">Marks</th>
+                <th className="p-3 text-left font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { min: 90, max: 100, marks: 20 },
+                { min: 75, max: 90, marks: 16 },
+                { min: 60, max: 75, marks: 12 },
+                { min: 50, max: 60, marks: 8 },
+                { min: 0, max: 50, marks: 0 }
+              ].map((range, index) => {
+                const isActive = percentages.overallPercentage >= range.min && 
+                                percentages.overallPercentage < (range.max === 100 ? 101 : range.max);
+                
+                return (
+                  <tr 
+                    key={index} 
+                    className={`border-b hover:bg-gray-50 ${isActive ? 'bg-yellow-50 border-l-4 border-yellow-500' : ''}`}
+                  >
+                    <td className="p-3 font-medium">
+                      {range.min === 90 ? '≥90%' : 
+                       range.min === 0 ? '<50%' : 
+                       `≥${range.min}%`}
                     </td>
+                    <td className="p-3 font-bold">{range.marks} marks</td>
                     <td className="p-3">
-                      <input
-                        type="text"
-                        value={row.designation || ""}
-                        onChange={(e) => handleRowChange(yearSection.year, row.id, "designation", e.target.value)}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Designation & Organization"
-                      />
+                      {isActive ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <Check className="w-4 h-4 mr-1" /> Selected
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
                     </td>
-                    <td className="p-3">
-                      <input
-                        type="text"
-                        value={row.course || ""}
-                        onChange={(e) => handleRowChange(yearSection.year, row.id, "course", e.target.value)}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Course name"
-                      />
-                    </td>
-                    <td className="p-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={row.hours || ""}
-                        onChange={(e) => handleRowChange(yearSection.year, row.id, "hours", e.target.value)}
-                        disabled={disabled}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Hours"
-                      />
-                    </td>
-                    {!disabled && (
-                      <td className="p-3">
-                        <button
-                          onClick={() => handleRemoveRow(yearSection.year, row.id)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="Remove row"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </td>
-                    )}
                   </tr>
-                ))}
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-                {/* Total Hours Row */}
-                <tr className="bg-gray-100 font-bold">
-                  <td colSpan={4} className="p-3 text-right">
-                    Total no. of hours:
-                  </td>
-                  <td className="p-3 text-center font-bold text-blue-700">
-                    {calculateTotalHours(yearSection.rows)}
-                  </td>
-                  {!disabled && <td></td>}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Add Row Button */}
-          {!disabled && (
+        {/* Current Calculation */}
+        <div className="bg-white p-4 rounded-lg border border-blue-300">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <h5 className="font-bold text-gray-700">Current Calculation:</h5>
+              <div className="text-sm text-gray-600 mt-1">
+                <div>CAY: {percentages.cayPercentage}% = ({tableRows[0]?.cay || 0} / {tableRows[1]?.cay || 1}) × 100</div>
+                <div>CAYm1: {percentages.caym1Percentage}% = ({tableRows[0]?.caym1 || 0} / {tableRows[1]?.cay || 1}) × 100</div>
+                <div>Overall: ({percentages.cayPercentage} + {percentages.caym1Percentage}) / 2 = {percentages.overallPercentage}%</div>
+              </div>
+            </div>
             <div className="text-center">
-              <button
-                onClick={() => handleAddRow(yearSection.year)}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2 mx-auto"
-              >
-                <Plus className="w-4 h-4" /> Add Row for {yearSection.label}
-              </button>
-            </div>
-          )}
-
-          {/* Marks Calculation for this year */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="text-sm">
-              <strong>{yearSection.label} Marks Calculation:</strong>
-              <div className="mt-1">
-                Total Hours: <span className="font-bold">{calculateTotalHours(yearSection.rows)}</span> hours
-                {calculateTotalHours(yearSection.rows) >= 50 ? (
-                  <span className="ml-2 text-green-600 font-bold flex items-center gap-1">
-                    <Check className="w-4 h-4" /> Eligible for 3 marks
-                  </span>
-                ) : (
-                  <span className="ml-2 text-red-600 font-bold flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> Needs minimum 50 hours for marks
-                  </span>
-                )}
-              </div>
+              <div className="text-sm text-gray-600">Awarded Marks</div>
+              <div className="text-3xl font-bold text-indigo-700">{marks} / 20</div>
             </div>
           </div>
         </div>
-      ))}
+      </div>
 
-      {/* Overall Marks Calculation */}
-      <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-300 rounded-lg">
-        <h4 className="text-lg font-bold text-blue-700 mb-2">Overall Marks Calculation</h4>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {yearRows.map((yearSection) => {
-            const totalHours = calculateTotalHours(yearSection.rows);
-            const marks = totalHours >= 50 ? 3 : 0;
-
-            return (
-              <div key={yearSection.year} className="text-center p-3 bg-white rounded-lg border">
-                <div className="font-bold">{yearSection.label}</div>
-                <div className="text-sm">Total Hours: {totalHours}</div>
-                <div className={`text-lg font-bold ${marks > 0 ? "text-green-600" : "text-red-600"}`}>
-                  {marks} / 3 marks
-                </div>
+      {/* Example from image */}
+      <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h5 className="font-bold text-yellow-700 mb-2 flex items-center gap-2">
+          <Users className="w-5 h-5" /> Example from NBA Guidelines:
+        </h5>
+        <div className="text-sm overflow-x-auto">
+          <table className="w-full border-collapse min-w-full">
+            <thead>
+              <tr className="bg-yellow-100">
+                <th className="border border-yellow-300 p-2 text-left">Item</th>
+                <th className="border border-yellow-300 p-2 text-center">CAY</th>
+                <th className="border border-yellow-300 p-2 text-center">CAYm1</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-yellow-300 p-2">No of Faculty Retained</td>
+                <td className="border border-yellow-300 p-2 text-center font-bold">28</td>
+                <td className="border border-yellow-300 p-2 text-center font-bold">29</td>
+              </tr>
+              <tr>
+                <td className="border border-yellow-300 p-2">Total No. of Required Faculty in CAYm2</td>
+                <td className="border border-yellow-300 p-2 text-center font-bold">33</td>
+                <td className="border border-yellow-300 p-2 text-center">33</td>
+              </tr>
+              <tr>
+                <td className="border border-yellow-300 p-2 font-medium">% of Faculty Retained</td>
+                <td className="border border-yellow-300 p-2 text-center font-bold text-blue-600">85%</td>
+                <td className="border border-yellow-300 p-2 text-center font-bold text-blue-600">88%</td>
+              </tr>
+              <tr className="bg-yellow-100">
+                <td className="border border-yellow-300 p-2 font-bold">Faculty Retained (overall)</td>
+                <td colSpan="2" className="border border-yellow-300 p-2 text-center font-bold text-green-700">
+                  86.5% = (85 + 88) / 2
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="mt-3 p-3 bg-yellow-100 rounded border border-yellow-300">
+            <div className="font-bold text-yellow-800">Calculation:</div>
+            <div className="text-yellow-700 text-sm mt-1">
+              <div>• CAY: (28 ÷ 33) × 100 = 84.85% ≈ 85%</div>
+              <div>• CAYm1: (29 ÷ 33) × 100 = 87.88% ≈ 88%</div>
+              <div>• Overall: (85% + 88%) ÷ 2 = 86.5%</div>
+              <div className="mt-2 font-bold">
+                <span className="text-green-700">Result:</span> 86.5% ≥ 75% → <strong className="text-green-700">Awarded 16 marks</strong>
               </div>
-            );
-          })}
-
-          <div className="text-center p-3 bg-blue-100 rounded-lg border border-blue-300">
-            <div className="font-bold">Provision of Faculty</div>
-            <div className="text-sm">Basic provision</div>
-            <div className="text-lg font-bold text-blue-600">1 / 1 mark</div>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-blue-300">
-          <div className="flex justify-between items-center">
-            <div>
-              <strong>Total Marks Breakdown:</strong>
-              <div className="text-sm">
-                • Provision of visiting faculty: 1 mark
-                <br />
-                • Yearly interaction (3 years × 3 marks each):{" "}
-                {yearRows.reduce(
-                  (sum, ys) => sum + (calculateTotalHours(ys.rows) >= 50 ? 3 : 0),
-                  0
-                )}{" "}
-                marks
-              </div>
-            </div>
-            <div className="text-2xl font-bold text-indigo-700">
-              Total:{" "}
-              {1 +
-                yearRows.reduce(
-                  (sum, ys) => sum + (calculateTotalHours(ys.rows) >= 50 ? 3 : 0),
-                  0
-                )}{" "}
-              / 10 marks
             </div>
           </div>
         </div>
@@ -314,7 +324,7 @@ const VisitingFacultyTable = ({ columns, data = [], onChange, disabled, tableCon
 // Main Component
 const GenericCriteriaForm5_4 = ({
   title = "NBA Section",
-  marks = 10,
+  marks = 20,
   fields = [],
   initialData = null,
   onSave,
@@ -331,7 +341,6 @@ const GenericCriteriaForm5_4 = ({
 
   const [filesByField, setFilesByField] = useState(() => {
     if (initialData?.filesByField) {
-      // Ensure each field has at least one empty row for new uploads
       const updatedFiles = { ...initialData.filesByField };
       fields.forEach((field) => {
         if (!updatedFiles[field.name] || updatedFiles[field.name].length === 0) {
@@ -396,7 +405,7 @@ const GenericCriteriaForm5_4 = ({
       if (currentRow.description?.trim()) formData.append("description", currentRow.description.trim());
 
       const resData = await nbaDashboardService.uploadFile(formData);
-      const s3Url = resData || resData?.url || "";
+      const s3Url = resData?.url || resData || "";
 
       const updatedFile = { ...currentRow, s3Url, filename: newFile.name, uploading: false };
 
@@ -469,14 +478,23 @@ const GenericCriteriaForm5_4 = ({
             </h3>
 
             {field.hasTable ? (
-              <VisitingFacultyTable
-                columns={field.tableConfig.columns}
-                data={tableData}
-                onChange={setTableData}
-                disabled={!isEditMode || isEditingDisabled}
-                tableConfig={field.tableConfig}
-                approvalStatus={approvalStatus}
-              />
+              field.tableConfig.type === "faculty_retention" ? (
+                <FacultyRetentionTable
+                  columns={field.tableConfig.columns}
+                  data={tableData}
+                  onChange={setTableData}
+                  disabled={!isEditMode || isEditingDisabled}
+                  tableConfig={field.tableConfig}
+                  approvalStatus={approvalStatus}
+                />
+              ) : (
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                  <div className="flex items-center gap-2 text-yellow-700">
+                    <AlertCircle className="w-5 h-5" />
+                    <span>Table configuration not found for this criteria.</span>
+                  </div>
+                </div>
+              )
             ) : (
               <div className="border-2 border-gray-300 rounded-b-lg bg-white">
                 <Editor
@@ -489,7 +507,7 @@ const GenericCriteriaForm5_4 = ({
               </div>
             )}
 
-            {/* Supporting Documents Section - Always Display */}
+            {/* Supporting Documents Section */}
             <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">
@@ -689,9 +707,18 @@ const GenericCriteriaForm5_4 = ({
 
             <div className="flex-1 p-4">
               {previewModal.file.filename?.toLowerCase().endsWith(".pdf") ? (
-                <iframe src={previewModal.file.s3Url} title={previewModal.file.filename} className="w-full h-full border-0" />
+                <iframe 
+                  src={previewModal.file.s3Url} 
+                  title={previewModal.file.filename} 
+                  className="w-full h-full border-0" 
+                  style={{ minHeight: '500px' }}
+                />
               ) : previewModal.file.filename?.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                <img src={previewModal.file.s3Url} alt={previewModal.file.filename} className="max-w-full max-h-full object-contain mx-auto" />
+                <img 
+                  src={previewModal.file.s3Url} 
+                  alt={previewModal.file.filename} 
+                  className="max-w-full max-h-full object-contain mx-auto" 
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
                   <FileText className="w-16 h-16 mb-4" />
