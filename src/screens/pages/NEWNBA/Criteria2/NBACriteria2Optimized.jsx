@@ -315,7 +315,16 @@ const NBACriteria2Optimized = () => {
 
   const fetchCardDetails = async (cycleSubCategoryId) => {
     try {
-      const cardDetails = await newnbaCriteria2Service.getallCardDetails(cycleSubCategoryId);
+      // Determine which section this is
+      const indicator = keyIndicators.find(ind => ind.subLevel2Id === cycleSubCategoryId);
+      const sectionName = indicator?.rawName || "";
+
+      let cardDetails = [];
+      if (sectionName.includes("2.2")) {
+        cardDetails = await newnbaCriteria2Service.getAllCriteria2_2_Data(cycleSubCategoryId);
+      } else {
+        cardDetails = await newnbaCriteria2Service.getAllCriteria2_1_Data(cycleSubCategoryId);
+      }
 
       const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const currentUserInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -325,14 +334,23 @@ const NBACriteria2Optimized = () => {
         currentUserInfo2?.other_staff_id ||
         currentUserInfo2?.user_id;
 
-      let allCards = [...cardDetails];
+      let allCards = [...(Array.isArray(cardDetails) ? cardDetails : [])];
 
       if (currentStaffId) {
         try {
-          const coordinatorData = await newnbaCriteria2Service.getCriteria2_1_Data(cycleSubCategoryId, currentStaffId);
+          let coordinatorData = null;
+          let idField = "program_curriculum_id";
+
+          if (sectionName.includes("2.2")) {
+            coordinatorData = await newnbaCriteria2Service.getCriteria2_2_Data(cycleSubCategoryId, currentStaffId);
+            idField = "teaching_learning_process_id";
+          } else {
+            coordinatorData = await newnbaCriteria2Service.getCriteria2_1_Data(cycleSubCategoryId, currentStaffId);
+          }
+
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
 
-          if (coordinatorRecord && coordinatorRecord.program_curriculum_id) {
+          if (coordinatorRecord && coordinatorRecord[idField]) {
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
 
             if (!existingCard) {
@@ -364,11 +382,21 @@ const NBACriteria2Optimized = () => {
   };
 
   const handleCardClick = async (subLevel2Id, userStaffId, cardItem = null) => {
+    const indicator = keyIndicators.find(ind => ind.subLevel2Id === subLevel2Id);
+    const sectionName = indicator?.rawName || "";
+    
+    let recordId = null;
+    if (sectionName.includes("2.2")) {
+      recordId = cardItem?.teaching_learning_process_id;
+    } else {
+      recordId = cardItem?.program_curriculum_id;
+    }
+
     setSelectedCard({
       cycleSubCategoryId: subLevel2Id,
       otherStaffId: userStaffId,
       editMode: true,
-      teachingLearningQualityId: cardItem?.program_curriculum_id || null,
+      teachingLearningQualityId: recordId || null,
       cardData: cardItem
     });
   };
@@ -376,10 +404,16 @@ const NBACriteria2Optimized = () => {
   const handleStatusChange = async (cardItem, newStatus) => {
     const subLevel2Id = selectedCard?.cycleSubCategoryId || expandedSectionId;
     if (subLevel2Id) {
+      const indicator = keyIndicators.find(ind => ind.subLevel2Id === subLevel2Id);
+      const sectionName = indicator?.rawName || "";
+      
       await fetchCardDetails(subLevel2Id);
+      
+      const id = sectionName.includes("2.2") ? cardItem.teaching_learning_process_id : cardItem.program_curriculum_id;
+      
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.program_curriculum_id]: newStatus
+        [id]: newStatus
       }));
     }
   };
@@ -390,7 +424,7 @@ const NBACriteria2Optimized = () => {
 
     if (!wasExpanded) {
       const indicator = keyIndicators.find(ind => ind.subLevel2Id === id);
-      if (indicator && indicator.rawName && indicator.rawName.match(/^2\.[1-8]/)) {
+      if (indicator && indicator.rawName) {
         await fetchCardDetails(id);
       }
     }
@@ -774,7 +808,9 @@ const NBACriteria2Optimized = () => {
                                     onCardClick={handleCardClick}
                                     onStatusChange={handleStatusChange}
                                     apiService={{
-                                      updateCardStatus: newnbaCriteria2Service.updateCardStatus,
+                                      updateCardStatus: rawName.includes("2.2") 
+                                        ? newnbaCriteria2Service.updateCriteria2_2Status 
+                                        : newnbaCriteria2Service.updateCardStatus,
                                       getCardData: () => fetchCardDetails(subLevel2Id)
                                     }}
                                     cardConfig={{
@@ -782,7 +818,7 @@ const NBACriteria2Optimized = () => {
                                       statusField: "approval_status",
                                       userField: "other_staff_id",
                                       nameFields: ["firstname", "lastname"],
-                                      idField: "program_curriculum_id",
+                                      idField: rawName.includes("2.2") ? "teaching_learning_process_id" : "program_curriculum_id",
                                       isCoordinatorField: "is_coordinator_entry"
                                     }}
                                     isSubCoordinator={isSubCoordinator}
@@ -940,4 +976,4 @@ const NBACriteria2Optimized = () => {
   );
 };
 
-export default NBACriteria2Optimized;
+export default NBACriteria2Optimized; 
