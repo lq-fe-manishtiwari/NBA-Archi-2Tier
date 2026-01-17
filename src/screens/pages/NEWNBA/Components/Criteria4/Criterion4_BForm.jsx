@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm4_A from "./GenericCriteriaForm4_A";
+import GenericCriteriaForm4_B from "./GenericCriteriaForm4_B";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 
@@ -20,7 +20,7 @@ const Criterion4_BForm = ({
   const [initialData, setInitialData] = useState({
     content: {},
     tableData: [],
-    files: [],
+    filesByField: {}, 
   });
 
   const [alert, setAlert] = useState(null);
@@ -30,12 +30,12 @@ const Criterion4_BForm = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "Table No. 4A. Admission details of a program",
+      "Table No. 4B. No. of students graduated without backlogs",
     totalMarks: 20,
     fields: [
       {
-        name: "4.8",
-        label: "4A. Admission details of a program",
+        name: "4.1b",
+        label: "4B. Admission details of a program",
         marks: 20,
         hasTable: true,
         tableConfig: {
@@ -120,7 +120,7 @@ const Criterion4_BForm = ({
       console.log("  - userIsContributor:", userIsContributor);
       
       // Call API with staff ID
-      const res = await newnbaCriteria4Service.getCriteria4_A_Data(cycle_sub_category_id, currentOtherStaffId);
+      const res = await newnbaCriteria4Service.getCriteria4_B_Data(cycle_sub_category_id, currentOtherStaffId);
       
       // Handle both array and object responses like Criterion1_1Form
       const rawResponse = res?.data || res || [];
@@ -130,17 +130,17 @@ const Criterion4_BForm = ({
       console.log("🟢 Criterion4_BForm - Processed Data:", d);
 
       // Set ID for update/delete operations
-      setStudentsPerformanceId(d.students_performance_id || null);
+      setStudentsPerformanceId(d.id || null);
 
-      // Parse table data from cri4_atable - API returns array of flat objects with row_type
+      // Parse table data from students_graduated_data - API returns array of flat objects with row_type
       const tableData = [];
       const yearKeys = ["cay", "caym1", "caym2", "caym3", "caym4", "caym5", "caym6", "caym7"];
       const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
       
       // If we have existing data, populate from API
-      if (d.cri4_atable && Array.isArray(d.cri4_atable) && d.cri4_atable.length > 0) {
+      if (d.students_graduated_data && Array.isArray(d.students_graduated_data) && d.students_graduated_data.length > 0) {
         yearKeys.forEach((key, index) => {
-          const row = d.cri4_atable.find(r => r.row_type === key);
+          const row = d.students_graduated_data.find(r => r.row_type === key);
           if (row) {
             tableData.push({
               id: `row-${Date.now()}-${index}`,
@@ -185,18 +185,18 @@ const Criterion4_BForm = ({
       console.log("✅ Criterion4_BForm - Parsed tableData:", tableData);
 
       setInitialData({
-        content: { "4.1": "" },
+        content: { "4.1b": "" },
         tableData: tableData.length > 0 ? tableData : [],
         filesByField: {
-          "4.1": (d.cri4_bdocument || []).length > 0
-            ? (d.cri4_bdocument || []).map((f, i) => ({
-                id: `file-4.1-${i}`,
+          "4.1b": (d.students_graduated_document || []).length > 0
+            ? (d.students_graduated_document || []).map((f, i) => ({
+                id: `file-4.1b-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
                 description: f.description || "",
                 uploading: false
               }))
-            : [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+            : [{ id: `file-4.1b-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } catch (err) {
@@ -217,10 +217,10 @@ const Criterion4_BForm = ({
       }));
       
       setInitialData({
-        content: { "4.1": "" },
+        content: { "4.1b": "" },
         tableData: [],
         filesByField: {
-          "4.1": [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.1b": [{ id: `file-4.1b-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } finally {
@@ -260,6 +260,14 @@ const handleSave = async (formData) => {
   setSaving(true);
 
   try {
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
+        (field) =>
+          (formData.filesByField[field] || []).map((file) => ({
+            ...file,
+            category: "Students' Performance",
+          }))
+      );
+      console.log(filesWithCategory);
     const table = formData.tableData;
 
     // Year key mapping
@@ -274,8 +282,8 @@ const handleSave = async (formData) => {
       "CAYm7 (LYGm2)": "caym7"
     };
 
-    // Build cri4_atable as array of flat objects
-    const cri4_atable = table.map((row) => {
+    // Build students_graduated_data as array of flat objects
+    const students_graduated_data = table.map((row) => {
       const key = yearToKey[row.year_of_entry];
       if (!key) return null;
 
@@ -293,7 +301,7 @@ const handleSave = async (formData) => {
     // Extract documents
     console.log("🟠 filesWithCategory before filter:", filesWithCategory);
     
-    const cri4_adocument = filesWithCategory
+    const students_graduated_document = filesWithCategory
       .filter((f) => {
         const hasUrl = f.s3Url && f.s3Url.trim() !== "";
         console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
@@ -305,7 +313,7 @@ const handleSave = async (formData) => {
         description: f.description || ""
       }));
     
-    console.log("✅ cri4_adocument after mapping:", cri4_adocument);
+    console.log("✅ students_graduated_document after mapping:", students_graduated_document);
 
     // Get staff ID
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -321,22 +329,22 @@ const handleSave = async (formData) => {
     const payload = {
       other_staff_id: staffId,
       cycle_sub_category_id: cycle_sub_category_id,
-      cri4_adocument,
-      cri4_atable
+      students_graduated_document,
+      students_graduated_data
     };
 
     console.log("FINAL PAYLOAD → ", payload);
     
     // Use PUT if updating existing entry, POST for new entry
     if (studentsPerformanceId) {
-      await newnbaCriteria4Service.putCriteria4_A_Data(studentsPerformanceId, payload);
+      await newnbaCriteria4Service.putCriteria4_B_Data(studentsPerformanceId, payload,staffId);
     } else {
-      await newnbaCriteria4Service.saveCriteria4_A_Data(payload);
+      await newnbaCriteria4Service.saveCriteria4_B_Data(payload,staffId);
     }
 
     setAlert(
       <SweetAlert success title="Saved!" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
-        Criterion 4A saved successfully
+        Criterion 4B saved successfully
       </SweetAlert>
     );
 
@@ -384,7 +392,7 @@ const handleSave = async (formData) => {
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_AData(
+            const res = await newnbaCriteria4Service.deleteCriteria4_BData(
               studentsPerformanceId
             );
 
@@ -452,11 +460,11 @@ const handleSave = async (formData) => {
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.A",
+            title: "Criterion 4.B",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "students_performance_id",
+            idField: "id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
@@ -467,7 +475,7 @@ const handleSave = async (formData) => {
 
   return (
     <div>
-      <GenericCriteriaForm4_A
+      <GenericCriteriaForm4_B
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

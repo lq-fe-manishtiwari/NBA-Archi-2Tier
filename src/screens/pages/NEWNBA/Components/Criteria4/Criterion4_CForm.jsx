@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm4_C from "./GenericCriteriaForm4_C";
+import GenericCriteriaForm4_B from "./GenericCriteriaForm4_B";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 
@@ -9,7 +9,7 @@ const Criterion4_CForm = ({
   onSaveSuccess,
   programId = null,
   otherStaffId = null,
-  showCardView = false, 
+  showCardView = false,
   onCardClick = null,
 }) => {
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const Criterion4_CForm = ({
   const [initialData, setInitialData] = useState({
     content: {},
     tableData: [],
-    files: [],
+    filesByField: {}, 
   });
 
   const [alert, setAlert] = useState(null);
@@ -30,34 +30,72 @@ const Criterion4_CForm = ({
   // ---------------- CONFIG ----------------
   const config = {
     title:
-      "4C: No. of students graduated within the stipulated period of the program.",
+      "Table No. 4C. No. of students graduated without backlogs",
     totalMarks: 20,
     fields: [
       {
-        name: "4.1",
-        label: "4C: No. of students graduated within the stipulated period of the program.",
+        name: "4.1c",
+        label: "4C. Admission details of a program",
         marks: 20,
         hasTable: true,
         tableConfig: {
-          title: "Teaching-Learning Activities",
+          title: "Admission details of a program",
           columns: [
-            { field: "item", header: "Year of entry"},
-            { field: "item1", header: "Total no. of students (N1 + N2 + N3+ N4+N5-N6 as defined above)"},
-            { field: "cay", header: "I Year" },
-            { field: "caym1", header: "II Year " },
-            { field: "caym2", header: "III Year" },
-            { field: "caym3", header: "IV Year" },
+              { 
+                field: "year_of_entry", 
+                header: "Year of entry", 
+                placeholder: "",
+                readOnly: true 
+              },
+              { 
+                field: "admitted_first_year", 
+                header: "Number of students admitted in 1st year of the program (N1)", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_i_year", 
+                header: "I Year", 
+                placeholder: "",
+                subHeader: "Number of students who have successfully graduated without backlogs in any year of study" 
+              },
+              { 
+                field: "graduated_ii_year", 
+                header: "II Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iii_year", 
+                header: "III Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_iv_year", 
+                header: "IV Year", 
+                placeholder: "" 
+              },
+              { 
+                field: "graduated_v_year", 
+                header: "V Year", 
+                placeholder: "" 
+              },
+            ],
+          predefinedRows: [
+            { year_of_entry: "CAY" },
+            { year_of_entry: "CAYm1" },
+            { year_of_entry: "CAYm2" },
+            { year_of_entry: "CAYm3" },
+            { year_of_entry: "CAYm4" },
+            { year_of_entry: "CAYm5 (LYG)" },
+            { year_of_entry: "CAYm6 (LYGm1)" },
+            { year_of_entry: "CAYm7 (LYGm2)" },
           ],
         },
       },
     ],
   };
 
-
-
-
   // ---------------- LOAD DATA  ----------------
-   const loadData = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) {
       setLoading(false);
       return;
@@ -66,57 +104,123 @@ const Criterion4_CForm = ({
     try {
       setLoading(true);
       
+      // Check if user is contributor
       const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const userIsContributor = userInfo?.rawData?.is_contributor || false;
       setIsContributor(userIsContributor);
       
+      // Determine staff ID to use - otherStaffId has priority
       const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-
+      
+      console.log("🟠 Criterion4_CForm - Loading data:");
+      console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
+      console.log("  - otherStaffId (prop):", otherStaffId);
+      console.log("  - currentOtherStaffId (final):", currentOtherStaffId);
+      console.log("  - userIsContributor:", userIsContributor);
+      
+      // Call API with staff ID
       const res = await newnbaCriteria4Service.getCriteria4_C_Data(cycle_sub_category_id, currentOtherStaffId);
+      
+      // Handle both array and object responses like Criterion1_1Form
       const rawResponse = res?.data || res || [];
-      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[rawResponse.length - 1] : rawResponse;
+      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
+      
+      console.log("🟢 Criterion4_CForm - Raw API Response:", rawResponse);
+      console.log("🟢 Criterion4_CForm - Processed Data:", d);
 
-      setStudentsPerformanceId(d.cstudents_performance_id || null);
+      // Set ID for update/delete operations
+      setStudentsPerformanceId(d.id || null);
 
+      // Parse table data from students_graduated_stipulated_data - API returns array of flat objects with row_type
       const tableData = [];
-      if (d.cri4_ctable && Array.isArray(d.cri4_ctable) && d.cri4_ctable.length > 0) {
-        d.cri4_ctable.forEach((row, index) => {
+      const yearKeys = ["cay", "caym1", "caym2", "caym3", "caym4", "caym5", "caym6", "caym7"];
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      
+      // If we have existing data, populate from API
+      if (d.students_graduated_stipulated_data && Array.isArray(d.students_graduated_stipulated_data) && d.students_graduated_stipulated_data.length > 0) {
+        yearKeys.forEach((key, index) => {
+          const row = d.students_graduated_stipulated_data.find(r => r.row_type === key);
+          if (row) {
+            tableData.push({
+              id: `row-${Date.now()}-${index}`,
+              year_of_entry: yearLabels[index],
+              admitted_first_year: row.admitted_first_year || "",
+              graduated_i_year: row.graduated_i_year || "",
+              graduated_ii_year: row.graduated_ii_year || "",
+              graduated_iii_year: row.graduated_iii_year || "",
+              graduated_iv_year: row.graduated_iv_year || "",
+              graduated_v_year: row.graduated_v_year || ""
+            });
+          } else {
+            // Add empty row if not found
+            tableData.push({
+              id: `row-${Date.now()}-${index}`,
+              year_of_entry: yearLabels[index],
+              admitted_first_year: "",
+              graduated_i_year: "",
+              graduated_ii_year: "",
+              graduated_iii_year: "",
+              graduated_iv_year: "",
+              graduated_v_year: ""
+            });
+          }
+        });
+      } else {
+        // No existing data - create empty rows with predefined labels
+        yearLabels.forEach((label, index) => {
           tableData.push({
             id: `row-${Date.now()}-${index}`,
-            item: row.row_type || row.item || "",
-            item1: row.item1 || "",
-            cay: row.cay || "",
-            caym1: row.caym1 || "",
-            caym2: row.caym2 || "",
-            caym3: row.caym3 || ""
+            year_of_entry: label,
+            admitted_first_year: "",
+            graduated_i_year: "",
+            graduated_ii_year: "",
+            graduated_iii_year: "",
+            graduated_iv_year: "",
+            graduated_v_year: ""
           });
         });
       }
+      
+      console.log("✅ Criterion4_CForm - Parsed tableData:", tableData);
 
       setInitialData({
-        content: { "4.1": "" },
+        content: { "4.1c": "" },
         tableData: tableData.length > 0 ? tableData : [],
         filesByField: {
-          "4.1": (d.cri4_cdocument || []).length > 0
-            ? (d.cri4_cdocument || []).map((f, i) => ({
-                id: `file-4.1-${i}`,
+          "4.1c": (d.students_graduated_stipulated_document || []).length > 0
+            ? (d.students_graduated_stipulated_document || []).map((f, i) => ({
+                id: `file-4.1c-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
                 description: f.description || "",
                 uploading: false
               }))
-            : [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+            : [{ id: `file-4.1c-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } catch (err) {
       console.warn("Load failed:", err);
       setStudentsPerformanceId(null);
+      
+      // Create empty table data with year labels
+      const yearLabels = ["CAY", "CAYm1", "CAYm2", "CAYm3", "CAYm4", "CAYm5 (LYG)", "CAYm6 (LYGm1)", "CAYm7 (LYGm2)"];
+      const emptyTableData = yearLabels.map((label, index) => ({
+        id: `row-empty-${index}`,
+        year_of_entry: label,
+        admitted_first_year: "",
+        graduated_i_year: "",
+        graduated_ii_year: "",
+        graduated_iii_year: "",
+        graduated_iv_year: "",
+        graduated_v_year: ""
+      }));
+      
       setInitialData({
-        content: { "4.1": "" },
+        content: { "4.1c": "" },
         tableData: [],
         filesByField: {
-          "4.1": [{ id: `file-4.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.1c": [{ id: `file-4.1c-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } finally {
@@ -149,29 +253,13 @@ const Criterion4_CForm = ({
 
   useEffect(() => {
     loadData();
-  }, [loadData]); 
+  }, [loadData]);
 
   // ---------------- SAVE DATA ----------------
-   const handleSave = async (formData) => {
-    setSaving(true);
+const handleSave = async (formData) => {
+  setSaving(true);
 
-    try {
-      const table = formData.tableData || [];
-
-      // Build cri4_ctable as array of flat objects
-      const cri4_ctable = table.map((row) => {
-        if (!row.item) return null;
-        
-        return {
-          row_type: row.item,
-          item1: row.item1 || "",
-          cay: row.cay || "",
-          caym1: row.caym1 || "",
-          caym2: row.caym2 || "",
-          caym3: row.caym3 || "",
-        };
-      }).filter(Boolean);
-
+  try {
       const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
@@ -179,62 +267,102 @@ const Criterion4_CForm = ({
             category: "Students' Performance",
           }))
       );
-      console.log("🟠 4C filesWithCategory before filter:", filesWithCategory);
-      
-      const cri4_cdocument = filesWithCategory
-        .filter((f) => {
-          const hasUrl = f.s3Url && f.s3Url.trim() !== "";
-          console.log(`4C File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
-          return hasUrl;
-        })
-        .map((f) => ({
-          file_name: f.filename,
-          file_url: f.s3Url,
-          description: f.description || ""
-        }));
-      
-      console.log("✅ 4C cri4_cdocument after mapping:", cri4_cdocument);
+      console.log(filesWithCategory);
+    const table = formData.tableData;
 
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+    // Year key mapping
+    const yearToKey = {
+      "CAY": "cay",
+      "CAYm1": "caym1",
+      "CAYm2": "caym2",
+      "CAYm3": "caym3",
+      "CAYm4": "caym4",
+      "CAYm5 (LYG)": "caym5",
+      "CAYm6 (LYGm1)": "caym6",
+      "CAYm7 (LYGm2)": "caym7"
+    };
 
-      const payload = {
-        other_staff_id: staffId,
-        cycle_sub_category_id : cycle_sub_category_id,
-        cri4_cdocument,
-        cri4_ctable
+    // Build students_graduated_stipulated_data as array of flat objects
+    const students_graduated_stipulated_data = table.map((row) => {
+      const key = yearToKey[row.year_of_entry];
+      if (!key) return null;
+
+      return {
+        row_type: key,
+        admitted_first_year: row.admitted_first_year || "",
+        graduated_i_year: row.graduated_i_year || "",
+        graduated_ii_year: row.graduated_ii_year || "",
+        graduated_iii_year: row.graduated_iii_year || "",
+        graduated_iv_year: row.graduated_iv_year || "",
+        graduated_v_year: row.graduated_v_year || ""
       };
+    }).filter(Boolean);
 
-      console.log("FINAL 4C PAYLOAD:", payload);
+    // Extract documents
+    console.log("🟠 filesWithCategory before filter:", filesWithCategory);
+    
+    const students_graduated_stipulated_document = filesWithCategory
+      .filter((f) => {
+        const hasUrl = f.s3Url && f.s3Url.trim() !== "";
+        console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
+        return hasUrl;
+      })
+      .map((f) => ({
+        file_name: f.filename,
+        file_url: f.s3Url,
+        description: f.description || ""
+      }));
+    
+    console.log("✅ students_graduated_stipulated_document after mapping:", students_graduated_stipulated_document);
 
-      if (studentsPerformanceId) {
-        await newnbaCriteria4Service.putCriteria4_C_Data(studentsPerformanceId, payload);
-      } else {
-        await newnbaCriteria4Service.saveCriteria4_C_Data(payload);
-      }
+    // Get staff ID
+    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-      setAlert(
-        <SweetAlert success title="Saved!" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
-          Criteria 4 C saved successfully
-        </SweetAlert>
-      );
+    const staffId =
+      otherStaffId ||
+      userInfo?.rawData?.other_staff_id ||
+      userInfo.user_id ||
+      userInfoo?.other_staff_id;
 
-      onSaveSuccess?.();
-      loadData();
-    } catch (err) {
-      console.error("Save failed:", err);
-      setAlert(
-        <SweetAlert danger title="Save Failed" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
-          Something went wrong while saving
-        </SweetAlert>
-      );
-    } finally {
-      setSaving(false);
+    // FINAL PAYLOAD (Correct Format)
+    const payload = {
+      other_staff_id: staffId,
+      cycle_sub_category_id: cycle_sub_category_id,
+      students_graduated_stipulated_document,
+      students_graduated_stipulated_data
+    };
+
+    console.log("FINAL PAYLOAD → ", payload);
+    
+    // Use PUT if updating existing entry, POST for new entry
+    if (studentsPerformanceId) {
+      await newnbaCriteria4Service.putCriteria4_C_Data(studentsPerformanceId, payload,staffId);
+    } else {
+      await newnbaCriteria4Service.saveCriteria4_C_Data(payload,staffId);
     }
-  };
 
-  // ---------------- DELETE DATA ----------------
+    setAlert(
+      <SweetAlert success title="Saved!" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
+        Criterion 4B saved successfully
+      </SweetAlert>
+    );
+
+    onSaveSuccess?.();
+    loadData();
+  } catch (err) {
+    console.error(err);
+    setAlert(
+      <SweetAlert danger title="Save Failed" confirmBtnCssClass="btn-confirm" onConfirm={() => setAlert(null)}>
+        Something went wrong while saving
+      </SweetAlert>
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
+  // ---------------- DELETE DATA----------------
   const handleDelete = async () => {
     if (!studentsPerformanceId) {
       setAlert(
@@ -268,7 +396,7 @@ const Criterion4_CForm = ({
               studentsPerformanceId
             );
 
-            let message = "Criteria 4 C deleted successfully.";
+            let message = "Criteria 4 A deleted successfully.";
             if (typeof res === "string") message = res;
             else if (res?.data) message = res.data;
 
@@ -308,13 +436,13 @@ const Criterion4_CForm = ({
         You won’t be able to revert this!
       </SweetAlert>
     );
-  };
+};
 
   // ---------------- UI ----------------
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criteria 4 C...
+        Loading Criteria 4 A...
       </div>
     );
   }
@@ -332,11 +460,11 @@ const Criterion4_CForm = ({
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.C",
+            title: "Criterion 4.B",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "cstudents_performance_id",
+            idField: "id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
@@ -347,7 +475,7 @@ const Criterion4_CForm = ({
 
   return (
     <div>
-      <GenericCriteriaForm4_C
+      <GenericCriteriaForm4_B
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

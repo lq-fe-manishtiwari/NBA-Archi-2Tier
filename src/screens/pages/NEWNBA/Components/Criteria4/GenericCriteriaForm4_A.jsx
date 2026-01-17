@@ -12,109 +12,86 @@ import {
 Modal.setAppElement("#root");
 
 // ---------------- Generic Table inside the same file ----------------
-const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
-  const safeData = data.length > 0
-    ? data
-    : tableConfig?.predefinedRows
-      ? tableConfig.predefinedRows.map((r, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...r,
-        }))
-      : Array.from({ length: 6 }).map((_, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
-        }));
+const GenericTable = ({
+  columns,
+  data = [],
+  onChange,
+  disabled,
+  tableConfig
+}) => {
+  const predefinedRows = tableConfig?.predefinedRows || [];
 
-  const handleChange = (i, field, value) => {
-    const updated = [...safeData];
-    updated[i][field] = value;
+  // 🔥 Always use predefined rows as base
+  const tableData = predefinedRows.map((baseRow, index) => {
+    const savedRow = data[index] || {};
+    return {
+      id: `row-${index}`,
+      ...baseRow,      // item comes from here (FIX)
+      ...savedRow      // cay, caym1... come from saved data
+    };
+  });
 
-    // Recalculate last row (index 5) for numeric columns: N1 + N2 + N3 + N4
-    const numericCols = columns.slice(1).map(c => c.field); // Skip first 'item' column
-    numericCols.forEach(col => {
-      const N1 = parseFloat(updated[1]?.[col]) || 0;
-      const N2 = parseFloat(updated[2]?.[col]) || 0;
-      const N3 = parseFloat(updated[3]?.[col]) || 0;
-      const N4 = parseFloat(updated[4]?.[col]) || 0;
-      updated[5][col] = (N1 + N2 + N3 + N4).toString();
-    });
+  const handleChange = (rowIndex, field, value) => {
+    const updated = [...tableData];
+    updated[rowIndex][field] = value;
 
-    onChange(updated);
-  };
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(safeData);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
-    onChange(items);
+    // ❗ strip item before sending up if backend doesn’t expect it
+    const cleaned = updated.map(({ id, ...row }) => row);
+    onChange(cleaned);
   };
 
   return (
-    <div className="space-y-6">
-      <DragDropContext onDragEnd={onDragEnd}>
-        <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
-          <thead>
-            <tr className="bg-[#2163c1] text-white">
-              <th className="p-4 w-12"></th>
-              {columns.map((c) => (
-                <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
+    <div className="overflow-x-auto">
+      <table className="w-full border border-gray-400 border-collapse">
+        <thead>
+          <tr className="bg-[#2163c1] text-white">
+            {columns.map((col) => (
+              <th
+                key={col.field}
+                className="border border-gray-400 px-4 py-3 text-sm font-bold text-center"
+              >
+                {col.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        <tbody>
+          {tableData.map((row, rowIndex) => (
+            <tr key={row.id}>
+              {columns.map((col) => (
+                <td
+                  key={col.field}
+                  className="border border-gray-400 px-3 py-2 align-middle"
+                >
+                  {/* ITEM COLUMN */}
+                  {col.field === "item" ? (
+                    <span className="block text-left font-medium text-gray-900">
+                      {row.item}
+                    </span>
+                  ) : (
+                    <input
+                      type="number"
+                      value={row[col.field] || ""}
+                      disabled={disabled}
+                      onChange={(e) =>
+                        handleChange(rowIndex, col.field, e.target.value)
+                      }
+                      className="w-full text-center border border-gray-300 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="0"
+                    />
+                  )}
+                </td>
               ))}
             </tr>
-          </thead>
-          <Droppable droppableId="table-rows">
-            {(provided) => (
-              <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                {safeData.map((row, i) => (
-                  <Draggable key={row.id} draggableId={row.id.toString()} index={i} isDragDisabled={disabled || i === safeData.length - 1}>
-                    {(provided, snapshot) => (
-                      <tr
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
-                      >
-                        <td className="p-3">
-                          {i !== safeData.length - 1 && (
-                            <div {...provided.dragHandleProps} className="cursor-grab">
-                              <GripVertical className="w-6 h-6 text-gray-500" />
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="p-3 font-medium text-gray-800">{row.item}</td>
-
-                        {columns.slice(1).map((col) => (
-                          <td key={col.field} className="p-3">
-                            {col.readOnly || i === safeData.length - 1 ? (
-                              <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
-                                {row[col.field] || "0.00"}
-                              </div>
-                            ) : (
-                              <input
-                                type="number"
-                                step="1"
-                                value={row[col.field] || ""}
-                                onChange={(e) => handleChange(i, col.field, e.target.value)}
-                                disabled={disabled}
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center font-medium"
-                                placeholder="0"
-                              />
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </tbody>
-            )}
-          </Droppable>
-        </table>
-      </DragDropContext>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
+
+
 
 // ---------------- Main Component ----------------
 const GenericCriteriaForm4_A = ({

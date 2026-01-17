@@ -103,7 +103,7 @@ export const newnbaCriteria4Service = {
 /// 4A //////////
 
 function getAllCriteria4_A_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/4/students-performance/ycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4a/new-admission-details/ycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -117,7 +117,7 @@ function updateCardStatus4_A(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4/students-performance/approval-status?approvalId=${currentUserStaffId}`;
+  const url = `/admin/nba/4a/new-admission-details/approval-status?approvalId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -126,9 +126,9 @@ function updateCardStatus4_A(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_A_Data(values) {
-  // /api/admin/nba/4/students-performance
-  const url = `/admin/nba/4/students-performance`;
+function saveCriteria4_A_Data(values,currentUserStaffId) {
+  // /api/admin/nba/4a/new-admission-details
+  const url = `/admin/nba/4a/new-admission-details?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -137,8 +137,8 @@ function saveCriteria4_A_Data(values) {
 }
 
 function getCriteria4_A_Data(cycleSubCategoryId, otherStaffId) {
-  // /api/admin/nba/4/students-performance/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
-   const url = `/admin/nba/4/students-performance/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  // /api/admin/nba/4a/new-admission-details/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
+   const url = `/admin/nba/4a/new-admission-details/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -146,7 +146,7 @@ function getCriteria4_A_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails4_A(cycleSubCategoryId) {
-  const url = `/admin/nba/4/students-performance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4a/new-admission-details/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -159,17 +159,17 @@ function getallCardDetails4_A(cycleSubCategoryId) {
  * @param {string | number} Id
  */
 function deleteCriteria4_AData(Id) {
-  //  /api/admin/nba/4/students-performance/{id}
-  const url = `/admin/nba/4/students-performance/${Id}`;
+  //  /api/admin/nba/4a/new-admission-details/{id}
+  const url = `/admin/nba/4a/new-admission-details/${Id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_A_Data(id,values) {
-  // /api/admin/nba/4/students-performance/{id}
-  const url = `/admin/nba/4/students-performance/${id}`;
+function putCriteria4_A_Data(id,values,currentUserStaffId) {
+  // /api/admin/nba/4a/new-admission-details/{id}
+  const url = `/admin/nba/4a/new-admission-details/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -180,7 +180,7 @@ function putCriteria4_A_Data(id,values) {
 //// 4B  ///////////////////
 
 function getAllCriteria4_B_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/4-b/students-performance/ycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4b/new-students-graduated/ycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -194,7 +194,7 @@ function updateCardStatus4_B(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4-b/students-performance/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4b/new-students-graduated/approval-status?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -203,9 +203,9 @@ function updateCardStatus4_B(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_B_Data(values) {
-  // /api/admin/nba/4/students-performance
-  const url = `/admin/nba/4-b/students-performance`;
+function saveCriteria4_B_Data(values,currentUserStaffId) {
+  // /api/admin/nba/4a/new-admission-details
+  const url = `/admin/nba/4b/new-students-graduated?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -214,8 +214,8 @@ function saveCriteria4_B_Data(values) {
 }
 
 function getCriteria4_B_Data(cycleSubCategoryId, otherStaffId) {
-  // /api/admin/nba/4/students-performance/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
-   const url = `/admin/nba/4-b/students-performance/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  // /api/admin/nba/4a/new-admission-details/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
+   const url = `/admin/nba/4b/new-students-graduated/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -223,7 +223,7 @@ function getCriteria4_B_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails4_B(cycleSubCategoryId) {
-  const url = `/admin/nba/4-b/students-performance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4b/new-students-graduated/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -236,17 +236,17 @@ function getallCardDetails4_B(cycleSubCategoryId) {
  * @param {string | number} Id
  */
 function deleteCriteria4_BData(Id) {
-  //  /api/admin/nba/4/students-performance/{id}
-  const url = `/admin/nba/4-b/students-performance/${Id}`;
+  //  /api/admin/nba/4a/new-admission-details/{id}
+  const url = `/admin/nba/4b/new-students-graduated/${Id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_B_Data(id,values) {
-  // /api/admin/nba/4/students-performance/{id}
-  const url = `/admin/nba/4-b/students-performance/${id}`;
+function putCriteria4_B_Data(id,values,currentUserStaffId) {
+  // /api/admin/nba/4a/new-admission-details/{id}
+  const url = `/admin/nba/4b/new-students-graduated/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -257,7 +257,7 @@ function putCriteria4_B_Data(id,values) {
 //// 4C  ///////////////////
 
 function getAllCriteria4_C_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/4-c/students-performance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -271,7 +271,7 @@ function updateCardStatus4_C(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4-c/students-performance/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/approval-status?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -280,8 +280,8 @@ function updateCardStatus4_C(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_C_Data(values) {
-  const url = `/admin/nba/4-c/students-performance`;
+function saveCriteria4_C_Data(values,currentUserStaffId) {
+  const url = `/admin/nba/4c/new-students-graduated-stipulated?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -290,7 +290,7 @@ function saveCriteria4_C_Data(values) {
 }
 
 function getCriteria4_C_Data(cycleSubCategoryId, otherStaffId) {
-   const url = `/admin/nba/4-c/students-performance/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+   const url = `/admin/nba/4c/new-students-graduated-stipulated/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -298,7 +298,7 @@ function getCriteria4_C_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails4_C(cycleSubCategoryId) {
-  const url = `/admin/nba/4-c/students-performance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -311,15 +311,15 @@ function getallCardDetails4_C(cycleSubCategoryId) {
  * @param {string | number} Id
  */
 function deleteCriteria4_CData(Id) {
-  const url = `/admin/nba/4-c/students-performance/${Id}`;
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/${Id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_C_Data(id,values) {
-  const url = `/admin/nba/4-c/students-performance/${id}`;
+function putCriteria4_C_Data(id,values,currentUserStaffId) {
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -330,7 +330,7 @@ function putCriteria4_C_Data(id,values) {
 //// 41  ///////////////////
 
 function getAllCriteria4_1_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/4.1/enrolment-ratio/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4.1/new-enrollment-ratio/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -344,7 +344,7 @@ function updateCardStatus4_1(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.1/enrolment-ratio/approval-status?approverId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.1/new-enrollment-ratio/approval-status?approverId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -353,9 +353,9 @@ function updateCardStatus4_1(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_1_Data(values) {
-  // /api/admin/nba/4.1/enrolment-ratio
-  const url = `/admin/nba/4.1/enrolment-ratio`;
+function saveCriteria4_1_Data(values,currentUserStaffId) {
+  // /api/admin/nba/4.1/new-enrollment-ratio
+  const url = `/admin/nba/4.1/new-enrollment-ratio?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -364,8 +364,8 @@ function saveCriteria4_1_Data(values) {
 }
 
 function getCriteria4_1_Data(cycleSubCategoryId, otherStaffId) {
-  ///api/admin/nba/4.1/enrolment-ratio/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
-   const url = `/admin/nba/4.1/enrolment-ratio/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  ///api/admin/nba/4.1/new-enrollment-ratio/cycle-subcategory/{cycleSubCategoryId}/staff/{otherStaffId}
+   const url = `/admin/nba/4.1/new-enrollment-ratio/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -373,7 +373,7 @@ function getCriteria4_1_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails4_1(cycleSubCategoryId) {
-  const url = `/admin/nba/4.1/enrolment-ratio/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4.1/new-enrollment-ratio/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -386,15 +386,15 @@ function getallCardDetails4_1(cycleSubCategoryId) {
  * @param {string | number} Id
  */
 function deleteCriteria4_1Data(Id) {
-  const url = `/admin/nba/4.1/enrolment-ratio/${Id}`;
+  const url = `/admin/nba/4.1/new-enrollment-ratio/${Id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_1_Data(id,values) {
-  const url = `/admin/nba/4.1/enrolment-ratio/${id}`;
+function putCriteria4_1_Data(id,values,currentUserStaffId) {
+  const url = `/admin/nba/4.1/new-enrollment-ratio/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -405,7 +405,7 @@ function putCriteria4_1_Data(id,values) {
 //// 42  ///////////////////
 
 function getAllCriteria4_2_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/4.2/success-rate/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4.2/new-success-rate/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -420,7 +420,7 @@ function updateCardStatus4_2(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.2/success-rate/approval-status?approverId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.2/new-success-rate/approval-status?approverId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -429,9 +429,9 @@ function updateCardStatus4_2(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_2_Data(values) {
-  // /api/admin/nba/4.2/success-rate
-  const url = `/admin/nba/4.2/success-rate`;
+function saveCriteria4_2_Data(values,currentUserStaffId) {
+  // /api/admin/nba/4.2/new-success-rate
+  const url = `/admin/nba/4.2/new-success-rate?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -440,7 +440,7 @@ function saveCriteria4_2_Data(values) {
 }
 
 function getCriteria4_2_Data(cycleSubCategoryId, otherStaffId) {
-   const url = `/admin/nba/4.2/success-rate/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+   const url = `/admin/nba/4.2/new-success-rate/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -448,7 +448,7 @@ function getCriteria4_2_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails4_2(cycleSubCategoryId) {
-  const url = `/admin/nba/4.2/success-rate/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4.2/new-success-rate/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -460,15 +460,15 @@ function getallCardDetails4_2(cycleSubCategoryId) {
  * @param {string | number} Id
  */
 function deleteCriteria4_2Data(Id) {
-  const url = `/admin/nba/4.2/success-rate/${Id}`;
+  const url = `/admin/nba/4.2/new-success-rate/${Id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_2_Data(id,values) {
-  const url = `/admin/nba/4.2/success-rate/${id}`;
+function putCriteria4_2_Data(id,values,currentUserStaffId) {
+  const url = `/admin/nba/4.2/new-success-rate/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),

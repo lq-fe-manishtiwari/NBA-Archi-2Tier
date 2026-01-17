@@ -10,150 +10,104 @@ import {
   Upload, X, Edit
 } from "lucide-react";
 import { uploadFileToS3 } from "../S3UploadHelper";
+
 Modal.setAppElement("#root");
 
 // Generic Table
 const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
+  console.log("GenericTable received data:", data);
+  console.log("Data length:", data.length);
 
-  const safeData = data.length > 0
-    ? data
-    : (columns.some(c => c.readOnly) && tableConfig?.predefinedRows)
-      ? tableConfig.predefinedRows.map((r, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...r,
-        }))
-      : Array.from({ length: 5 }).map((_, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
-        }));
+  let safeData = data.length > 0 ? [...data] : [];
+
+  if (safeData.length === 0 && tableConfig?.predefinedRows) {
+    safeData = tableConfig.predefinedRows.map((r, i) => ({
+      id: `fixed-row-${i}`,
+      ...r,
+      cay: "", caym1: "", caym2: "",
+    }));
+  }
 
   const handleChange = (i, field, val) => {
-    const updated = [...safeData];
+    if (i >= 3) return;
 
-    // Update cell
+    const updated = [...safeData];
     updated[i][field] = val;
 
-    // Recalculate ER rows
     ["cay", "caym1", "caym2"].forEach(col => {
-      const N   = parseFloat(updated[0][col]) || 0;
-      const N1  = parseFloat(updated[1][col]) || 0;
-      const N4  = parseFloat(updated[2][col]) || 0;   // ← typo? should be N1 again? kept as per original
-
-      updated[3][col] = N > 0 ? ((N1 + N4) / N * 100).toFixed(2) : "0.00";   // assuming % ratio
+      const N = parseFloat(updated[0][col]) || 0;
+      const N1 = parseFloat(updated[1][col]) || 0;
+      updated[2][col] = N > 0 ? ((N1 / N) * 100).toFixed(2) : "0.00";
     });
 
-    // Average ER
     const avg = (
-      parseFloat(updated[3].cay) +
-      parseFloat(updated[3].caym1) +
-      parseFloat(updated[3].caym2)
-    ) / 3 || 0;
+      parseFloat(updated[2].cay || 0) +
+      parseFloat(updated[2].caym1 || 0) +
+      parseFloat(updated[2].caym2 || 0)
+    ) / 3;
 
-    const averageER = avg.toFixed(2);
-
-    updated[4] = {
-      ...updated[4],
-      item: "Average ER = (ER_CAY + ER_CAYm1 + ER_CAYm2)/3",
-      cay: averageER,
-      caym1: averageER,
-      caym2: averageER,
-      averageER,
+    updated[3] = {
+      ...updated[3],
+      averageValue: avg.toFixed(2),
     };
 
     onChange(updated);
   };
 
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(safeData);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
-    onChange(items);
-  };
-
   return (
     <div className="space-y-6">
-      <DragDropContext onDragEnd={onDragEnd}>
-        <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
-          <thead>
-            <tr className="bg-[#2163c1] text-white">
-              <th className="p-4 w-12"></th>
-              {columns.map((c) => (
-                <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
-              ))}
-              {!disabled && <th className="w-20"></th>}
-            </tr>
-          </thead>
-          <Droppable droppableId="table-rows">
-            {(provided) => (
-              <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                {safeData.map((row, i) => (
-                  <Draggable
-                    key={row.id}
-                    draggableId={row.id.toString()}
-                    index={i}
-                    isDragDisabled={disabled || i === 4}
-                  >
-                    {(provided, snapshot) => (
-                      <tr
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
-                      >
-                        <td className="p-3">
-                          {i !== 4 && (
-                            <div {...provided.dragHandleProps} className="cursor-grab">
-                              <GripVertical className="w-6 h-6 text-gray-500" />
-                            </div>
-                          )}
-                        </td>
+      <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
+        <thead>
+          <tr className="bg-[#2163c1] text-white">
+            <th className="p-4 w-12"></th>
+            {columns.map((c) => (
+              <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {safeData.map((row, i) => (
+            <tr key={row.id} className="border-b hover:bg-gray-50">
+              <td className="p-3"></td>
 
-                        <td className="p-3 font-medium text-gray-800">
-                          {row.item}
-                        </td>
+              <td className="p-3 font-medium text-gray-800">
+                {row.item}
+              </td>
 
-                        {i === 4 ? (
-                          <td colSpan={3} className="p-6 text-center bg-gradient-to-r from-indigo-100 to-blue-100 font-bold text-xl">
-                            {row.averageER || row.cay || "0.00"} %
-                          </td>
-                        ) : (
-                          columns.slice(1).map((col) => (
-                            <td key={col.field} className="p-3">
-                              {col.readOnly || i === 3 ? (
-                                <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
-                                  {row[col.field] || "0.00"}
-                                </div>
-                              ) : (
-                                <input
-                                  type="number"
-                                  step="1"
-                                  value={row[col.field] || ""}
-                                  onChange={(e) => handleChange(i, col.field, e.target.value)}
-                                  disabled={disabled}
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center font-medium"
-                                  placeholder="0"
-                                />
-                              )}
-                            </td>
-                          ))
-                        )}
-                      </tr>
+              {i === 3 ? (
+                <td colSpan={3} className="p-4 text-center font-bold text-xl bg-gradient-to-r from-indigo-50 to-blue-50">
+                  {row.averageValue || "0.00"} %
+                </td>
+              ) : (
+                columns.slice(1).map((col) => (
+                  <td key={col.field} className="p-3">
+                    {col.readOnly || i === 2 ? (
+                      <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
+                        {row[col.field] || "0.00"}
+                      </div>
+                    ) : (
+                      <input
+                        type="number"
+                        step="1"
+                        value={row[col.field] || ""}
+                        onChange={(e) => handleChange(i, col.field, e.target.value)}
+                        disabled={disabled}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center font-medium"
+                        placeholder="0"
+                      />
                     )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </tbody>
-            )}
-          </Droppable>
-        </table>
-      </DragDropContext>
+                  </td>
+                ))
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-// ──────────────────────────────────────────────────────────────
-// Main Form Component (without 4.1.2 table)
-// ──────────────────────────────────────────────────────────────
+// MAIN FORM COMPONENT
 const GenericCriteriaForm4_1 = ({
   title = "NBA Section",
   marks = 50,
@@ -301,7 +255,7 @@ const GenericCriteriaForm4_1 = ({
               </div>
             )}
 
-            {/* Supporting Documents Section – KEPT */}
+            {/* Supporting Documents */}
             <div className="mt-6 p-6 bg-gray-50 rounded-xl border">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-lg font-bold text-blue-700 flex items-center gap-2">

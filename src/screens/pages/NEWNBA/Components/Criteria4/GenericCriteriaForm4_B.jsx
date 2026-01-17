@@ -13,117 +13,140 @@ Modal.setAppElement("#root");
 
 // ---------------- Generic Table inside the same file ----------------
 const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
-  const safeData = data.length > 0
-    ? data
-    : tableConfig?.predefinedRows
-      ? tableConfig.predefinedRows.map((r, i) => ({
-          id: `row-${Date.now()}-${i}`,
+  const tableData =
+    data.length > 0
+      ? data
+      : tableConfig.predefinedRows.map((r, i) => ({
+          id: `row-${i}`,
           ...r,
-        }))
-      : Array.from({ length: 6 }).map((_, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...columns.reduce((acc, c) => ({ ...acc, [c.field]: "" }), {}),
+          admitted_first_year: "",
+          graduated_i_year: "",
+          graduated_ii_year: "",
+          graduated_iii_year: "",
+          graduated_iv_year: "",
+          graduated_v_year: "",
         }));
 
-  const handleChange = (i, field, value) => {
-    const updated = [...safeData];
-    updated[i][field] = value;
-
-    // Recalculate total row for numeric columns
-    // Correct calculations for N5 and N6 rows
-const numericCols = columns.slice(1).map(c => c.field); // all year columns
-
- numericCols.forEach(col => {
-  // N5 = N52 + N53 + N54
-  const N52 = parseFloat(updated[0]?.[col]) || 0;
-  const N53 = parseFloat(updated[1]?.[col]) || 0;
-  const N54 = parseFloat(updated[2]?.[col]) || 0;
-  updated[3][col] = (N52 + N53 + N54).toString();
-
-  // N6 = N61 + N62 + N63
-  const N61 = parseFloat(updated[4]?.[col]) || 0;
-  const N62 = parseFloat(updated[5]?.[col]) || 0;
-  const N63 = parseFloat(updated[6]?.[col]) || 0;
-  updated[7][col] = (N61 + N62 + N63).toString();
-});
-
-
+  const handleChange = (rowIndex, field, value) => {
+    const updated = [...tableData];
+    updated[rowIndex][field] = value;
     onChange(updated);
   };
 
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(safeData);
-    const [moved] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, moved);
-    onChange(items);
+  // Graduation availability logic (grey cells)
+  const isCellDisabled = (rowIndex, field) => {
+    if (field === "admitted_first_year") return false;
+
+    const graduationOrder = [
+      "graduated_i_year",
+      "graduated_ii_year",
+      "graduated_iii_year",
+      "graduated_iv_year",
+      "graduated_v_year",
+    ];
+
+    const colIndex = graduationOrder.indexOf(field);
+
+    // CAY → all graduation disabled
+    // CAYm1 → only I Year enabled
+    // CAYm2 → I, II enabled ...
+    return colIndex >= rowIndex;
   };
 
   return (
-    <div className="space-y-6">
-      <DragDropContext onDragEnd={onDragEnd}>
-        <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
-          <thead>
-            <tr className="bg-[#2163c1] text-white">
-              <th className="p-4 w-12"></th>
-              {columns.map((c) => (
-                <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
-              ))}
+    <div className="overflow-x-auto">
+      <table className="w-full border border-black text-sm">
+        {/* ---------- HEADER ROW 1 ---------- */}
+        <thead>
+          <tr className="bg-[#2161c2] text-center text-white font-bold">
+            <th rowSpan={2} className="border border-black px-3 py-2">
+              Year of entry
+            </th>
+            <th rowSpan={2} className="border border-black px-3 py-2">
+              Number of students admitted in 1<sup>st</sup> year of the program (N1)
+            </th>
+            <th colSpan={5} className="border border-black px-3 py-2">
+              Number of students who have successfully graduated without backlogs
+              <br />
+              <span className="text-xs font-medium">
+                [Without backlogs means no compartment/failure in any semester/year of study]
+              </span>
+            </th>
+          </tr>
+
+          {/* ---------- HEADER ROW 2 ---------- */}
+          <tr className="bg-[#2161c1] text-center text-white font-bold">
+            <th className="border border-black px-2 py-1">I Year</th>
+            <th className="border border-black px-2 py-1">II Year</th>
+            <th className="border border-black px-2 py-1">III Year</th>
+            <th className="border border-black px-2 py-1">IV Year</th>
+            <th className="border border-black px-2 py-1">V Year</th>
+          </tr>
+        </thead>
+
+        {/* ---------- BODY ---------- */}
+        <tbody>
+          {tableData.map((row, rowIndex) => (
+            <tr key={row.id}>
+              {/* Year of entry */}
+              <td className="border border-black px-3 py-2 font-medium">
+                {row.year_of_entry}
+              </td>
+
+              {/* N1 */}
+              <td className="border border-black px-2 py-1">
+                <input
+                  type="number"
+                  value={row.admitted_first_year || ""}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    handleChange(rowIndex, "admitted_first_year", e.target.value)
+                  }
+                  className="w-full text-center border border-gray-400 px-2 py-1"
+                />
+              </td>
+
+              {/* Graduation columns */}
+              {[
+                "graduated_i_year",
+                "graduated_ii_year",
+                "graduated_iii_year",
+                "graduated_iv_year",
+                "graduated_v_year",
+              ].map((field) => {
+                const cellDisabled = isCellDisabled(rowIndex, field) || disabled;
+
+                return (
+                  <td
+                    key={field}
+                    className={`border border-black px-2 py-1 ${
+                      cellDisabled ? "bg-gray-400" : ""
+                    }`}
+                  >
+                    <input
+                      type="number"
+                      value={row[field] || ""}
+                      disabled={cellDisabled}
+                      onChange={(e) =>
+                        handleChange(rowIndex, field, e.target.value)
+                      }
+                      className={`w-full text-center px-2 py-1 ${
+                        cellDisabled
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "border border-gray-400"
+                      }`}
+                    />
+                  </td>
+                );
+              })}
             </tr>
-          </thead>
-          <Droppable droppableId="table-rows">
-            {(provided) => (
-              <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                {safeData.map((row, i) => (
-                  <Draggable key={row.id} draggableId={row.id.toString()} index={i} isDragDisabled={disabled || i === safeData.length - 1}>
-                    {(provided, snapshot) => (
-                      <tr
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
-                      >
-                        <td className="p-3">
-                          {i !== safeData.length - 1 && (
-                            <div {...provided.dragHandleProps} className="cursor-grab">
-                              <GripVertical className="w-6 h-6 text-gray-500" />
-                            </div>
-                          )}
-                        </td>
-
-                        <td className="p-3 font-medium text-gray-800">{row.item}</td>
-
-                        {columns.slice(1).map((col) => (
-                          <td key={col.field} className="p-3">
-                            {row.readOnly || i === safeData.length - 1 ? (
-                              <div className="text-center font-semibold text-indigo-600 bg-indigo-50 px-4 py-2.5 rounded-lg">
-                                {row[col.field] || "0.00"}
-                              </div>
-                            ) : (
-                              <input
-                                type="number"
-                                step="1"
-                                value={row[col.field] || ""}
-                                onChange={(e) => handleChange(i, col.field, e.target.value)}
-                                disabled={disabled}
-                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-center font-medium"
-                                placeholder="0"
-                              />
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </tbody>
-            )}
-          </Droppable>
-        </table>
-      </DragDropContext>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
+
 
 // ---------------- Main Component ----------------
 const GenericCriteriaForm4_B = ({
