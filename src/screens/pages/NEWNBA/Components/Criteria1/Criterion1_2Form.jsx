@@ -269,8 +269,8 @@ const Criterion1_2Form = ({
       },
       new_peo_id: d.new_peo_id || null,
       filesByField: {
-        "1.2.1": (d.curriculum_documents || []).length > 0 
-          ? (d.curriculum_documents || []).map((f, i) => ({
+        "1.2.1": (d.peo_document || []).length > 0 
+          ? (d.peo_document || []).map((f, i) => ({
               id: `file-1.2.1-${i}`,
               name: f.name || f.file_name || "",
               filename: f.name || f.file_name || "",
@@ -468,7 +468,7 @@ const Criterion1_2Form = ({
         // caym3_events: formData.tableData["1.2.4.3"] || [],
         
         // Document arrays
-        curriculum_documents: filesWithCategory
+        peo_document: filesWithCategory
           .filter(f => f.category === "Curriculum Structure" && (f.url || f.s3Url) && f.filename)
           .map(f => ({ name: f.filename, url: f.s3Url || f.url, description: f.description || "" })),
         

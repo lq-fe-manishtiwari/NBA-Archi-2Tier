@@ -23,10 +23,26 @@ const Criterion1_4Form = ({
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
+  // Always start in edit mode so file upload is visible
+  const [isEditMode, setIsEditMode] = useState(true);
+
   const [initialData, setInitialData] = useState({
-    content: {},
+    content: {
+      "1.4.1": "",
+    },
     tableData: {},
-    filesByField: {},
+    filesByField: {
+      "1.4.1": [
+        {
+          id: `file-1.4.1-default-${Date.now()}`,
+          description: "",
+          file: null,
+          filename: "",
+          s3Url: "",
+          uploading: false,
+        },
+      ],
+    },
     process_defining_vm_id: null,
   });
 
@@ -35,10 +51,8 @@ const Criterion1_4Form = ({
   const [poCourseMappingData, setPoCourseMappingData] = useState([]);
 
   /* ================= CONFIG ================= */
-
   const config = {
-    title:
-     "1.4. State the Process for Defining the Vision & Mission and PEOs of the Program",
+    title: "1.4. State the Process for Defining the Vision & Mission and PEOs of the Program",
     totalMarks: 10,
     fields: [
       {
@@ -46,12 +60,33 @@ const Criterion1_4Form = ({
         label: "1.4.1 Articulate the process for defining the Vision, Mission and PEOs of the program",
         marks: 10,
         type: "textarea",
+        allowFiles: true, // important to allow files
       },
     ],
   };
 
-  /* ================= LOAD DATA ================= */
+  /* ================= ENSURE AT LEAST ONE FILE SLOT ================= */
+  const ensureFileSlot = (data) => {
+    const field = "1.4.1";
+    if (!data?.filesByField?.[field]?.length) {
+      data.filesByField = {
+        ...(data.filesByField || {}),
+        [field]: [
+          {
+            id: `file-1.4.1-default-${Date.now()}`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            uploading: false,
+          },
+        ],
+      };
+    }
+    return { ...data };
+  };
 
+  /* ================= LOAD DATA ================= */
   const loadData = async () => {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -62,6 +97,7 @@ const Criterion1_4Form = ({
       userInfoo?.other_staff_id;
 
     if (!cycle_sub_category_id) {
+      setInitialData((prev) => ensureFileSlot({ ...prev }));
       setLoading(false);
       return;
     }
@@ -76,26 +112,26 @@ const Criterion1_4Form = ({
 
       const d = Array.isArray(res) ? res[0] : res || {};
 
-      setInitialData({
+      const loadedData = {
         content: {
           "1.4.1": d.process_defining_vision_mission || "",
         },
         tableData: {},
-        process_defining_vm_id:
-          d.process_defining_vm_id || null,
+        process_defining_vm_id: d.process_defining_vm_id || null,
         filesByField: {
           "1.4.1":
-            d.process_defining_vision_mission_document?.length > 0
-              ? d.process_defining_vision_mission_document.map((f, i) => ({
+            d?.process_defining_vm_document?.length > 0
+              ? d.process_defining_vm_document.map((f, i) => ({
                   id: `file-1.4.1-${i}`,
-                  filename: f.document_name,
-                  s3Url: f.document_url,
+                  filename: f.document_name || "",
+                  s3Url: f.document_url || "",
+                  url: f.document_url || "",
                   description: f.description || "",
                   uploading: false,
                 }))
               : [
                   {
-                    id: "file-1.4.1-0",
+                    id: `file-1.4.1-default-${Date.now()}`,
                     description: "",
                     file: null,
                     filename: "",
@@ -104,18 +140,21 @@ const Criterion1_4Form = ({
                   },
                 ],
         },
-      });
-    } catch (err) {
-      toast.error("Failed to load Criterion 1.3");
-    }
+      };
 
-    setLoading(false);
+      setInitialData(ensureFileSlot(loadedData));
+    } catch (err) {
+      console.error("Failed to load Criterion 1.4:", err);
+      toast.error("Failed to load Criterion 1.4");
+      // On error still show empty form + upload area
+      setInitialData((prev) => ensureFileSlot({ ...prev }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ================= DELETE ================= */
-
   const handleDelete = async () => {
-  
     if (!initialData?.process_defining_vm_id) {
       setAlert(
         <SweetAlert
@@ -141,11 +180,15 @@ const Criterion1_4Form = ({
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
-          await newnbaCriteria1Service.deleteCriteria1_4_Data(
-            initialData.process_defining_vm_id
-          );
-          await loadData();
-          onSaveSuccess?.();
+          try {
+            await newnbaCriteria1Service.deleteCriteria1_4_Data(
+              initialData.process_defining_vm_id
+            );
+            await loadData();
+            onSaveSuccess?.();
+          } catch (err) {
+            toast.error("Delete failed");
+          }
         }}
         onCancel={() => setAlert(null)}
       >
@@ -155,7 +198,6 @@ const Criterion1_4Form = ({
   };
 
   /* ================= SAVE ================= */
-
   const handleSave = async (formData) => {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -176,7 +218,7 @@ const Criterion1_4Form = ({
         po_data: pos,
         pso_data: psos,
         po_course_mapping: poCourseMappingData,
-        process_defining_vision_mission_document: (formData.filesByField["1.4.1"] || [])
+        process_defining_vm_document: (formData.filesByField["1.4.1"] || [])
           .filter((f) => f.s3Url)
           .map((f) => ({
             document_name: f.filename,
@@ -203,7 +245,7 @@ const Criterion1_4Form = ({
           success
           title="Saved!"
           confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
+          cancelBtnCssClass="btn-cancel"
           onConfirm={async () => {
             setAlert(null);
             await loadData();
@@ -214,14 +256,14 @@ const Criterion1_4Form = ({
         </SweetAlert>
       );
     } catch (err) {
+      console.error(err);
       toast.error("Save failed");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   /* ================= EFFECTS ================= */
-
   useEffect(() => {
     loadData();
   }, [cycle_sub_category_id, otherStaffId]);
@@ -242,7 +284,6 @@ const Criterion1_4Form = ({
   }
 
   /* ================= RENDER ================= */
-
   return (
     <>
       <GenericCriteriaForm
@@ -251,7 +292,9 @@ const Criterion1_4Form = ({
         fields={config.fields}
         initialData={initialData}
         saving={saving}
-        isCompleted={!isEditable}
+        isContributorEditable={isEditable}
+        initialEditMode={true}           // ← Key fix: start in edit mode
+        // Remove or avoid: isCompleted={!isEditable}
         onDelete={handleDelete}
         onSave={(data) =>
           handleSave({
@@ -260,6 +303,7 @@ const Criterion1_4Form = ({
             filesByField: data.filesByField,
           })
         }
+        showFileCategories={true}        // optional, aligns with other criteria
       />
       {alert}
     </>

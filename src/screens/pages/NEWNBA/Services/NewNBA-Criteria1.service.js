@@ -78,7 +78,8 @@ function getAllCriteria1_1_Data(cycleSubCategoryId) {
   return apiNBARequest(url, { method: 'GET', headers: authHeader() }).then(handleResponse);
 }
 
-function updateCardStatus(payload, approverStaffId) {
+function updateCardStatus(approverStaffId,payload) {
+  console.log(payload);
   const url = `/admin/nba/1.1/new-vision-mission/approval-status?approverStaffId=${approverStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',

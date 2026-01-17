@@ -292,7 +292,7 @@ const NBACriteria1Optimized = () => {
           console.log("📊 DEBUG: Coordinator record extracted:", coordinatorRecord);
 
           // If coordinator has data, add it to the cards array
-          if (coordinatorRecord && coordinatorRecord.vision_mission_peo_id) {
+          if (coordinatorRecord && coordinatorRecord.vision_mission_id) {
             // Check if this coordinator data is not already in the contributor cards
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
             console.log("🔍 DEBUG: Existing card check:", existingCard);
@@ -313,7 +313,7 @@ const NBACriteria1Optimized = () => {
               console.log("⚠️ DEBUG: Coordinator already exists in contributor cards");
             }
           } else {
-            console.log("⚠️ DEBUG: No coordinator data or missing vision_mission_peo_id");
+            console.log("⚠️ DEBUG: No coordinator data or missing vision_mission_id");
           }
         } catch (coordinatorError) {
           // Coordinator doesn't have data yet, that's fine
@@ -347,7 +347,7 @@ const NBACriteria1Optimized = () => {
         cycleSubCategoryId: subLevel2Id,
         otherStaffId: userStaffId,
         editMode: true,
-        visionMissionPeoId: cardItem?.vision_mission_peo_id || null,
+        visionMissionPeoId: cardItem?.vision_mission_id || null,
         cardData: cardItem
       });
 
@@ -363,7 +363,7 @@ const NBACriteria1Optimized = () => {
       await fetchCardDetails(subLevel2Id);
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.vision_mission_peo_id]: newStatus
+        [cardItem.vision_mission_id]: newStatus
       }));
     }
   };
@@ -913,7 +913,7 @@ const fetchMoMarks = async (subLevel2Id) => {
                                     apiService={{
                                       updateCardStatus: (payload) => {
                                         if (rawName.includes("1.1")) {
-                                          return newnbaCriteria1Service.updateCardStatus({
+                                          return newnbaCriteria1Service.updateCardStatus(payload.approved_by,{
                                             id: payload.id,
                                             approval_status: payload.approval_status,
                                             rejection_reason: payload.rejection_reason,
@@ -922,25 +922,25 @@ const fetchMoMarks = async (subLevel2Id) => {
                                           });
                                         } else if (rawName.includes("1.2")) {
                                           return newnbaCriteria1Service.updateCriteria1_2_Status(payload.approved_by, {
-                                            curriculum_structure_id: payload.id,
+                                            id: payload.id,
                                             approval_status: payload.approval_status,
                                             rejection_reason: payload.rejection_reason
                                           });
                                         } else if (rawName.includes("1.3")) {
                                           return newnbaCriteria1Service.updateCriteria1_3_Status(payload.approved_by, {
-                                            po_pso_id: payload.id,
+                                            id: payload.id,
                                             approval_status: payload.approval_status,
                                             rejection_reason: payload.rejection_reason
                                           });
                                         } else if (rawName.includes("1.4")) {
                                           return newnbaCriteria1Service.updateCriteria1_4_Status(payload.approved_by, {
-                                            course_outcome_matrix_id: payload.id,
+                                            id: payload.id,
                                             approval_status: payload.approval_status,
                                             rejection_reason: payload.rejection_reason
                                           });
                                         } else if (rawName.includes("1.5")) {
                                           return newnbaCriteria1Service.updateCriteria1_5_Status(payload.approved_by, {
-                                            program_articulation_id: payload.id,
+                                            id: payload.id,
                                             approval_status: payload.approval_status,
                                             rejection_reason: payload.rejection_reason
                                           });
@@ -954,11 +954,11 @@ const fetchMoMarks = async (subLevel2Id) => {
                                       statusField: "approval_status",
                                       userField: "other_staff_id",
                                       nameFields: ["firstname", "lastname"],
-                                      idField: rawName.includes("1.2") ? "curriculum_structure_id" :
-                                              rawName.includes("1.3") ? "po_pso_id" :
-                                              rawName.includes("1.4") ? "course_outcome_matrix_id" :
-                                              rawName.includes("1.5") ? "program_articulation_id" :
-                                              "vision_mission_peo_id",
+                                      idField: rawName.includes("1.2") ? "new_peo_id" :
+                                              rawName.includes("1.3") ? "vision_mission_dissemination_id" :
+                                              rawName.includes("1.4") ? "process_defining_vm_id" :
+                                              rawName.includes("1.5") ? "consistency_peo_mission_id" :
+                                              "vision_mission_id",
                                       isCoordinatorField: "is_coordinator_entry"
                                     }}
                                     isSubCoordinator={isSubCoordinator}

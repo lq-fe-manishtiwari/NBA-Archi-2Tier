@@ -23,10 +23,26 @@ const Criterion1_3Form = ({
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 
+  // Always start in edit mode so file upload is visible
+  const [isEditMode, setIsEditMode] = useState(true);
+
   const [initialData, setInitialData] = useState({
-    content: {},
+    content: {
+      "1.3.1": "",
+    },
     tableData: {},
-    filesByField: {},
+    filesByField: {
+      "1.3.1": [
+        {
+          id: `file-1.3.1-default-${Date.now()}`,
+          description: "",
+          file: null,
+          filename: "",
+          s3Url: "",
+          uploading: false,
+        },
+      ],
+    },
     vision_mission_dissemination_id: null,
   });
 
@@ -35,7 +51,6 @@ const Criterion1_3Form = ({
   const [poCourseMappingData, setPoCourseMappingData] = useState([]);
 
   /* ================= CONFIG ================= */
-
   const config = {
     title:
       "1.3. Indicate Where and How the Vision, Mission and PEOs are Published and Disseminated among Stakeholders",
@@ -44,15 +59,36 @@ const Criterion1_3Form = ({
       {
         name: "1.3.1",
         label:
-          "Internal stakeholders may include Management, Governing Board Members, faculty, support staff,students etc. and external stakeholders may include employers, industry, alumni, funding agencies,etc. Describe the place and media such as (websites, curricula, posters etc.), where the Vision, Mission,PEOs and the details of the process to ensure awareness among internal and external stakeholders with effective process of implementation are published",
+          "Internal stakeholders may include Management, Governing Board Members, faculty, support staff, students etc. and external stakeholders may include employers, industry, alumni, funding agencies, etc. Describe the place and media such as (websites, curricula, posters etc.), where the Vision, Mission, PEOs and the details of the process to ensure awareness among internal and external stakeholders with effective process of implementation are published",
         marks: 15,
         type: "textarea",
+        allowFiles: true,
       },
     ],
   };
 
-  /* ================= LOAD DATA ================= */
+  /* ================= ENSURE AT LEAST ONE FILE SLOT ================= */
+  const ensureFileSlot = (data) => {
+    const field = "1.3.1";
+    if (!data?.filesByField?.[field]?.length) {
+      data.filesByField = {
+        ...(data.filesByField || {}),
+        [field]: [
+          {
+            id: `file-1.3.1-default-${Date.now()}`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            uploading: false,
+          },
+        ],
+      };
+    }
+    return { ...data };
+  };
 
+  /* ================= LOAD DATA ================= */
   const loadData = async () => {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -63,6 +99,8 @@ const Criterion1_3Form = ({
       userInfoo?.other_staff_id;
 
     if (!cycle_sub_category_id) {
+      // No ID → new entry → keep default empty form + file slot
+      setInitialData((prev) => ensureFileSlot({ ...prev }));
       setLoading(false);
       return;
     }
@@ -77,7 +115,7 @@ const Criterion1_3Form = ({
 
       const d = Array.isArray(res) ? res[0] : res || {};
 
-      setInitialData({
+      const loadedData = {
         content: {
           "1.3.1": d.vision_mission_peo_dissemination || "",
         },
@@ -86,17 +124,18 @@ const Criterion1_3Form = ({
           d.vision_mission_dissemination_id || null,
         filesByField: {
           "1.3.1":
-            d.course_documents?.length > 0
-              ? d.course_documents.map((f, i) => ({
+            d?.vision_mission_dissemination_document?.length > 0
+              ? d.vision_mission_dissemination_document.map((f, i) => ({
                   id: `file-1.3.1-${i}`,
-                  filename: f.document_name,
-                  s3Url: f.document_url,
+                  filename: f.document_name || "",
+                  s3Url: f.document_url || "",
+                  url: f.document_url || "",
                   description: f.description || "",
                   uploading: false,
                 }))
               : [
                   {
-                    id: "file-1.3.1-0",
+                    id: `file-1.3.1-default-${Date.now()}`,
                     description: "",
                     file: null,
                     filename: "",
@@ -105,18 +144,21 @@ const Criterion1_3Form = ({
                   },
                 ],
         },
-      });
-    } catch (err) {
-      toast.error("Failed to load Criterion 1.3");
-    }
+      };
 
-    setLoading(false);
+      setInitialData(ensureFileSlot(loadedData));
+    } catch (err) {
+      console.error("Failed to load Criterion 1.3:", err);
+      toast.error("Failed to load Criterion 1.3");
+      // Still show empty form with upload section on error
+      setInitialData((prev) => ensureFileSlot({ ...prev }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ================= DELETE ================= */
-
   const handleDelete = async () => {
-  
     if (!initialData?.vision_mission_dissemination_id) {
       setAlert(
         <SweetAlert
@@ -142,11 +184,15 @@ const Criterion1_3Form = ({
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
-          await newnbaCriteria1Service.deleteCriteria1_3_Data(
-            initialData.vision_mission_dissemination_id
-          );
-          await loadData();
-          onSaveSuccess?.();
+          try {
+            await newnbaCriteria1Service.deleteCriteria1_3_Data(
+              initialData.vision_mission_dissemination_id
+            );
+            await loadData();
+            onSaveSuccess?.();
+          } catch (err) {
+            toast.error("Delete failed");
+          }
         }}
         onCancel={() => setAlert(null)}
       >
@@ -156,7 +202,6 @@ const Criterion1_3Form = ({
   };
 
   /* ================= SAVE ================= */
-
   const handleSave = async (formData) => {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -177,7 +222,7 @@ const Criterion1_3Form = ({
         po_data: pos,
         pso_data: psos,
         po_course_mapping: poCourseMappingData,
-        course_documents: (formData.filesByField["1.3.1"] || [])
+        vision_mission_dissemination_document: (formData.filesByField["1.3.1"] || [])
           .filter((f) => f.s3Url)
           .map((f) => ({
             document_name: f.filename,
@@ -204,7 +249,6 @@ const Criterion1_3Form = ({
           success
           title="Saved!"
           confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
           onConfirm={async () => {
             setAlert(null);
             await loadData();
@@ -215,14 +259,14 @@ const Criterion1_3Form = ({
         </SweetAlert>
       );
     } catch (err) {
+      console.error(err);
       toast.error("Save failed");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   /* ================= EFFECTS ================= */
-
   useEffect(() => {
     loadData();
   }, [cycle_sub_category_id, otherStaffId]);
@@ -243,7 +287,6 @@ const Criterion1_3Form = ({
   }
 
   /* ================= RENDER ================= */
-
   return (
     <>
       <GenericCriteriaForm
@@ -252,7 +295,13 @@ const Criterion1_3Form = ({
         fields={config.fields}
         initialData={initialData}
         saving={saving}
-        isCompleted={!isEditable}
+        isContributorEditable={isEditable}
+        // ─── Key changes to always show file upload ─────────────────────
+        // Remove isCompleted={false} if it was present
+        initialEditMode={true}           // ← Most important: start in edit mode
+        // Alternative (if you prefer explicit control):
+        // isEditMode={isEditMode}
+        // onEditModeChange={setIsEditMode}
         onDelete={handleDelete}
         onSave={(data) =>
           handleSave({
@@ -261,6 +310,7 @@ const Criterion1_3Form = ({
             filesByField: data.filesByField,
           })
         }
+        showFileCategories={true}        // ← Optional, same as in 1.1
       />
       {alert}
     </>
