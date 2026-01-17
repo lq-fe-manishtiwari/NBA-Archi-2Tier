@@ -257,7 +257,63 @@ const Criterion2_1Form = ({
         }),
       },
       id: d.program_curriculum_id || null,
-      filesByField: {}
+      filesByField: {
+        "2.1.1": (d.program_curriculum_document || []).filter(f => f.category === "Process for Designing").length > 0 
+          ? (d.program_curriculum_document || []).filter(f => f.category === "Process for Designing").map((f, i) => ({
+              id: `file-2.1.1-${i}`,
+              name: f.name || f.file_name || "",
+              filename: f.name || f.file_name || "",
+              url: f.url || f.file_url || "",
+              s3Url: f.url || f.file_url || "",
+              description: f.description || "",
+              uploading: false
+            }))
+          : [{ id: `file-2.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "2.1.2": (d.program_curriculum_document || []).filter(f => f.category === "Components of Curriculum").length > 0
+          ? (d.program_curriculum_document || []).filter(f => f.category === "Components of Curriculum").map((f, i) => ({
+              id: `file-2.1.2-${i}`,
+              name: f.name || f.file_name || "",
+              filename: f.name || f.file_name || "",
+              url: f.url || f.file_url || "",
+              s3Url: f.url || f.file_url || "",
+              description: f.description || "",
+              uploading: false
+            }))
+          : [{ id: `file-2.1.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "2.1.3": (d.program_curriculum_document || []).filter(f => f.category === "Transaction of Curriculum").length > 0
+          ? (d.program_curriculum_document || []).filter(f => f.category === "Transaction of Curriculum").map((f, i) => ({
+              id: `file-2.1.3-${i}`,
+              name: f.name || f.file_name || "",
+              filename: f.name || f.file_name || "",
+              url: f.url || f.file_url || "",
+              s3Url: f.url || f.file_url || "",
+              description: f.description || "",
+              uploading: false
+            }))
+          : [{ id: `file-2.1.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "2.1.4": (d.program_curriculum_document || []).filter(f => f.category === "Compliance of Curriculum").length > 0
+          ? (d.program_curriculum_document || []).filter(f => f.category === "Compliance of Curriculum").map((f, i) => ({
+              id: `file-2.1.4-${i}`,
+              name: f.name || f.file_name || "",
+              filename: f.name || f.file_name || "",
+              url: f.url || f.file_url || "",
+              s3Url: f.url || f.file_url || "",
+              description: f.description || "",
+              uploading: false
+            }))
+          : [{ id: `file-2.1.4-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "2.1.5": (d.program_curriculum_document || []).filter(f => f.category === "Education Policy Initiatives").length > 0
+          ? (d.program_curriculum_document || []).filter(f => f.category === "Education Policy Initiatives").map((f, i) => ({
+              id: `file-2.1.5-${i}`,
+              name: f.name || f.file_name || "",
+              filename: f.name || f.file_name || "",
+              url: f.url || f.file_url || "",
+              s3Url: f.url || f.file_url || "",
+              description: f.description || "",
+              uploading: false
+            }))
+          : [{ id: `file-2.1.5-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+      }
     });
 
     console.log("✅ Criterion2_1Form: Data loaded and set successfully");
@@ -363,6 +419,20 @@ const Criterion2_1Form = ({
     setSaving(true);
 
     try {
+      // Transform filesByField → flat files with correct category
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
+        return (formData.filesByField[fieldName] || []).map(file => {
+          let category = "Other";
+          if (fieldName === "2.1.1") category = "Process for Designing";
+          if (fieldName === "2.1.2") category = "Components of Curriculum";
+          if (fieldName === "2.1.3") category = "Transaction of Curriculum";
+          if (fieldName === "2.1.4") category = "Compliance of Curriculum";
+          if (fieldName === "2.1.5") category = "Education Policy Initiatives";
+  
+          return { ...file, category };
+        });
+      });
+
       const payload = {
         other_staff_id: currentOtherStaffId,
         cycle_sub_category_id,
@@ -371,6 +441,14 @@ const Criterion2_1Form = ({
         transaction_program_curriculum: formData.tableData["2.1.3"] || [],
         compliance_program_curriculum: formData.content["2.1.4"] || "",
         initiative_education_policy_autonomous: formData.content["2.1.5"] || "",
+        program_curriculum_document: filesWithCategory
+          .filter(f => f.url || f.s3Url)
+          .map(f => ({ 
+              name: f.filename || f.name, 
+              url: f.s3Url || f.url, 
+              description: f.description || "",
+              category: f.category 
+          })),
       };
 
       console.log("FINAL API CALL → payload:", payload);

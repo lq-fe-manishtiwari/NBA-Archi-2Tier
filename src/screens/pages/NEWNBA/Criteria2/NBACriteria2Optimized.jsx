@@ -332,7 +332,7 @@ const NBACriteria2Optimized = () => {
           const coordinatorData = await newnbaCriteria2Service.getCriteria2_1_Data(cycleSubCategoryId, currentStaffId);
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
 
-          if (coordinatorRecord && coordinatorRecord.teaching_learning_quality_id) {
+          if (coordinatorRecord && coordinatorRecord.program_curriculum_id) {
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
 
             if (!existingCard) {
@@ -368,7 +368,7 @@ const NBACriteria2Optimized = () => {
       cycleSubCategoryId: subLevel2Id,
       otherStaffId: userStaffId,
       editMode: true,
-      teachingLearningQualityId: cardItem?.teaching_learning_quality_id || null,
+      teachingLearningQualityId: cardItem?.program_curriculum_id || null,
       cardData: cardItem
     });
   };
@@ -379,7 +379,7 @@ const NBACriteria2Optimized = () => {
       await fetchCardDetails(subLevel2Id);
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.teaching_learning_quality_id]: newStatus
+        [cardItem.program_curriculum_id]: newStatus
       }));
     }
   };
@@ -782,7 +782,7 @@ const NBACriteria2Optimized = () => {
                                       statusField: "approval_status",
                                       userField: "other_staff_id",
                                       nameFields: ["firstname", "lastname"],
-                                      idField: "teaching_learning_quality_id",
+                                      idField: "program_curriculum_id",
                                       isCoordinatorField: "is_coordinator_entry"
                                     }}
                                     isSubCoordinator={isSubCoordinator}
