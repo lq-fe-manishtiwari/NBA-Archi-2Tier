@@ -1,560 +1,473 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import GenericCriteriaForm5_6 from "../Criteria5/GenericCriteriaForm5_6";
+import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
 import { toast } from "react-toastify";
-import SweetAlert from 'react-bootstrap-sweetalert';
+import SweetAlert from "react-bootstrap-sweetalert";
+import StatusBadge from "../StatusBadge";
+import { Users } from "lucide-react";
 
 const Criterion5_6Form = ({
   cycle_sub_category_id,
+  other_staff_id,
   isEditable = true,
   onSaveSuccess,
-  programId = null,
-  otherStaffId = null,
-  showCardView = false,
-  onCardClick = null,
-  onStatusChange = null,
-  cardData = [],
+  cardItem = null,
 }) => {
-  const [loading, setLoading] = useState(false);
+  console.log("🔵 Criterion5_6Form props:", {
+    cycle_sub_category_id,
+    other_staff_id,
+    isEditable
+  });
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [alert, setAlert] = useState(null);
-  
-  // Form data states
-  const [facultyData, setFacultyData] = useState([
-    { id: 1, name: "", CAYm1: "", CAYm2: "", CAYm3: "" },
-    { id: 2, name: "", CAYm1: "", CAYm2: "", CAYm3: "" },
-  ]);
-  
-  const [rfValue, setRfValue] = useState(10); // Default RF value
-  const [supportingFiles, setSupportingFiles] = useState([]);
-  
-  // Calculations
-  const calculateSums = () => {
-    const sums = { CAYm1: 0, CAYm2: 0, CAYm3: 0 };
-    
-    facultyData.forEach(faculty => {
-      sums.CAYm1 += parseFloat(faculty.CAYm1) || 0;
-      sums.CAYm2 += parseFloat(faculty.CAYm2) || 0;
-      sums.CAYm3 += parseFloat(faculty.CAYm3) || 0;
-    });
-    
-    return sums;
+  const [recordId, setRecordId] = useState(null);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [approvalStatus, setApprovalStatus] = useState(null);
+  const [userRole, setUserRole] = useState({});
+  const [contributorName, setContributorName] = useState("");
+
+  const [initialData, setInitialData] = useState({
+    content: {
+      "5.6": ""
+    },
+    tableData: {
+      facultyDevelopment: []
+    },
+    rfValue: 10,
+    filesByField: {},
+  });
+
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    setUserRole(userInfo);
+  }, []);
+
+  // ---------------- CONFIG ----------------
+  const config = {
+    title: "5.6. Faculty as Participants in Faculty Development/Training Activities/STTPs (15)",
+    totalMarks: 15,
+    fields: [
+      {
+        name: "5.6",
+        label: "5.6 Faculty Development Points Calculation",
+        marks: 15,
+        hasTable: true,
+        tableKey: "facultyDevelopment",
+        tableConfig: {
+          title: "Table No. 5.6: A list of faculty members who have participated in FDPs or STPs over the past 3 years",
+          description: "Calculate faculty development points for each faculty member"
+        },
+      },
+    ],
   };
-  
-  const calculateAssessment = (yearSum) => {
-    const assessment = 3 * yearSum / (0.5 * rfValue);
-    return Math.min(assessment, 15); // Limit to 15 marks
+
+  // Helper function to get default faculty table structure
+  const getDefaultFacultyTable = () => {
+    return [
+      { 
+        id: "faculty_1", 
+        name: "", 
+        CAYm1: "", 
+        CAYm2: "", 
+        CAYm3: "",
+        maxPerYear: 5
+      }
+    ];
   };
-  
-  const calculateAverage = () => {
-    const sums = calculateSums();
-    const assessments = {
-      CAYm1: calculateAssessment(sums.CAYm1),
-      CAYm2: calculateAssessment(sums.CAYm2),
-      CAYm3: calculateAssessment(sums.CAYm3),
-    };
-    
-    const average = (assessments.CAYm1 + assessments.CAYm2 + assessments.CAYm3) / 3;
-    return Math.min(average, 15); // Limit to 15 marks
-  };
-  
-  const sums = calculateSums();
-  const averageAssessment = calculateAverage();
-  
-  // Add new faculty row
-  const addFacultyRow = () => {
-    const newId = facultyData.length > 0 
-      ? Math.max(...facultyData.map(f => f.id)) + 1 
-      : 1;
-    
-    setFacultyData([
-      ...facultyData,
-      { id: newId, name: "", CAYm1: "", CAYm2: "", CAYm3: "" }
-    ]);
-  };
-  
-  // Remove faculty row
-  const removeFacultyRow = (id) => {
-    if (facultyData.length <= 1) {
-      toast.warning("At least one faculty member is required");
+
+  // ---------------- LOAD DATA ----------------
+  const loadData = useCallback(async () => {
+    if (!cycle_sub_category_id) {
+      console.log("⏸️ Skipping load - missing cycle_sub_category_id");
+      setLoading(false);
       return;
     }
+
+    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const staffIdToUse = other_staff_id || userInfo?.rawData?.other_staff_id || userInfo2?.other_staff_id;
     
-    setFacultyData(facultyData.filter(f => f.id !== id));
-  };
-  
-  // Update faculty data
-  const updateFacultyData = (id, field, value) => {
-    setFacultyData(facultyData.map(faculty => {
-      if (faculty.id === id) {
-        // Validate max 5 points per year
-        if (field.startsWith("CAY") && value > 5) {
-          toast.warning("Maximum 5 points per faculty per year");
-          return { ...faculty, [field]: 5 };
-        }
-        return { ...faculty, [field]: value };
-      }
-      return faculty;
-    }));
-  };
-  
-  // Handle file upload
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newFiles = files.map(file => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      file,
-      type: file.type,
-      size: file.size,
-      uploading: false
-    }));
-    
-    setSupportingFiles([...supportingFiles, ...newFiles]);
-    
-    // Simulate upload
-    newFiles.forEach(file => {
-      setTimeout(() => {
-        setSupportingFiles(prev => 
-          prev.map(f => f.id === file.id ? { ...f, uploading: false, uploaded: true } : f)
-        );
-      }, 1000);
-    });
-  };
-  
-  // Remove file
-  const removeFile = (id) => {
-    setSupportingFiles(supportingFiles.filter(f => f.id !== id));
-  };
-  
-  // Save data
-  const handleSave = async () => {
-    setSaving(true);
-    
+    console.log("🎯 Criterion5_6Form - Final staffId:", staffIdToUse);
+
+    if (!staffIdToUse) {
+      console.log("❌ Criterion5_6Form - No staffId found, using empty data");
+      setInitialData({
+        content: { "5.6": "" },
+        tableData: {
+          facultyDevelopment: getDefaultFacultyTable()
+        },
+        rfValue: 10,
+        filesByField: {}
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Prepare payload
-      const payload = {
-        cycle_sub_category_id,
-        faculty_data: facultyData,
-        rf_value: rfValue,
-        sums,
-        average_assessment: averageAssessment,
-        supporting_documents: supportingFiles.filter(f => f.uploaded).map(f => ({
-          name: f.name,
-          type: f.type,
-          size: f.size
-        }))
-      };
+      setLoading(true);
+      console.log("📡 Criterion5_6Form - Making API call with:");
+      console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
+      console.log("  - staffId:", staffIdToUse);
       
-      // TODO: Replace with actual API call
-      console.log("Saving Criterion 5.6 data:", payload);
+      // TODO: Replace with actual API call for 5.6
+      const response = await newnbaCriteria5Service.getCriteria5_6_Data(cycle_sub_category_id, staffIdToUse);
+      console.log("📊 Criterion5_6Form - Raw API Response:", response);
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success("Criterion 5.6 data saved successfully!");
-      onSaveSuccess?.();
-      
-    } catch (error) {
-      console.error("Save error:", error);
-      toast.error("Failed to save data");
+      let data = {};
+      if (Array.isArray(response?.data)) {
+        data = response.data.find(item => item && (item.faculty_dev_id || item.criteria5_6_id || item.id)) || {};
+      } else if (response?.data) {
+        data = response.data;
+      } else if (response && !response.data) {
+        data = Array.isArray(response) ? (response.find(item => item && (item.faculty_dev_id || item.criteria5_6_id || item.id)) || {}) : response;
+      }
+
+      if (data.faculty_dev_id || data.criteria5_6_id || data.id) {
+        const newRecordId = data.faculty_dev_id || data.criteria5_6_id || data.id;
+        setRecordId(newRecordId);
+        console.log("✅ Record ID set to:", newRecordId);
+
+        const statusData = cardItem || data;
+        if (statusData.approval_status) {
+          setApprovalStatus({
+            status: statusData.approval_status,
+            rejectionReason: statusData.rejection_reason,
+            approvalReason: statusData.approval_status === 'APPROVED' ? statusData.rejection_reason : null,
+            approvedByName: statusData.approved_by_name,
+            submittedTime: statusData.submitted_time
+          });
+        }
+
+        // Set approval status if available
+        if (data.approval_status) {
+          setApprovalStatus({
+            status: data.approval_status,
+            rejectionReason: data.rejection_reason,
+            approvalReason: data.approval_status === 'APPROVED' ? data.rejection_reason : null,
+            approvedByName: data.approved_by_name,
+            submittedTime: data.submitted_time
+          });
+        }
+        
+        // Parse faculty development table data
+        let facultyTableData = getDefaultFacultyTable();
+        let filesByField = {};
+        let rfValue = 10;
+
+        // Handle faculty table data
+        if (data.faculty_table && Array.isArray(data.faculty_table)) {
+          facultyTableData = data.faculty_table.map((row, index) => ({
+            id: row.id || `faculty_${index + 1}`,
+            name: row.name || "",
+            CAYm1: row.CAYm1 || "",
+            CAYm2: row.CAYm2 || "",
+            CAYm3: row.CAYm3 || "",
+            maxPerYear: row.maxPerYear || 5
+          }));
+        }
+
+        // Get RF value
+        if (data.rf_value) {
+          rfValue = data.rf_value;
+        }
+
+        // Handle files
+        if (data.supporting_documents && Array.isArray(data.supporting_documents)) {
+          data.supporting_documents.forEach(doc => {
+            const fieldName = doc.field_name || "5.6";
+            if (!filesByField[fieldName]) {
+              filesByField[fieldName] = [];
+            }
+            filesByField[fieldName].push({
+              id: `file-${Date.now()}-${Math.random()}`,
+              filename: doc.file_name,
+              s3Url: doc.s3_url || doc.file_url,
+              description: doc.description || "",
+              uploading: false
+            });
+          });
+        }
+
+        setInitialData({
+          content: {
+            "5.6": data.description_5_6 || data.faculty_dev_description || ""
+          },
+          tableData: {
+            facultyDevelopment: facultyTableData
+          },
+          rfValue: rfValue,
+          filesByField: filesByField
+        });
+      } else {
+        // No existing data, use defaults
+        setApprovalStatus(null);
+        setContributorName("");
+        setInitialData({
+          content: { "5.6": "" },
+          tableData: {
+            facultyDevelopment: getDefaultFacultyTable()
+          },
+          rfValue: 10,
+          filesByField: {}
+        });
+      }
+
+    } catch (err) {
+      console.error("Load failed:", err);
+      toast.error("Failed to load saved data");
+      // Set defaults on error
+      setInitialData({
+        content: { "5.6": "" },
+        tableData: {
+          facultyDevelopment: getDefaultFacultyTable()
+        },
+        rfValue: 10,
+        filesByField: {}
+      });
     } finally {
-      setSaving(false);
+      setLoading(false);
+    }
+  }, [cycle_sub_category_id, other_staff_id]);
+
+  useEffect(() => {
+    if (cycle_sub_category_id) {
+      console.log("🚀 useEffect triggered, loading data...");
+      loadData();
+    } else {
+      console.log("⏸️ Skipping load - missing cycle_sub_category_id:", { cycle_sub_category_id, other_staff_id });
+      setLoading(false);
+    }
+  }, [loadData, cycle_sub_category_id, other_staff_id]);
+
+  // ---------------- SAVE DATA ----------------
+  const handleSave = async (formData) => {
+    if (!isEditable) {
+      toast.error("You don't have permission to edit");
+      return;
+    }
+
+    setSaveLoading(true);
+    try {
+      // Transform UI data to API format
+      const faculty_table = formData.tableData?.facultyDevelopment?.map(row => ({
+        name: row.name || "",
+        CAYm1: row.CAYm1 || "",
+        CAYm2: row.CAYm2 || "",
+        CAYm3: row.CAYm3 || "",
+        maxPerYear: row.maxPerYear || 5
+      })) || [];
+
+      // Transform supporting documents
+      const supporting_documents = [];
+      if (formData.filesByField) {
+        Object.entries(formData.filesByField).forEach(([fieldName, files]) => {
+          files.forEach(file => {
+            if (file.s3Url) {
+              supporting_documents.push({
+                field_name: fieldName,
+                file_name: file.filename || "",
+                s3_url: file.s3Url,
+                description: file.description || ""
+              });
+            }
+          });
+        });
+      }
+
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    
+      const staffId = userInfo?.rawData?.other_staff_id || userInfo2?.other_staff_id;
+
+      const payload = {
+        other_staff_id: parseInt(staffId),
+        cycle_sub_category_id: parseInt(cycle_sub_category_id),
+        description_5_6: formData.content?.["5.6"] || "",
+        faculty_table,
+        rf_value: formData.rfValue || 10,
+        supporting_documents
+      };
+
+      console.log("🚀 Saving Criterion 5.6 payload:", payload);
+
+      let response;
+      if (recordId) {
+        // Update existing record
+        response = await newnbaCriteria5Service.updateCriteria5_6_Data(recordId, payload);
+        console.log("✅ Update response:", response);
+        setSuccessMessage("Section updated successfully!");
+      } else {
+        // Create new record
+        response = await newnbaCriteria5Service.saveCriteria5_6_Data(payload, staffId);
+        console.log("✅ Save response:", response);
+        
+        // Set recordId from response for future updates
+        if (response?.data?.faculty_dev_id || response?.data?.id) {
+          setRecordId(response.data.faculty_dev_id || response.data.id);
+        } else if (response?.faculty_dev_id || response?.id) {
+          setRecordId(response.faculty_dev_id || response.id);
+        }
+        
+        setSuccessMessage("Section created successfully!");
+      }
+
+      // Update initialData state immediately
+      setInitialData({
+        content: formData.content,
+        tableData: formData.tableData,
+        rfValue: formData.rfValue,
+        filesByField: formData.filesByField || {}
+      });
+
+      setShowSuccessAlert(true);
+      onSaveSuccess?.();
+      loadData();
+    } catch (err) {
+      console.error("Save failed:", err);
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // ---------------- DELETE DATA ----------------
+  const handleDelete = async () => {
+    const idToDelete = recordId;
+    
+    console.log("🗑️ Delete function called:", idToDelete);
+  
+    if (!idToDelete) {
+      console.warn("⚠️ No ID available for deletion");
+      setAlert(
+        <SweetAlert info title="No Data to Delete" onConfirm={() => setAlert(null)}>
+          There is no saved data to delete.
+        </SweetAlert>
+      );
+      return;
+    }
+    setShowDeleteAlert(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await newnbaCriteria5Service.deleteCriteria5_6Data(recordId);
+  
+      toast.success("✅ Section data deleted successfully!");
+  
+      // Reset everything
+      setRecordId(null);
+      setApprovalStatus(null);
+      setContributorName("");
+  
+      setInitialData({
+        content: { "5.6": "" },
+        tableData: {
+          facultyDevelopment: getDefaultFacultyTable()
+        },
+        rfValue: 10,
+        filesByField: {}
+      });
+  
+      setShowDeleteAlert(false);
+      await loadData();
+      onSaveSuccess?.();
+
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error(
+        err.response?.data?.message ||
+        "❌ Failed to delete data. Please try again."
+      );
+      setShowDeleteAlert(false);
     }
   };
   
-  // Load initial data
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // TODO: Load data from API
-        // Simulate loading
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error("Load error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (cycle_sub_category_id) {
-      loadData();
-    }
-  }, [cycle_sub_category_id]);
-  
+
+  const cancelDelete = () => {
+    setShowDeleteAlert(false);
+    toast.info("Delete operation cancelled.");
+  };
+
+  // ---------------- UI ----------------
   if (loading) {
     return (
-      <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 5.6...
+      <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">
+        Loading 5.6. Faculty Development Activities...
       </div>
     );
   }
-  
-  // Show card view for coordinators
-  if (showCardView) {
-    return (
-      <div className="space-y-4">
-        {cardData && cardData.length > 0 ? (
-          cardData.map((card, index) => (
-            <div key={index} className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
-                 onClick={() => onCardClick?.(cycle_sub_category_id, card.other_staff_id, card)}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium">{card.firstname} {card.lastname}</h4>
-                  <p className="text-sm text-gray-600">Staff ID: {card.other_staff_id}</p>
-                  <p className="text-sm text-gray-600">RF Value: {card.rf_value}</p>
-                  <p className="text-sm text-gray-600">Average Assessment: {card.average_assessment?.toFixed(2)}</p>
-                </div>
-                <div className="text-right">
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    card.approval_status === 'APPROVED_BY_COORDINATOR' ? 'bg-green-100 text-green-800' :
-                    card.approval_status === 'REJECTED_BY_COORDINATOR' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {card.approval_status || 'Pending'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            No contributor submissions found
-          </div>
-        )}
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">5.6 Faculty as Participants in Faculty Development/Training Activities/STTPs (15)</h2>
-        <p className="text-gray-600 mt-2">
-          Faculty members can score a maximum of five points per year for participation.
-        </p>
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
-          <p className="text-sm text-gray-700">
-            <strong>Note:</strong> If a faculty member participates in a workshop/FDP lasting 2 to 5 days, they receive 3 points.
-            If a faculty member participates in a workshop/FDP lasting more than 5 days, they receive 5 points.
-          </p>
-        </div>
-      </div>
-      
-      {/* Table */}
-      <div className="overflow-x-auto mb-8">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold">SN.</th>
-              <th className="border border-gray-300 px-4 py-3 text-left font-semibold">Name of the Faculty</th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Max. 5 per Faculty</th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold">CAYm1</th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold">CAYm2</th>
-              <th className="border border-gray-300 px-4 py-3 text-center font-semibold">CAYm3</th>
-              {isEditable && (
-                <th className="border border-gray-300 px-4 py-3 text-center font-semibold">Action</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {facultyData.map((faculty, index) => (
-              <tr key={faculty.id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-3 text-center">
-                  {String.fromCharCode(65 + index)} {/* A, B, C... */}
-                </td>
-                <td className="border border-gray-300 px-4 py-3">
-                  {isEditable ? (
-                    <input
-                      type="text"
-                      value={faculty.name}
-                      onChange={(e) => updateFacultyData(faculty.id, 'name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter faculty name"
-                    />
-                  ) : (
-                    <span>{faculty.name || "-"}</span>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-4 py-3 text-center text-blue-600 font-medium">
-                  5
-                </td>
-                <td className="border border-gray-300 px-4 py-3">
-                  {isEditable ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.5"
-                      value={faculty.CAYm1}
-                      onChange={(e) => updateFacultyData(faculty.id, 'CAYm1', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0-5"
-                    />
-                  ) : (
-                    <span className="block text-center">{faculty.CAYm1 || "0"}</span>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-4 py-3">
-                  {isEditable ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.5"
-                      value={faculty.CAYm2}
-                      onChange={(e) => updateFacultyData(faculty.id, 'CAYm2', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0-5"
-                    />
-                  ) : (
-                    <span className="block text-center">{faculty.CAYm2 || "0"}</span>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-4 py-3">
-                  {isEditable ? (
-                    <input
-                      type="number"
-                      min="0"
-                      max="5"
-                      step="0.5"
-                      value={faculty.CAYm3}
-                      onChange={(e) => updateFacultyData(faculty.id, 'CAYm3', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="0-5"
-                    />
-                  ) : (
-                    <span className="block text-center">{faculty.CAYm3 || "0"}</span>
-                  )}
-                </td>
-                {isEditable && (
-                  <td className="border border-gray-300 px-4 py-3 text-center">
-                    <button
-                      onClick={() => removeFacultyRow(faculty.id)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 focus:outline-none text-sm"
-                    >
-                      Remove
-                    </button>
-                  </td>
-                )}
-              </tr>
-            ))}
-            
-            {/* Sum Row */}
-            <tr className="bg-gray-100 font-semibold">
-              <td className="border border-gray-300 px-4 py-3 text-center">Sum</td>
-              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
-              <td className="border border-gray-300 px-4 py-3 text-center">-</td>
-              <td className="border border-gray-300 px-4 py-3 text-center bg-blue-50">
-                {sums.CAYm1.toFixed(1)}
-              </td>
-              <td className="border border-gray-300 px-4 py-3 text-center bg-blue-50">
-                {sums.CAYm2.toFixed(1)}
-              </td>
-              <td className="border border-gray-300 px-4 py-3 text-center bg-blue-50">
-                {sums.CAYm3.toFixed(1)}
-              </td>
-              {isEditable && (
-                <td className="border border-gray-300 px-4 py-3 text-center">-</td>
-              )}
-            </tr>
-          </tbody>
-        </table>
-        
-        {isEditable && (
-          <div className="mt-4">
-            <button
-              onClick={addFacultyRow}
-              className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 focus:outline-none flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Faculty
-            </button>
+    <div className="space-y-6">
+      {/* Approval Status */}
+      {approvalStatus && approvalStatus.status !== 'COORDINATORS_DATA' && userRole.nba_coordinator !== true && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <StatusBadge
+              status={approvalStatus.status}
+              rejectionReason={approvalStatus.rejectionReason}
+              approvalReason={approvalStatus.approvalReason}
+              approvedByName={approvalStatus.approvedByName}
+            />
           </div>
-        )}
-      </div>
-      
-      {/* Calculations Section */}
-      <div className="mb-8 p-6 bg-gray-50 rounded-lg">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Assessment Calculation</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                RF = Number of Faculty required to comply with 15:1 Student-Faculty ratio as per 5.1
-              </label>
-              {isEditable ? (
-                <input
-                  type="number"
-                  value={rfValue}
-                  onChange={(e) => setRfValue(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter RF value"
-                />
-              ) : (
-                <div className="px-4 py-2 bg-white border border-gray-300 rounded-lg">
-                  {rfValue}
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">Assessment = 3 × Sum / (0.5 × RF) (Marks limited to 15)</p>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-3 bg-white rounded border">
-                  <div className="text-sm text-gray-500">CAYm1</div>
-                  <div className="text-xl font-bold text-blue-600">
-                    {calculateAssessment(sums.CAYm1).toFixed(2)}
-                  </div>
-                </div>
-                <div className="text-center p-3 bg-white rounded border">
-                  <div className="text-sm text-gray-500">CAYm2</div>
-                  <div className="text-xl font-bold text-blue-600">
-                    {calculateAssessment(sums.CAYm2).toFixed(2)}
-                  </div>
-                </div>
-                <div className="text-center p-3 bg-white rounded border">
-                  <div className="text-sm text-gray-500">CAYm3</div>
-                  <div className="text-xl font-bold text-blue-600">
-                    {calculateAssessment(sums.CAYm3).toFixed(2)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-bold text-lg text-blue-800 mb-2">Average Assessment over Three Years</h4>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-700">
-                  {averageAssessment.toFixed(2)}
-                </div>
-                <p className="text-sm text-blue-600 mt-1">(Marks limited to 15)</p>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-bold text-lg text-green-800 mb-2">Formula</h4>
-              <div className="text-sm text-gray-700 space-y-1">
-                <p>For each year: Assessment = 3 × Sum / (0.5 × RF)</p>
-                <p>Average = (CAYm1 + CAYm2 + CAYm3) ÷ 3</p>
-                <p className="font-semibold">Maximum Marks: 15</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Supporting Documents */}
-      <div className="mb-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Supporting Documents</h3>
-        <p className="text-gray-600 mb-4">
-          Table No.5.6.A list of faculty members who have participated in FDPs or STPs over the past 3 years
-        </p>
-        
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-          <div className="text-center">
-            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <p className="text-gray-600 mb-2">Upload supporting documents (FDP certificates, STTP records, etc.)</p>
-            {isEditable ? (
-              <>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <span className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none inline-block">
-                    Choose Files
-                  </span>
-                </label>
-                <p className="text-sm text-gray-500 mt-2">Max file size: 10MB each</p>
-              </>
-            ) : (
-              <p className="text-gray-500 italic">No files uploaded</p>
-            )}
-          </div>
-          
-          {supportingFiles.length > 0 && (
-            <div className="mt-6">
-              <h4 className="font-medium text-gray-700 mb-3">Uploaded Files:</h4>
-              <div className="space-y-2">
-                {supportingFiles.map(file => (
-                  <div key={file.id} className="flex items-center justify-between bg-white p-3 rounded border">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                        file.uploading ? 'bg-yellow-100' : 'bg-green-100'
-                      }`}>
-                        {file.uploading ? (
-                          <svg className="w-5 h-5 text-yellow-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-800">{file.name}</p>
-                        <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
-                      </div>
-                    </div>
-                    {isEditable && !file.uploading && (
-                      <button
-                        onClick={() => removeFile(file.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Action Buttons */}
-      {isEditable && (
-        <div className="flex justify-end space-x-4 pt-6 border-t">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {saving ? (
-              <>
-                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Save Criterion 5.6
-              </>
-            )}
-          </button>
         </div>
       )}
+
+      <GenericCriteriaForm5_6
+        title={config.title}
+        marks={config.totalMarks}
+        fields={config.fields}
+        initialData={initialData}
+        saving={saveLoading}
+        isCompleted={false}
+        isContributorEditable={isEditable}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
       
-      {alert}
+      {showDeleteAlert && (
+        <SweetAlert
+          warning
+          showCancel
+          confirmBtnText="Yes, Delete!"
+          cancelBtnText="Cancel"
+          confirmBtnBsStyle="danger"
+          cancelBtnBsStyle="default"
+          title="Delete Confirmation"
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        >
+          <div className="text-left">
+            <p className="mb-3">Are you sure you want to delete all data for this section?</p>
+          </div>
+        </SweetAlert>
+      )}
+
+      {showSuccessAlert && (
+        <SweetAlert
+          success
+          confirmBtnText="OK"
+          confirmBtnBsStyle="success"
+          title="Success!"
+          onConfirm={() => {
+            setShowSuccessAlert(false);
+            onSaveSuccess?.();
+            loadData();
+          }}
+        >
+          <div className="text-center">
+            <p className="mb-3">{successMessage}</p>
+            <div className="text-sm text-gray-600">
+              <p>✅ Data has been saved successfully</p>
+            </div>
+          </div>
+        </SweetAlert>
+      )}
     </div>
   );
 };
