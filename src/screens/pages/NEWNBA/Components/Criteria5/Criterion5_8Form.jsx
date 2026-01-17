@@ -5,6 +5,8 @@ import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
 import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
+import { POService } from "../../../OBE/Settings/Services/po.service";
+import { PSOService } from "../../../OBE/Settings/Services/pso.service";
 
 const Criterion5_8Form = ({
   cycle_sub_category_id,
@@ -17,6 +19,7 @@ const Criterion5_8Form = ({
   onStatusChange = null,
   cardData = [],
   editMode = false,
+  poMappingId = null,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -24,43 +27,25 @@ const Criterion5_8Form = ({
     content: {},
     tableData: {},
     files: [],
-    fpads_id: null,
+    po_pso_id: null,
   });
   const [cardLoading, setCardLoading] = useState(false);
   const [alert, setAlert] = useState(null);
   
-  // System description and assessment years data
-  const [systemDescription, setSystemDescription] = useState("");
-  const [assessmentYears, setAssessmentYears] = useState([
-    { year: "2023-2024", implemented: false, effectiveness: "", documents: [] },
-    { year: "2022-2023", implemented: false, effectiveness: "", documents: [] },
-    { year: "2021-2022", implemented: false, effectiveness: "", documents: [] },
-  ]);
+  // OBE Data states
+  const [pos, setPos] = useState([]);
+  const [psos, setPsos] = useState([]);
+  const [poCourseMappingData, setPoCourseMappingData] = useState([]);
 
   const config = {
     title: "5.8 Faculty Performance Appraisal and Development System (FPADS) (15)",
     totalMarks: 15,
     fields: [
-      {
-        name: "system_description",
-        label: "Description of FPADS System",
-        marks: 5,
-        type: "richText",
-        placeholder: "Describe the well-defined Faculty Performance Appraisal and Development System...",
-      },
-      {
-        name: "implementation_status",
-        label: "Implementation Status",
-        marks: 5,
+        {
+        name: "5.8",
+        label: "5.8 Faculty Performance Appraisal and Development System (FPADS) (15)",
+        marks: 15,
         type: "textarea",
-        placeholder: "Describe the implementation status across assessment years...",
-      },
-      {
-        name: "effectiveness",
-        label: "Effectiveness of the System",
-        marks: 5,
-        type: "richText",
-        placeholder: "Describe the effectiveness and outcomes of FPADS...",
       },
     ]
   };
@@ -74,6 +59,7 @@ const Criterion5_8Form = ({
     console.log("🟠 Criterion5_8Form - useEffect triggered:");
     console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
     console.log("  - currentOtherStaffId:", currentOtherStaffId);
+    console.log("  - isEditable:", isEditable);
 
     if (!cycle_sub_category_id) {
       console.log("❌ Criterion5_8Form: cycle_sub_category_id is missing, exiting");
@@ -85,68 +71,49 @@ const Criterion5_8Form = ({
     setLoading(true);
 
     try {
-      // Replace with actual service call for 5.8
-      const res = await newnbaCriteria1Service.getCriteria5_8_Data?.(cycle_sub_category_id, currentOtherStaffId) || { data: {} };
-      const rawResponse = res?.data || res || {};
-      d = rawResponse;
-      console.log("🟢 Loaded Criterion 5.8 data:", d);
+      const res = await newnbaCriteria1Service.getCriteria1_3_Data(
+        cycle_sub_category_id,
+        currentOtherStaffId
+      );
+      const rawResponse = res?.data || res || [];
+      d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : {};
+      console.log("🟢 Loaded Criterion 1.3 data:", d);
     } catch (err) {
-      console.error("❌ Failed to load Criterion 5.8 data:", err);
-      toast.error("Failed to load Criterion 5.8 data");
+      console.error("❌ Failed to load Criterion 1.3 data:", err);
+      toast.error("Failed to load Criterion 1.3 data");
       d = {};
-    }
-
-    // Parse system description
-    const desc = d.system_description || "The Faculty Performance Appraisal and Development System (FPADS) is a comprehensive framework designed to evaluate and enhance faculty performance across multiple dimensions including teaching, research, innovation, community service, and administrative responsibilities. The system aims to optimize individual faculty contributions to institutional performance through regular assessment, feedback, and professional development opportunities.";
-    setSystemDescription(desc);
-
-    // Parse assessment years data
-    if (d.assessment_years && Array.isArray(d.assessment_years)) {
-      setAssessmentYears(d.assessment_years);
     }
 
     setInitialData({
       content: {
-        system_description: desc,
-        implementation_status: d.implementation_status || "The FPADS has been implemented consistently across all assessment years with regular review cycles. The system includes self-assessment, peer review, student feedback, and head-of-department evaluation components.",
-        effectiveness: d.effectiveness || "The FPADS has proven effective in identifying faculty strengths and development areas. It has led to targeted professional development programs, improved teaching methodologies, increased research output, and enhanced community engagement activities.",
+        course_code: d.course_code || "",
+        course_name: d.course_name || "",
       },
       tableData: {},
-      fpads_id: d.fpads_id || null,
+      po_pso_id: d.po_pso_id || null,
       filesByField: {
-        "system_documents": (d.system_documents || []).length > 0 
-          ? (d.system_documents || []).map((f, i) => ({
-              id: `file-system-${i}`,
+        "5.81": (d.course_documents || []).length > 0 
+          ? (d.course_documents || []).map((f, i) => ({
+              id: `file-5.81-${i}`,
               name: f.document_name || f.name || "",
               filename: f.document_name || f.name || "",
               url: f.document_url || f.url || "",
               s3Url: f.document_url || f.url || "",
-              description: f.description || "FPADS System Document",
+              description: f.description || "",
               uploading: false
             }))
-          : [{ id: `file-system-0`, description: "FPADS Policy Document", file: null, filename: "", s3Url: "", uploading: false }],
-        "implementation_documents": (d.implementation_documents || []).length > 0 
-          ? (d.implementation_documents || []).map((f, i) => ({
-              id: `file-impl-${i}`,
+          : [{ id: `file-5.81-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+        "5.8": (d.mapping_documents || []).length > 0 
+          ? (d.mapping_documents || []).map((f, i) => ({
+              id: `file-5.8-${i}`,
               name: f.document_name || f.name || "",
               filename: f.document_name || f.name || "",
               url: f.document_url || f.url || "",
               s3Url: f.document_url || f.url || "",
-              description: f.description || "Implementation Report",
+              description: f.description || "",
               uploading: false
             }))
-          : [{ id: `file-impl-0`, description: "Annual Implementation Report", file: null, filename: "", s3Url: "", uploading: false }],
-        "effectiveness_documents": (d.effectiveness_documents || []).length > 0 
-          ? (d.effectiveness_documents || []).map((f, i) => ({
-              id: `file-eff-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "Effectiveness Analysis",
-              uploading: false
-            }))
-          : [{ id: `file-eff-0`, description: "Effectiveness Assessment Report", file: null, filename: "", s3Url: "", uploading: false }],
+          : [{ id: `file-5.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
       }
     });
 
@@ -160,7 +127,7 @@ const Criterion5_8Form = ({
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria5_8_Data?.(cycle_sub_category_id);
+      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria1_3_Data?.(cycle_sub_category_id);
       if (onStatusChange) {
         onStatusChange(contributorsResponse || []);
       }
@@ -173,7 +140,7 @@ const Criterion5_8Form = ({
 
   // Delete function that calls API
   const handleDelete = async () => {
-    if (!initialData?.fpads_id) {
+    if (!initialData?.po_pso_id) {
       setAlert(
         <SweetAlert
           warning
@@ -199,7 +166,7 @@ const Criterion5_8Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria5_8_Data?.(initialData.fpads_id);
+            await newnbaCriteria1Service.deleteCriteria1_3_Data(initialData.po_pso_id);
             
             setAlert(
               <SweetAlert
@@ -212,7 +179,7 @@ const Criterion5_8Form = ({
                   onSaveSuccess?.();
                 }}
               >
-                Criterion 5.8 data has been deleted successfully.
+                Criterion 1.3 data has been deleted successfully.
               </SweetAlert>
             );
           } catch (err) {
@@ -231,7 +198,7 @@ const Criterion5_8Form = ({
         }}
         onCancel={() => setAlert(null)}
       >
-        This will permanently delete all Criterion 5.8 data!
+        This will permanently delete all Criterion 1.3 data!
       </SweetAlert>
     );
   };
@@ -243,6 +210,79 @@ const Criterion5_8Form = ({
       loadContributorsData();
     }
   }, [cycle_sub_category_id, showCardView, otherStaffId]);
+
+  // Fetch PO/PSO and PO-Course mapping when programId is available
+  useEffect(() => {
+    if (programId) {
+      fetchPOsByProgram(programId);
+      fetchPSOsByProgram(programId);
+      fetchPOCourseMapping(programId);
+    }
+  }, [programId]);
+
+  const fetchPOsByProgram = async (programId) => {
+    try {
+      const data = await POService.getPObyProgramId(programId);
+      setPos(data || []);
+    } catch (err) {
+      console.error("Failed to fetch POs:", err);
+      setPos([]);
+    }
+  };
+
+  const fetchPSOsByProgram = async (programId) => {
+    try {
+      const data = await PSOService.getPSOByProgramId(programId);
+      setPsos(data || []);
+    } catch (err) {
+      console.error("Failed to fetch PSOs:", err);
+      setPsos([]);
+    }
+  };
+
+
+
+  const fetchPOCourseMapping = async (progId) => {
+    if (!progId) return;
+    
+    try {
+      const response = await newnbaCriteria1Service.getCoPoMappingsByProgram(progId);
+      const mappings = response?.content || [];
+
+      const poMappingMap = {};
+      
+      mappings.forEach(mapping => {
+        if (mapping.po) {
+          const poId = mapping.po.poId;
+          if (!poMappingMap[poId]) {
+            poMappingMap[poId] = {
+              po_id: poId,
+              po_code: mapping.po.poCode,
+              po_statement: mapping.po.poStatement,
+              mapped_courses: []
+            };
+          }
+          
+          const courseExists = poMappingMap[poId].mapped_courses.some(
+            c => c.subject_id === mapping.subject.subjectId
+          );
+          
+          if (!courseExists) {
+            poMappingMap[poId].mapped_courses.push({
+              course_code: mapping.subject.subjectCode,
+              course_name: mapping.subject.name,
+              subject_id: mapping.subject.subjectId
+            });
+          }
+        }
+      });
+
+      setPoCourseMappingData(Object.values(poMappingMap));
+    } catch (err) {
+      console.error("Error fetching PO-course mapping:", err);
+      setPoCourseMappingData([]);
+    }
+  };
 
   const handleSave = async (formData) => {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -257,9 +297,8 @@ const Criterion5_8Form = ({
       const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
         return (formData.filesByField[fieldName] || []).map(file => {
           let category = "Other";
-          if (fieldName === "system_documents") category = "System Documents";
-          if (fieldName === "implementation_documents") category = "Implementation Documents";
-          if (fieldName === "effectiveness_documents") category = "Effectiveness Documents";
+          if (fieldName === "5.8") category = "Course Information";
+          if (fieldName === "5.8") category = "PO-PSO Mapping";
           return { ...file, category };
         });
       });
@@ -268,26 +307,26 @@ const Criterion5_8Form = ({
         cycle_sub_category_id,
         other_staff_id: currentOtherStaffId,
         program_id: programId,
-        system_description: formData.content.system_description || systemDescription,
-        implementation_status: formData.content.implementation_status || "",
-        effectiveness: formData.content.effectiveness || "",
-        assessment_years: assessmentYears,
-        system_documents: filesWithCategory
-          .filter(f => f.category === "System Documents" && (f.url || f.s3Url))
+        po_data: pos.map(po => ({
+          po_id: po.po_id,
+          po_code: po.po_code,
+          po_statement: po.po_statement
+        })),
+        pso_data: psos.map(pso => ({
+          pso_id: pso.pso_id,
+          pso_code: pso.pso_code,
+          pso_statement: pso.pso_statement
+        })),
+        po_course_mapping: poCourseMappingData || [],
+        course_documents: filesWithCategory
+          .filter(f => f.category === "Course Information" && (f.url || f.s3Url))
           .map(f => ({ 
             document_name: f.filename, 
             document_url: f.s3Url || f.url,
             description: f.description || ""
           })),
-        implementation_documents: filesWithCategory
-          .filter(f => f.category === "Implementation Documents" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-        effectiveness_documents: filesWithCategory
-          .filter(f => f.category === "Effectiveness Documents" && (f.url || f.s3Url))
+        mapping_documents: filesWithCategory
+          .filter(f => f.category === "PO-PSO Mapping" && (f.url || f.s3Url))
           .map(f => ({ 
             document_name: f.filename, 
             document_url: f.s3Url || f.url,
@@ -301,14 +340,14 @@ const Criterion5_8Form = ({
       console.log("New files to upload:", newFiles.length);
 
       // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.fpads_id) {
-        await newnbaCriteria1Service.putCriteria5_8_Data?.(
-          initialData.fpads_id,
+      if (initialData?.po_pso_id) {
+        await newnbaCriteria1Service.putCriteria1_3_Data(
+          initialData.po_pso_id,
           currentOtherStaffId,
           payload
         );
       } else {
-        await newnbaCriteria1Service.saveCriteria5_8_Data?.(currentOtherStaffId, payload);
+        await newnbaCriteria1Service.saveCriteria1_3_Data(currentOtherStaffId, payload);
       }
 
       setAlert(
@@ -322,7 +361,7 @@ const Criterion5_8Form = ({
             onSaveSuccess?.();
           }}
         >
-          Criterion 5.8 saved successfully!
+          Criterion 1.3 saved successfully!
         </SweetAlert>
       );
     } catch (err) {
@@ -331,19 +370,6 @@ const Criterion5_8Form = ({
     }
 
     setSaving(false);
-  };
-
-  // Handle assessment year changes
-  const handleYearToggle = (index) => {
-    const newYears = [...assessmentYears];
-    newYears[index].implemented = !newYears[index].implemented;
-    setAssessmentYears(newYears);
-  };
-
-  const handleYearEffectivenessChange = (index, value) => {
-    const newYears = [...assessmentYears];
-    newYears[index].effectiveness = value;
-    setAssessmentYears(newYears);
   };
 
   if (loading || (showCardView && cardLoading)) {
@@ -369,7 +395,7 @@ const Criterion5_8Form = ({
                   <div>
                     <h4 className="font-medium">{card.firstname} {card.lastname}</h4>
                     <p className="text-sm text-gray-600">Staff ID: {card.other_staff_id}</p>
-                    <p className="text-sm text-gray-600">Submitted: {new Date(card.created_at).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-600">Course: {card.course_code} - {card.course_name}</p>
                   </div>
                   <div className="text-right">
                     <span className={`px-2 py-1 rounded text-xs ${
@@ -406,114 +432,121 @@ const Criterion5_8Form = ({
         isContributorEditable={isEditable}
         onDelete={handleDelete}
         customContent={{
-          "assessment_years": (
+          "5.81": (
             <div className="space-y-6">
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                <p className="text-sm text-gray-700">
-                  <strong>Note:</strong> The assessment is based on:
-                  <ul className="list-disc ml-5 mt-2">
-                    <li>A well-defined system instituted for all the assessment years</li>
-                    <li>Its implementation and effectiveness</li>
-                  </ul>
-                </p>
-              </div>
+              <div className="space-y-8">
+                  {/* Program Outcomes (POs) */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-blue-600 mb-4">Program Outcomes (POs)</h4>
+                    {pos.length > 0 ? (
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-blue-50">
+                            <tr>
+                              <th className="border px-3 py-2 text-center w-20">PO Code</th>
+                              <th className="border px-3 py-2 text-left">PO Statement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pos.map((po, idx) => (
+                              <tr key={po.po_id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                <td className="border px-3 py-2 text-center font-medium">{po.po_code}</td>
+                                <td className="border px-3 py-2 text-sm">{po.po_statement}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 border rounded-lg">
+                        No POs found for selected program
+                      </div>
+                    )}
+                  </div>
 
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-[#2163c1] text-white px-4 py-2">
-                  <h5 className="font-semibold">FPADS Implementation Across Assessment Years</h5>
+                  {/* Program Specific Outcomes (PSOs) */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-green-600 mb-4">Program Specific Outcomes (PSOs)</h4>
+                    {psos.length > 0 ? (
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full">
+                          <thead className="bg-green-50">
+                            <tr>
+                              <th className="border px-3 py-2 text-center w-20">PSO Code</th>
+                              <th className="border px-3 py-2 text-left">PSO Statement</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {psos.map((pso, idx) => (
+                              <tr key={pso.pso_id} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                <td className="border px-3 py-2 text-center font-medium">{pso.pso_code}</td>
+                                <td className="border px-3 py-2 text-sm">{pso.pso_statement}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 border rounded-lg">
+                        No PSOs found for selected program
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full border text-sm">
-                    <thead className="bg-blue-100">
-                      <tr>
-                        <th className="border px-3 py-2 w-40">Assessment Year</th>
-                        <th className="border px-3 py-2">System Instituted</th>
-                        <th className="border px-3 py-2">Implementation Status</th>
-                        <th className="border px-3 py-2">Effectiveness Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assessmentYears.map((year, idx) => (
-                        <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="border px-3 py-2 text-center font-medium">
-                            {year.year}
-                          </td>
-                          <td className="border px-3 py-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleYearToggle(idx)}
-                              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                year.implemented 
-                                  ? 'bg-green-100 text-green-800 border border-green-300' 
-                                  : 'bg-red-100 text-red-800 border border-red-300'
-                              }`}
-                            >
-                              {year.implemented ? '✓ Implemented' : 'Not Implemented'}
-                            </button>
-                          </td>
-                          <td className="border px-3 py-2">
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <div className={`w-3 h-3 rounded-full ${year.implemented ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                                <span className="text-sm">
-                                  {year.implemented ? 'System fully implemented' : 'System not implemented'}
-                                </span>
-                              </div>
-                              {year.implemented && (
-                                <div className="text-xs text-gray-600 ml-5">
-                                  • Regular faculty assessments conducted<br/>
-                                  • Development plans created<br/>
-                                  • Review meetings held
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="border px-3 py-2">
-                            <textarea
-                              value={year.effectiveness}
-                              onChange={(e) => handleYearEffectivenessChange(idx, e.target.value)}
-                              placeholder="Enter effectiveness remarks..."
-                              className="w-full p-2 border rounded text-sm"
-                              rows="3"
-                              disabled={!isEditable}
-                            />
-                          </td>
+            </div>
+          ),
+          "5.8": (
+            <div className="space-y-6">
+              {programId && poCourseMappingData.length > 0 && (
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="bg-[#2163c1] text-white px-4 py-2">
+                    <h5 className="font-semibold">PO-Course Mapping</h5>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border text-sm">
+                      <thead className="bg-blue-100">
+                        <tr>
+                          <th className="border px-3 py-2 w-24">PO Code</th>
+                          <th className="border px-3 py-2">PO Statement</th>
+                          <th className="border px-3 py-2">Mapped Courses</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h6 className="font-semibold text-gray-700 mb-2">Faculty Roles Considered in FPADS:</h6>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Instruction and Teaching Excellence</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Research and Innovation</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Technology Adoption and Curriculum Development</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Community/Professional Service</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Administrative Responsibilities</span>
-                  </div>
-                  <div className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                    <span className="text-sm">Self-Renewal and Professional Growth</span>
+                      </thead>
+                      <tbody>
+                        {poCourseMappingData.map((item, idx) => (
+                          <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                            <td className="border px-3 py-2 text-center font-medium">
+                              {item.po_code}
+                            </td>
+                            <td className="border px-3 py-2">
+                              {item.po_statement}
+                            </td>
+                            <td className="border px-3 py-2">
+                              {item.mapped_courses && item.mapped_courses.length > 0 ? (
+                                <div className="space-y-1">
+                                  {item.mapped_courses.map((course, courseIdx) => (
+                                    <div key={courseIdx} className="text-sm p-2 bg-blue-50 rounded">
+                                      <div className="font-medium text-blue-800">{course.course_code}</div>
+                                      <div className="text-gray-700">{course.course_name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 italic">No courses mapped</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
+              )}
+              
+              {programId && poCourseMappingData.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No PO-course mapping data found for this program.
+                </div>
+              )}
             </div>
           )
         }}
