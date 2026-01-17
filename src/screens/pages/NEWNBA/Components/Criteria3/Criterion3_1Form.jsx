@@ -11,7 +11,7 @@ const Criterion3_1Form = ({
   isEditable = true,
   onSaveSuccess,
   otherStaffId = null,
-  showCardView = false,
+  showCardView = true,
   onCardClick = null,
   editMode = false,
   teaching_learning_quality_id: propTeaching_learning_quality_id = null,
@@ -194,29 +194,41 @@ const Criterion3_1Form = ({
       
       // Handle both array and object responses
       const rawResponse = res?.data || res || [];
-      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
+      let d;
+      if (Array.isArray(rawResponse) && rawResponse.length > 0) {
+        // Sort by updated_at descending to get the latest
+        const sorted = rawResponse.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+        d = sorted[0];
+      } else {
+        d = rawResponse;
+      }
       
       console.log("🟢 Criterion3_1Form - Raw API Response:", rawResponse);
       console.log("🟢 Criterion3_1Form - Processed Data:", d);
 
       // If API returns nothing, show blank form
-      setTeaching_learning_quality_id(d.teaching_learning_quality_id || null);
+      setTeaching_learning_quality_id(d.course_outcome_correlation_id || null);
 
       setInitialData({
-        content: { "3.1": d.quality_processes_description || "" },
-        tableData: [],
+        content: {},
+        tableData: {
+          "3.1.1": d.course_outcomes || [],
+          "3.1.2": d.co_po_matrices || [],
+          "3.1.3": d.course_po_matrix || [],
+        },
         filesByField: {
-          "3.1": (d.quality_process_documents || []).length > 0
-            ? (d.quality_process_documents || []).map((f, i) => ({
-                id: `file-3.1-${i}`,
+          "3.1.1": (d.course_outcome_document || []).length > 0
+            ? (d.course_outcome_document || []).map((f, i) => ({
+                id: `file-3.1.1-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
-                // description: f.file_name || f.name || "",
-                 url: f.file_url || f.url || "",
+                url: f.file_url || f.url || "",
                 description: f.description || "",
                 uploading: false
               }))
-            : [{ id: `file-3.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+            : [{ id: `file-3.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "3.1.2": [{ id: `file-3.1.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "3.1.3": [{ id: `file-3.1.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
         }
       });
 
@@ -224,10 +236,16 @@ const Criterion3_1Form = ({
       console.warn("❌ Criterion3_1Form - API failed or returned 404, showing blank form", err);
       setTeaching_learning_quality_id(null);
       setInitialData({
-        content: { "3.1": "" },
-        tableData: [],
+        content: {},
+        tableData: {
+          "3.1.1": [],
+          "3.1.2": [],
+          "3.1.3": [],
+        },
         filesByField: {
-          "3.1": [{ id: `file-3.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "3.1.1": [{ id: `file-3.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "3.1.2": [{ id: `file-3.1.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "3.1.3": [{ id: `file-3.1.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
         }
       });
     } finally {
@@ -259,8 +277,10 @@ const Criterion3_1Form = ({
       const payload = {
         other_staff_id: staffId,
         cycle_sub_category_id,
-        quality_processes_description: formData.content["3.1"] || "",
-        quality_process_documents: filesWithCategory
+        course_outcomes: formData.tableData["3.1.1"] || [],
+        co_po_matrices: formData.tableData["3.1.2"] || [],
+        course_po_matrix: formData.tableData["3.1.3"] || [],
+        course_outcome_document: filesWithCategory
           .filter((f) => f.url || f.s3Url)
           .map((f) => ({
             file_name: f.filename,
