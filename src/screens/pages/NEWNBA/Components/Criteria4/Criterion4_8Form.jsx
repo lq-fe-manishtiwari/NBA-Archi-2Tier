@@ -1,7 +1,7 @@
 // src/screens/pages/NEWNBA/Components/Criteria4/Criterion4_8Form.jsx
 
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm4_6 from "./GenericCriteriaForm4_6";
+import GenericCriteriaForm4_8 from "./GenericCriteriaForm4_8";
 import { newnbaCriteria4Service } from "../../Services/NewNBA-Criteria4.service";
 import SweetAlert from "react-bootstrap-sweetalert";
 
@@ -30,54 +30,53 @@ const Criterion4_8Form = ({
   const [cardLoading, setCardLoading] = useState(false);
   
 
-  // Helper function to get row labels
+  // Helper function to get row labels for 4.8
   const getRowLabel = (index) => {
     const labels = [
-      "FS* =Total no. of final year students",
-      "X= No. of students placed",
-      "Y= No. of students admitted to higher studies",
-      "Z= No. of students taking up entrepreneurship",
-      "X + Y + Z =",
-      "Placement Index (P) = (((X + Y + Z)/FS) * 100)",
-      "Average placement index = (P_1 + P_2 + P_3)/3"
+      "Total No. of Final Year Students (N)",
+      "Number of students placed (X)",
+      "No. of students admitted to higher studies (Y)",
+      "No. of students opted for entrepreneurs (Z)",
+      "X + Y + Z",
+      "Placement Index (PI): (X + Y + Z)/N",
+      "Average placement = (P1 + P2 + P3)/3"
     ];
     return labels[index] || "";
   };
 
-  // ---------------- CONFIG ----------------
+  // ---------------- CONFIG FOR 4.8 ----------------
   const config = {
-    title:
-      "4.6. Placement, Higher Studies and Entrepreneurship",
-    totalMarks: 30,
+    title: "4.8. Placement and Higher Studies and Entrepreneurship",
+    totalMarks: 40,
     fields: [
       {
-        name: "4.6",
-        label: "4.6 Placement, Higher Studies and Entrepreneurship",
-        marks: 30,
+        name: "4.8",
+        label: "4.8 Placement and Higher Studies and Entrepreneurship",
+        marks: 40,
         hasTable: true,
-          tableConfig: {
-            title: "Teaching-Learning Activities",
-            columns: [
-              { field: "item", header: "Item", placeholder: "" },
-              { field: "lyg", header: "LYG", placeholder: "" },
-              { field: "lygm1", header: "LYGm1", placeholder: "" },
-              { field: "lygm2", header: "LYGm2", placeholder: "" },
-            ],
-            predefinedRows: [
-            { item: "FS* =Total no. of final year students" },
-            { item: "X= No. of students placed" },
-            { item: "Y= No. of students admitted to higher studies" },
-            { item: "Z= No. of students taking up entrepreneurship" },
-            { item: "X + Y + Z =" },
-            { item: "Placement Index (P) = (((X + Y + Z)/FS) * 100) " },
-            { item: "Average placement index = (P_1 + P_2 + P_3)/3" },
+        tableConfig: {
+          title: "Table No. 4.8.1. Placement and Higher Studies and Entrepreneurship details for 3 years.",
+          columns: [
+            { field: "item", header: "Item", placeholder: "" },
+            { field: "lyg", header: "LYG", placeholder: "" },
+            { field: "lygm1", header: "LYGm1", placeholder: "" },
+            { field: "lygm2", header: "LYGm2", placeholder: "" },
           ],
-          },
+          predefinedRows: [
+            { item: "Total No. of Final Year Students (N)" },
+            { item: "Number of students placed (X)" },
+            { item: "No. of students admitted to higher studies (Y)" },
+            { item: "No. of students opted for entrepreneurs (Z)" },
+            { item: "X + Y + Z" },
+            { item: "Placement Index (PI): (X + Y + Z)/N" },
+            { item: "Average placement = (P1 + P2 + P3)/3" },
+          ],
+        },
       },
     ],
   };
 
-  // ---------------- LOAD DATA (Same as 2.1) ----------------
+  // ---------------- LOAD DATA ----------------
   const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) return setLoading(false);
 
@@ -91,15 +90,17 @@ const Criterion4_8Form = ({
       
       const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-      const res = await newnbaCriteria4Service.getCriteria4_6_Data(cycle_sub_category_id, currentOtherStaffId);
+      // Note: We might need to change the service method to getCriteria4_8_Data if it exists
+      // For now, using 4.6 service as example
+      const res = await newnbaCriteria4Service.getCriteria4_8_Data(cycle_sub_category_id, currentOtherStaffId);
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
 
-      setPlacementId(d.cri46_higher_studies_id || null);
+      setPlacementId(d.cri48_placement_id || null);
 
       // Transform table data from API response
-      const transformedTableData = d.cri46_higher_studies_table ? 
-        d.cri46_higher_studies_table.map((row, index) => ({
+      const transformedTableData = d.cri48_placement_table ? 
+        d.cri48_placement_table.map((row, index) => ({
           id: `row-${Date.now()}-${index}`,
           item: getRowLabel(index),
           lyg: row.lyg || "",
@@ -108,12 +109,12 @@ const Criterion4_8Form = ({
         })) : [];
 
       setInitialData({
-        content: { "4.6": "" },
+        content: { "4.8": "" },
         tableData: transformedTableData,
         filesByField: {
-          "4.6": (d.cri46_higher_studies_document || []).length > 0
-            ? (d.cri46_higher_studies_document || []).map((f, i) => ({
-                id: `file-4.6-${i}`,
+          "4.8": (d.cri48_placement_document || []).length > 0
+            ? (d.cri48_placement_document || []).map((f, i) => ({
+                id: `file-4.8-${i}`,
                 name: f.name || f.file_name || "",
                 filename: f.name || f.file_name || "",
                 url: f.url || f.file_url || "",
@@ -121,7 +122,7 @@ const Criterion4_8Form = ({
                 description: f.description || "",
                 uploading: false
               }))
-            : [{ id: `file-4.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+            : [{ id: `file-4.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } catch (err) {
@@ -129,10 +130,10 @@ const Criterion4_8Form = ({
 
       setPlacementId(null);
       setInitialData({
-        content: { "4.6": "" },
+        content: { "4.8": "" },
         tableData: [],
         filesByField: {
-          "4.6": [{ id: `file-4.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "4.8": [{ id: `file-4.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
         }
       });
     } finally {
@@ -145,7 +146,7 @@ const Criterion4_8Form = ({
       
       setCardLoading(true);
       try {
-        const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_6_Data?.(cycle_sub_category_id);
+        const contributorsResponse = await newnbaCriteria4Service.getAllCriteria4_8_Data?.(cycle_sub_category_id);
         setCardData(contributorsResponse || []);
       } catch (err) {
         console.error("Failed to load contributors data:", err);
@@ -168,7 +169,7 @@ const Criterion4_8Form = ({
   }, [loadData]);
 
   const tablePayload = (formData) => {
-  const rowKeys = ["FSrow", "Xrow", "Yrow", "Zrow", "total", "placement_index", "average"];
+  const rowKeys = ["N_row", "X_row", "Y_row", "Z_row", "total", "placement_index", "average"];
   
   return formData.tableData.map((row, i) => {
     const key = rowKeys[i];
@@ -208,25 +209,25 @@ const handleSave = async (formData) => {
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
     const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-    const cri46_higher_studies_table = tablePayload(formData);
-    const cri46_higher_studies_document = DocumentPayload(formData);
+    const cri48_placement_table = tablePayload(formData);
+    const cri48_placement_document = DocumentPayload(formData);
     
     console.log("Files being processed:", formData.filesByField);
-    console.log("Document payload:", cri46_higher_studies_document);
+    console.log("Document payload:", cri48_placement_document);
 
     const payload = {
       other_staff_id: staffId,
       cycle_sub_category_id: cycle_sub_category_id,
-      cri46_higher_studies_table,
-      cri46_higher_studies_document
+      cri48_placement_table,
+      cri48_placement_document
     };
 
     console.log("FINAL API CALL → payload:", payload);
 
     if (placementId) {
-      await newnbaCriteria4Service.putCriteria4_6_Data(placementId, payload);
+      await newnbaCriteria4Service.putCriteria4_8_Data(placementId, payload);
     } else {
-      await newnbaCriteria4Service.saveCriteria4_6_Data(payload);
+      await newnbaCriteria4Service.saveCriteria4_8_Data(payload);
     }
 
     setAlert(
@@ -237,7 +238,7 @@ const handleSave = async (formData) => {
             confirmBtnText="OK"
             onConfirm={() => setAlert(null)}
           >
-            Criterion 4.6 saved successfully
+            Criterion 4.8 saved successfully
           </SweetAlert>
         );
 
@@ -262,7 +263,7 @@ const handleSave = async (formData) => {
   }
 };
 
-  // ---------------- DELETE DATA (Same as 2.1) ----------------
+  // ---------------- DELETE DATA ----------------
   const handleDelete = async () => {
     if (!placementId) {
       setAlert(
@@ -292,11 +293,11 @@ const handleSave = async (formData) => {
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_6Data(
+            const res = await newnbaCriteria4Service.deleteCriteria4_8Data(
               placementId
             );
 
-            let message = "Criterion 4.6 deleted successfully.";
+            let message = "Criterion 4.8 deleted successfully.";
             if (typeof res === "string") message = res;
             else if (res?.data) message = res.data;
 
@@ -342,12 +343,12 @@ const handleSave = async (formData) => {
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 4.6...
+        Loading Criterion 4.8...
       </div>
     );
   }
 
-   console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
+   console.log("🎯 Criterion4_8Form rendering with initialData:", initialData);
 
   // Show card view for coordinators
   if (showCardView) {
@@ -360,11 +361,11 @@ const handleSave = async (formData) => {
           onStatusChange={loadContributorsData}
           apiService={newnbaCriteria4Service}
           cardConfig={{
-            title: "Criterion 4.1",
+            title: "Criterion 4.8",
             statusField: "approval_status",
             userField: "other_staff_id",
             nameFields: ["firstname", "lastname"],
-            idField: "enrolment_ratio_id",
+            idField: "cri48_placement_id",
             isCoordinatorField: "is_coordinator_entry"
           }}
         />
@@ -375,7 +376,7 @@ const handleSave = async (formData) => {
 
   return (
     <div>
-      <GenericCriteriaForm4_6
+      <GenericCriteriaForm4_8
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}
