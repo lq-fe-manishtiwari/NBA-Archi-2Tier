@@ -14,14 +14,14 @@ const Criterion3_2Form = ({
   showCardView = false,
   onCardClick = null,
   editMode = false,
-  teaching_learning_quality_id: propTeaching_learning_quality_id = null,
+  teaching_learning_quality_id: propTeachingLearningQualityId = null,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [teaching_learning_quality_id, setTeaching_learning_quality_id] = useState(null);
+  const [attainmentCoId, setAttainmentCoId] = useState(null);
   const [initialData, setInitialData] = useState({
     content: {},
-    tableData: [],
+    tableData: {},
     filesByField: {},
   });
   const [alert, setAlert] = useState(null);
@@ -33,7 +33,7 @@ const Criterion3_2Form = ({
     fields: [
       {
         name: "3.2.1",
-        label: "3.2.1  Describe the Assessment Tools and Processes Used to Gather the Data for the Evaluation of Course Outcome ",
+        label: "3.2.1 Describe the Assessment Tools and Processes Used to Gather the Data for the Evaluation of Course Outcome",
         marks: 5,
         type: "textarea",
         hasFile: true,
@@ -55,78 +55,131 @@ const Criterion3_2Form = ({
             { field: "co2", header: "CO2 (%)", placeholder: "82", width: "w-20" },
             { field: "co3", header: "CO3 (%)", placeholder: "75", width: "w-20" },
             { field: "co4", header: "CO4 (%)", placeholder: "88", width: "w-20" },
-            { field: "attainment_level", header: "Attainment Level", placeholder: "3", width: "w-24", type: "select", options: [
-              { value: "1", label: "Level 1" },
-              { value: "2", label: "Level 2" },
-              { value: "3", label: "Level 3" },
-            ]},
+            {
+              field: "attainment_level",
+              header: "Attainment Level",
+              placeholder: "3",
+              width: "w-24",
+              type: "select",
+              options: [
+                { value: "1", label: "Level 1" },
+                { value: "2", label: "Level 2" },
+                { value: "3", label: "Level 3" },
+              ],
+            },
           ],
         },
       },
     ],
   };
 
-  // ---------------- LOAD DATA ----------------
+  // ────────────────────────────────────────────────
+  //                   LOAD DATA
+  // ────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) {
       setLoading(false);
       return;
     }
 
+    setLoading(true);
+
     try {
-      setLoading(true);
-      
       const profileFlags = getAllProfileFlags();
       const userIsContributor = profileFlags?.isContributor || false;
       setIsContributor(userIsContributor);
-      
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-      
-      console.log("🟠 Criterion3_2Form - Loading data:");
-      console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
-      console.log("  - otherStaffId (prop):", otherStaffId);
-      console.log("  - currentOtherStaffId (final):", currentOtherStaffId);
-      console.log("  - userIsContributor:", userIsContributor);
-      
-      const res = await newnbaCriteria3Service.getCriteria3_1_Data(cycle_sub_category_id, currentOtherStaffId);
-      
-      const rawResponse = res?.data || res || [];
-      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
-      
-      console.log("🟢 Criterion3_2Form - Raw API Response:", rawResponse);
-      console.log("🟢 Criterion3_2Form - Processed Data:", d);
 
-      setTeaching_learning_quality_id(d.teaching_learning_quality_id || null);
+      const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-      setInitialData({
-        content: { "3.2": d.quality_processes_description || "" },
-        tableData: [],
-        filesByField: {
-          "3.2": (d.quality_process_documents || []).length > 0
-            ? (d.quality_process_documents || []).map((f, i) => ({
-                id: `file-3.2-${i}`,
-                filename: f.file_name || f.name || "",
-                s3Url: f.file_url || f.url || "",
-                // description: f.file_name || f.name || "",
-                 url: f.file_url || f.url || "",
-                description: f.description || "",
-                uploading: false
-              }))
-            : [{ id: `file-3.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
+      const staffId =
+        otherStaffId ||
+        userProfile?.rawData?.other_staff_id ||
+        userProfile?.user_id ||
+        userInfo?.other_staff_id;
+
+      console.log("[Criterion 3.2] Loading data for:", {
+        cycle_sub_category_id,
+        staffId,
+        isContributor: userIsContributor,
       });
 
-    } catch (err) {
-      console.warn("❌ Criterion3_2Form - API failed or returned 404, showing blank form", err);
-      setTeaching_learning_quality_id(null);
+      const res = await newnbaCriteria3Service.getCriteria3_2_Data(cycle_sub_category_id, staffId);
+      const data = res?.data || res || null;
+
+      console.log("[Criterion 3.2] GET API full response:", data);
+
+      const attainmentId = data?.attainment_co_id || data?.id || null;
+      setAttainmentCoId(attainmentId);
+
+      // Handle description_assessment_process (backend most likely returns string or array)
+      let descriptionText = "";
+      if (Array.isArray(data?.description_assessment_process) && data.description_assessment_process.length > 0) {
+        descriptionText = data.description_assessment_process[0]?.description ||
+                          data.description_assessment_process[0]?.content ||
+                          "";
+      } else if (typeof data?.description_assessment_process === "string") {
+        descriptionText = data.description_assessment_process;
+      }
+
       setInitialData({
-        content: { "3.2": "" },
-        tableData: [],
+        content: {
+          "3.2.1": descriptionText,
+        },
+        tableData: {
+          "3.2.2": Array.isArray(data?.record_attainment_course_outcomes)
+            ? data.record_attainment_course_outcomes.map(item => ({
+                ...item,
+                co1: String(item.co1 ?? ""),
+                co2: String(item.co2 ?? ""),
+                co3: String(item.co3 ?? ""),
+                co4: String(item.co4 ?? ""),
+                attainment_level: String(item.attainment_level ?? "1"),
+              }))
+            : [],
+        },
         filesByField: {
-          "3.2": [{ id: `file-3.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
+          "3.2.1":
+            Array.isArray(data?.attainment_course_outcome_documents) &&
+            data.attainment_course_outcome_documents.length > 0
+              ? data.attainment_course_outcome_documents.map((f, i) => ({
+                  id: `file-3.2.1-${i}`,
+                  filename: f.file_name || f.name || "",
+                  s3Url: f.file_url || f.url || "",
+                  url: f.file_url || f.url || "",
+                  description: f.description || "",
+                  uploading: false,
+                }))
+              : [
+                  {
+                    id: `file-3.2.1-default`,
+                    description: "",
+                    file: null,
+                    filename: "",
+                    s3Url: "",
+                    uploading: false,
+                  },
+                ],
+        },
+      });
+    } catch (err) {
+      console.error("[Criterion 3.2] Load failed:", err);
+      setAttainmentCoId(null);
+      setInitialData({
+        content: { "3.2.1": "" },
+        tableData: { "3.2.2": [] },
+        filesByField: {
+          "3.2.1": [
+            {
+              id: `file-3.2.1-default`,
+              description: "",
+              file: null,
+              filename: "",
+              s3Url: "",
+              uploading: false,
+            },
+          ],
+        },
       });
     } finally {
       setLoading(false);
@@ -137,74 +190,120 @@ const Criterion3_2Form = ({
     loadData();
   }, [loadData]);
 
-  // ---------------- SAVE DATA ----------------
+  // ────────────────────────────────────────────────
+  //                   SAVE DATA
+  // ────────────────────────────────────────────────
   const handleSave = async (formData) => {
     setSaving(true);
-    console.log(formData);
+
     try {
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-        (field) =>
-          (formData.filesByField[field] || []).map((file) => ({
-            ...file,
-            category: "Exam Documents",
-          }))
-      );
-      console.log(filesWithCategory);
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+      const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-      const payload = {
-        other_staff_id: staffId,
-        cycle_sub_category_id,
-        quality_processes_description: formData.content["3.2"] || "",
-        quality_process_documents: filesWithCategory
-          .filter((f) => f.url || f.s3Url)
-          .map((f) => ({
-            file_name: f.filename,
-            file_url: f.s3Url || f.url,
-            description: f.description || "",
-          })),
-      };
-      console.log("🟠 Criterion3_2Form - Save payload:", payload);
-      console.log("🟠 staffId to save:", staffId);
+      const staffId =
+        otherStaffId ||
+        userProfile?.rawData?.other_staff_id ||
+        userProfile?.user_id ||
+        userInfo?.other_staff_id;
 
-      const newFiles = filesWithCategory.filter((f) => f.file);
+      // Prepare files
+      const filesArray = (formData.filesByField["3.2.1"] || [])
+        .filter(f => f.s3Url || f.url)
+        .map(f => ({
+          file_name: (f.filename || "").trim(),
+          file_url: (f.s3Url || f.url || "").trim(),
+          description: (f.description || "").trim(),
+        }));
 
-      if (teaching_learning_quality_id) {
-        console.log("🟠 Updating existing record with ID:", teaching_learning_quality_id);
-        await newnbaCriteria3Service.putCriteria3_1_Data(teaching_learning_quality_id, staffId, payload);
+      // Final payload – description as STRING (most likely what backend expects)
+     const payload = {
+  other_staff_id: Number(staffId),
+  cycle_sub_category_id: Number(cycle_sub_category_id),
+
+  ...(propTeachingLearningQualityId && {
+    teaching_learning_quality_id: Number(propTeachingLearningQualityId),
+  }),
+
+  // This is the corrected format based on the exact error
+  description_assessment_process: formData.content["3.2.1"]?.trim()
+    ? [{ description: formData.content["3.2.1"].trim() }]
+    : [],
+
+  record_attainment_course_outcomes: (formData.tableData["3.2.2"] || []).map(item => ({
+    course_code: String(item.course_code || "").trim(),
+    co1: Number(item.co1) || 0,
+    co2: Number(item.co2) || 0,
+    co3: Number(item.co3) || 0,
+    co4: Number(item.co4) || 0,
+    attainment_level: String(item.attainment_level || "1"),
+  })),
+
+  attainment_course_outcome_documents: filesArray,
+};
+
+      console.log("[Criterion 3.2] Saving payload:", JSON.stringify(payload, null, 2));
+
+      let response;
+
+      if (attainmentCoId) {
+        console.log(`Updating record ID: ${attainmentCoId}`);
+        response = await newnbaCriteria3Service.putCriteria3_2_Data(
+          attainmentCoId,
+          staffId,
+          payload
+        );
       } else {
-        console.log("🟠 Creating new record");
-        await newnbaCriteria3Service.saveCriteria3_1_Data(staffId, payload);
+        console.log("Creating new record");
+        response = await newnbaCriteria3Service.saveCriteria3_2_Data(staffId, payload);
       }
 
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          Criterion 3.2 saved successfully
-        </SweetAlert>
-      );
+      if (response?.status === 200 || response?.status === 201 || response?.id) {
+        setAlert(
+          <SweetAlert
+            success
+            title="Saved!"
+            confirmBtnText="OK"
+            onConfirm={() => {
+              setAlert(null);
+              onSaveSuccess?.();
+            }}
+          >
+            Criterion 3.2 saved successfully.
+          </SweetAlert>
+        );
 
-      await loadData();
-      onSaveSuccess?.();
+        await loadData(); // Refresh
 
+        // Auto-approve for contributors
+        if (isContributor) {
+          try {
+            const updatedId = response?.id || attainmentCoId;
+            if (updatedId) {
+              await newnbaCriteria3Service.updateCriteria3_2_Status({
+                id: updatedId,
+                approval_status: "APPROVED",
+                approved_by: staffId,
+                approved_by_name: userProfile?.name || userProfile?.rawData?.name || "",
+              }, staffId);
+              console.log("[Criterion 3.2] Auto-approved successfully");
+            }
+          } catch (approveErr) {
+            console.error("[Criterion 3.2] Auto-approve failed:", approveErr);
+          }
+        }
+      } else {
+        throw new Error(response?.message || "Save failed");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("[Criterion 3.2] Save failed:", err);
       setAlert(
         <SweetAlert
           danger
           title="Save Failed"
           confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
           onConfirm={() => setAlert(null)}
         >
-          An error occurred while saving
+          {err.message || "Could not save data. Please try again."}
         </SweetAlert>
       );
     } finally {
@@ -212,18 +311,19 @@ const Criterion3_2Form = ({
     }
   };
 
-  // ---------------- DELETE DATA ----------------
+  // ────────────────────────────────────────────────
+  //                   DELETE
+  // ────────────────────────────────────────────────
   const handleDelete = async () => {
-    if (!teaching_learning_quality_id) {
+    if (!attainmentCoId) {
       setAlert(
         <SweetAlert
           info
           title="Nothing to Delete"
           confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
           onConfirm={() => setAlert(null)}
         >
-          No data available to delete
+          No saved record found.
         </SweetAlert>
       );
       return;
@@ -235,67 +335,47 @@ const Criterion3_2Form = ({
         showCancel
         confirmBtnText="Yes, delete it!"
         cancelBtnText="Cancel"
-        confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
-
           try {
-            let res;
-            if (isContributor) {
-              res = await newnbaCriteria3Service.deleteStageCriteria3_1Data(
-                teaching_learning_quality_id
-              );
-            } else {
-              res = await newnbaCriteria3Service.deleteCriteria3_1Data(
-                teaching_learning_quality_id
-              );
-            }
-
-            let message = "Student Performance record deleted successfully.";
-            if (typeof res === "string") message = res;
-            else if (res?.data && typeof res.data === "string") message = res.data;
+            const res = await newnbaCriteria3Service.deleteCriteria3_2_Data(attainmentCoId);
 
             setAlert(
               <SweetAlert
                 success
                 title="Deleted!"
-                confirmBtnCssClass="btn-confirm"
                 confirmBtnText="OK"
                 onConfirm={() => setAlert(null)}
               >
-                {message}
+                {res?.message || "Record deleted successfully"}
               </SweetAlert>
             );
 
+            setAttainmentCoId(null);
             await loadData();
-            setTeaching_learning_quality_id(null);
             onSaveSuccess?.();
-
           } catch (err) {
-            console.error(err);
+            console.error("[Criterion 3.2] Delete failed:", err);
             setAlert(
               <SweetAlert
                 danger
                 title="Delete Failed"
-                confirmBtnCssClass="btn-confirm"
                 confirmBtnText="OK"
                 onConfirm={() => setAlert(null)}
               >
-                An error occurred while deleting
+                Could not delete the record. Please try again.
               </SweetAlert>
             );
           }
         }}
         onCancel={() => setAlert(null)}
       >
-        You won't be able to revert this deletion!
+        This action cannot be undone.
       </SweetAlert>
     );
   };
 
-  // ---------------- UI ----------------
   if (loading) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">

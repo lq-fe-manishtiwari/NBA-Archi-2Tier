@@ -549,7 +549,7 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
         "Program Curriculum and Teaching - Learning Processes": "/nba/criterion-2",
 
         // Criterion 3 - Research, Innovations and Extension
-        "Outcome-Based Assessment": "/nba/criterion-3",
+        "Course Outcomes and Program Outcomes": "/nba/criterion-3",
 
         // Criterion 4 - Students' Performance
         "Students' Performance": "/nba/criterion-4",
