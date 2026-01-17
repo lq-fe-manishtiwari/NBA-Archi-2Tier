@@ -36,36 +36,42 @@ const config = {
         label: "2.2.1 Initiatives in Teaching and Learning Process",
         marks: 15,
         type: "editor",
+        hasFile: true,
       },
       {
         name: "2.2.2",
         label: "2.2.2 Quality of Internal Semester Question Papers, Assignments and Evaluation",
         marks: 20,
         type: "editor",
+        hasFile: true,
       },
       {
         name: "2.2.3",
         label: "2.2.3 Quality of Students Projects",
         marks: 25,
         type: "editor",
+        hasFile: true,
       },
       {
         name: "2.2.4",
         label: "2.2.4 Initiatives Related to Profession Interaction",
         marks: 10,
         type: "editor",
+        hasFile: true,
       },
       {
         name: "2.2.5",
         label: "2.2.5 Initiatives Related to Skill Development Programs/Professional Internships / Summer Training",
         marks: 20,
         type: "editor",
+        hasFile: true,
       },
       {
         name: "2.2.6",
         label: "2.2.6 Quality of Studio Projects and Experiments",
         marks: 20,
         type: "editor",
+        hasFile: true,
       },
     ],
   };
@@ -120,7 +126,72 @@ const config = {
         },
         tableData: [],
         filesByField: {
-          "2.2": [{ id: `file-2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "2.2.1": (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives in Teaching and Learning Process").length > 0 
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives in Teaching and Learning Process").map((f, i) => ({
+                id: `file-2.2.1-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.2": (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Internal Semester Question Papers").length > 0
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Internal Semester Question Papers").map((f, i) => ({
+                id: `file-2.2.2-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.3": (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Students Projects").length > 0
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Students Projects").map((f, i) => ({
+                id: `file-2.2.3-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.4": (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives Related to Profession Interaction").length > 0
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives Related to Profession Interaction").map((f, i) => ({
+                id: `file-2.2.4-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.4-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.5": (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives Related to Skill Development").length > 0
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Initiatives Related to Skill Development").map((f, i) => ({
+                id: `file-2.2.5-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.5-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.6": (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Studio Projects").length > 0
+            ? (d.teaching_learning_process_document || []).filter(f => f.category === "Quality of Studio Projects").map((f, i) => ({
+                id: `file-2.2.6-${i}`,
+                name: f.name || f.file_name || "",
+                filename: f.name || f.file_name || "",
+                url: f.url || f.file_url || "",
+                s3Url: f.url || f.file_url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-2.2.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
         }
       });
 
@@ -138,7 +209,12 @@ const config = {
         },
         tableData: [],
         filesByField: {
-          "2.2": [{ id: `file-2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+          "2.2.1": [{ id: `file-2.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.2": [{ id: `file-2.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.3": [{ id: `file-2.2.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.4": [{ id: `file-2.2.4-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.5": [{ id: `file-2.2.5-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+          "2.2.6": [{ id: `file-2.2.6-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
         }
       });
     } finally {
@@ -155,13 +231,19 @@ const config = {
     setSaving(true);
     console.log(formData);
     try {
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-        (field) =>
-          (formData.filesByField[field] || []).map((file) => ({
-            ...file,
-            category: "Teaching-Learning Processes",
-          }))
-      );
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
+        return (formData.filesByField[fieldName] || []).map(file => {
+          let category = "Other";
+          if (fieldName === "2.2.1") category = "Initiatives in Teaching and Learning Process";
+          if (fieldName === "2.2.2") category = "Quality of Internal Semester Question Papers";
+          if (fieldName === "2.2.3") category = "Quality of Students Projects";
+          if (fieldName === "2.2.4") category = "Initiatives Related to Profession Interaction";
+          if (fieldName === "2.2.5") category = "Initiatives Related to Skill Development";
+          if (fieldName === "2.2.6") category = "Quality of Studio Projects";
+  
+          return { ...file, category };
+        });
+      });
       console.log(filesWithCategory);
           const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -176,11 +258,17 @@ const config = {
         initiatives_industry_interaction: formData.content["2.2.4"] || "",
         initiatives_skill_development: formData.content["2.2.5"] || "",
         quality_experiments: formData.content["2.2.6"] || "",
+        teaching_learning_process_document: filesWithCategory
+          .filter(f => f.url || f.s3Url)
+          .map(f => ({ 
+              name: f.filename || f.name, 
+              url: f.s3Url || f.url, 
+              description: f.description || "",
+              category: f.category 
+          })),
       };
       console.log("🟠 Criterion2_2Form - Save payload:", payload);
       console.log("🟠 staffId to save:", staffId);
-
-      const newFiles = filesWithCategory.filter((f) => f.file);
 
       // Call appropriate API based on whether record exists
       if (teachingLearningQualityId) {
