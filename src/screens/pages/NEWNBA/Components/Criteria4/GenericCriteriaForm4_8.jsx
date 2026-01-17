@@ -1,3 +1,5 @@
+// src/screens/pages/NEWNBA/Components/Criteria4/GenericCriteriaForm4_8.jsx
+
 import React, { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Editor } from "react-editor";
@@ -7,14 +9,13 @@ import { toast } from "react-toastify";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 import {
   GripVertical, Trash2, Plus, FileText, Save, CheckCircle,
-  Upload, X, Edit
+  Upload, X, Edit, Percent, Users, Briefcase, GraduationCap, Rocket
 } from "lucide-react";
-import { uploadFileToS3 } from "../S3UploadHelper";
+
 Modal.setAppElement("#root");
 
-// Generic Table
-const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
-
+// Generic Table for 4.8
+const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
   const safeData =
     data.length > 0
       ? data
@@ -26,45 +27,40 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
       : [];
 
   const handleChange = (i, field, val) => {
-  const updated = [...safeData];
-  updated[i][field] = val;
+    const updated = [...safeData];
+    updated[i][field] = val;
 
-  // Columns
-  ["lyg", "lygm1", "lygm2"].forEach(col => {
+    // Calculate automatically for rows 4, 5, 6
+    // Row indices: 0: N, 1: X, 2: Y, 3: Z, 4: X+Y+Z, 5: PI, 6: Average
+
+    // For each year column
+    ["lyg", "lygm1", "lygm2"].forEach(col => {
+      const N = parseFloat(updated[0][col]) || 0;
+      const X = parseFloat(updated[1][col]) || 0;
+      const Y = parseFloat(updated[2][col]) || 0;
+      const Z = parseFloat(updated[3][col]) || 0;
+
+      // Row 4: X + Y + Z
+      const totalXYZ = X + Y + Z;
+      updated[4][col] = totalXYZ.toString();
+
+      // Row 5: Placement Index (PI) = (X + Y + Z) / N
+      const PI = N > 0 ? ((totalXYZ / N) * 100).toFixed(2) : "0.00";
+      updated[5][col] = PI;
+    });
+
+    // Row 6: Average of the three PIs
+    const avgPI = (
+      (parseFloat(updated[5].lyg) || 0) +
+      (parseFloat(updated[5].lygm1) || 0) +
+      (parseFloat(updated[5].lygm2) || 0)
+    ) / 3;
     
-    // Extract numeric values from FS, X, Y, Z rows
-    const FS = parseFloat(updated[0][col]) || 0;  // N = Sanctioned intake
-    const X  = parseFloat(updated[1][col]) || 0;  // Students placed
-    const Y  = parseFloat(updated[2][col]) || 0;  // Higher studies
-    const Z  = parseFloat(updated[3][col]) || 0;  // Entrepreneurship
+    // Store average in a special field for display
+    updated[6].averageValue = avgPI.toFixed(2);
 
-    // ---------------------------------------
-    // 1️⃣  (X + Y + Z =) ROW → index = 4
-    // ---------------------------------------
-    const totalXYZ = X + Y + Z;
-    updated[4][col] = totalXYZ.toString();   // show total automatically
-
-    // ---------------------------------------
-    // 2️⃣  Placement Index (P) row → index = 5
-    //    (((X + Y + Z)/FS) * 100)
-    // ---------------------------------------
-    const P = FS > 0 ? ((totalXYZ / FS) * 100).toFixed(2) : "0.00";
-    updated[5][col] = P;
-  });
-
-  // ---------------------------------------
-  // 3️⃣ Average Placement Index row (index = 6)
-  // ---------------------------------------
-  const avg =
-    ((parseFloat(updated[5].lyg) || 0) +
-     (parseFloat(updated[5].lygm1) || 0) +
-     (parseFloat(updated[5].lygm2) || 0)) / 3;
-
-  updated[6].mergedAverage = avg.toFixed(2);
-
-  onChange(updated);
-};
-
+    onChange(updated);
+  };
 
   const onDragEnd = (result) => {
     if (!result.destination) return;
@@ -76,13 +72,25 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
 
   return (
     <div className="space-y-6">
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <h4 className="text-lg font-bold text-blue-700 mb-2">{tableConfig.title}</h4>
+        <p className="text-sm text-gray-600">
+          <strong>Note:</strong> LYG = Last Year Graduated, LYGm1 = LYG minus 1, LYGm2 = LYG minus 2
+        </p>
+      </div>
+
       <DragDropContext onDragEnd={onDragEnd}>
         <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
           <thead>
             <tr className="bg-[#2163c1] text-white">
               <th className="p-4 w-12"></th>
               {columns.map((c) => (
-                <th key={c.field} className="p-4 text-left font-medium">{c.header}</th>
+                <th key={c.field} className="p-4 text-left font-medium">
+                  {c.header}
+                  {c.field === 'lyg' && <div className="text-xs font-normal">(Last Year Graduated)</div>}
+                  {c.field === 'lygm1' && <div className="text-xs font-normal">(LYG - 1)</div>}
+                  {c.field === 'lygm2' && <div className="text-xs font-normal">(LYG - 2)</div>}
+                </th>
               ))}
               {!disabled && <th className="w-20"></th>}
             </tr>
@@ -98,47 +106,79 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
                     index={i}
                     isDragDisabled={disabled}
                   >
-                    {(provided, snapshot) => (
-                      <tr
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={`border-b transition-all ${snapshot.isDragging ? "bg-indigo-50 shadow-2xl" : "hover:bg-gray-50"}`}
-                      >
-                        <td className="p-3">
-                          <div {...provided.dragHandleProps} className="cursor-grab">
-                            <GripVertical className="w-6 h-6 text-gray-500" />
-                          </div>
-                        </td>
+                    {(provided, snapshot) => {
+                      // Determine row styling
+                      let rowClass = "border-b hover:bg-gray-50";
+                      let isCalculatedRow = i >= 4; // Rows 4,5,6 are calculated
+                      
+                      if (i === 6) {
+                        rowClass = "bg-gradient-to-r from-green-50 to-blue-50 border-t-2 border-green-300";
+                      } else if (isCalculatedRow) {
+                        rowClass = "bg-gray-50 border-b";
+                      }
 
-                        {/* Item Column */}
-                        <td className="p-3 font-medium text-gray-800">
-                          {row.item}
-                        </td>
-
-                        {/* 🔥 SPECIAL: MERGED AVERAGE ROW (index = 6) */}
-                        {i === 6 ? (
-                          <td colSpan={3} className="p-5 text-center bg-indigo-50 text-indigo-700 font-bold text-lg rounded-lg">
-                            {row.mergedAverage || "0.00"}
+                      return (
+                        <tr
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`${rowClass} transition-all ${snapshot.isDragging ? "shadow-2xl" : ""}`}
+                        >
+                          <td className="p-3">
+                            <div {...provided.dragHandleProps} className="cursor-grab">
+                              <GripVertical className="w-6 h-6 text-gray-500" />
+                            </div>
                           </td>
-                        ) : (
-                          // ✔ Normal 3 columns
-                          columns.slice(1).map((col) => (
-                            <td key={col.field} className="p-3">
-                              <input
-                                type="number"
-                                step="1"
-                                value={row[col.field] || ""}
-                                onChange={(e) => handleChange(i, col.field, e.target.value)}
-                                disabled={disabled}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-center"
-                                placeholder="0"
-                              />
-                            </td>
-                          ))
-                        )}
 
-                      </tr>
-                    )}
+                          {/* Item Column with icons */}
+                          <td className="p-3 font-medium text-gray-800 flex items-center gap-2">
+                            {i === 0 && <Users className="w-4 h-4 text-blue-600" />}
+                            {i === 1 && <Briefcase className="w-4 h-4 text-green-600" />}
+                            {i === 2 && <GraduationCap className="w-4 h-4 text-purple-600" />}
+                            {i === 3 && <Rocket className="w-4 h-4 text-orange-600" />}
+                            {i === 5 && <Percent className="w-4 h-4 text-red-600" />}
+                            {i === 6 && <span className="font-bold">Average</span>}
+                            {row.item}
+                          </td>
+
+                          {/* For the average row (index 6), show merged cell */}
+                          {i === 6 ? (
+                            <td colSpan={3} className="p-5 text-center bg-gradient-to-r from-green-100 to-blue-100">
+                              <div className="text-2xl font-bold text-green-800">
+                                {row.averageValue || "0.00"}%
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                Average Placement Index
+                              </div>
+                            </td>
+                          ) : (
+                            // Normal data cells for other rows
+                            columns.slice(1).map((col) => (
+                              <td key={col.field} className="p-3">
+                                {i >= 4 ? (
+                                  // Calculated rows (4,5) are read-only
+                                  <div className="text-center font-semibold">
+                                    {row[col.field] || "0"}
+                                    {i === 5 && "%"}
+                                  </div>
+                                ) : (
+                                  // Input rows (0-3)
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={row[col.field] || ""}
+                                    onChange={(e) => handleChange(i, col.field, e.target.value)}
+                                    disabled={disabled}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="0"
+                                  />
+                                )}
+                              </td>
+                            ))
+                          )}
+                        </tr>
+                      );
+                    }}
                   </Draggable>
                 ))}
                 {provided.placeholder}
@@ -147,15 +187,50 @@ const GenericTable = ({ columns, data = [], onChange, disabled, tableConfig }) =
           </Droppable>
         </table>
       </DragDropContext>
+
+      {/* Marks Calculation */}
+      {safeData[6]?.averageValue && (
+        <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl">
+          <h4 className="text-xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
+            <Percent className="w-6 h-6" /> Marks Calculation
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-4 rounded-lg border">
+              <h5 className="font-bold text-gray-700 mb-2">Formula:</h5>
+              <div className="text-sm text-gray-600 space-y-1">
+                <div>• Placement Index (PI) = (X + Y + Z) ÷ N × 100</div>
+                <div>• Average PI = (PI₁ + PI₂ + PI₃) ÷ 3</div>
+                <div>• Assessment Points = 40 × Average PI</div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border">
+              <h5 className="font-bold text-gray-700 mb-2">Current Calculation:</h5>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Average Placement Index:</span>
+                  <span className="font-bold text-green-700">{safeData[6]?.averageValue}%</span>
+                </div>
+                <div className="flex justify-between text-lg">
+                  <span>Marks (out of 40):</span>
+                  <span className="font-bold text-indigo-700">
+                    {(40 * parseFloat(safeData[6]?.averageValue || 0) / 100).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-
 // Main Component
 const GenericCriteriaForm4_8 = ({
   title = "NBA Section",
-  marks = 50,
+  marks = 40,
   fields = [],
   initialData = null,
   onSave,
@@ -170,13 +245,11 @@ const GenericCriteriaForm4_8 = ({
   const safeTableData = initialData?.tableData || [];
 
   const [filesByField, setFilesByField] = useState(() => {
-    // If initialData has filesByField, use it; otherwise initialize with empty slots
     if (initialData?.filesByField) {
       console.log("Initializing filesByField from initialData:", initialData.filesByField);
       return initialData.filesByField;
     }
 
-    // Default initialization with empty file slots
     const init = {};
     fields.forEach((field) => {
       init[field.name] = [
@@ -200,8 +273,6 @@ const GenericCriteriaForm4_8 = ({
       setTableData(initialData.tableData);
     }
     if (initialData?.filesByField) {
-      console.log("🔄 Updating filesByField from initialData:", initialData.filesByField);
-      // Only update if current filesByField doesn't have uploaded files
       setFilesByField(prev => {
         const hasUploadedFiles = Object.values(prev).some(fieldFiles => 
           fieldFiles.some(file => file.s3Url || file.filename)
@@ -242,7 +313,6 @@ const GenericCriteriaForm4_8 = ({
     }
 
     const currentRow = filesByField[fieldName][index];
-    console.log("Current row BEFORE updating:", currentRow);
 
     // Optimistic UI update
     setFilesByField(prev => ({
@@ -253,31 +323,16 @@ const GenericCriteriaForm4_8 = ({
     }));
 
     try {
-      // Pure multipart/form-data
       const formData = new FormData();
-      formData.append("file", newFile); // binary file content
-
-      // Only append description if it exists
+      formData.append("file", newFile);
+      
       if (currentRow.description?.trim()) {
         formData.append("description", currentRow.description.trim());
       }
 
-      console.log("FormData entries:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
-      // Call backend using your service
       const resData = await nbaDashboardService.uploadFile(formData);
-
-      console.log("Upload response:", resData);
-
-      // Extract S3 URL from response - same as main GenericCriteriaForm
       const s3Url = resData || resData?.url || "";
 
-      console.log("S3 URL extracted:", s3Url);
-
-      // Update UI with uploaded file info
       setFilesByField(prev => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
@@ -292,7 +347,6 @@ const GenericCriteriaForm4_8 = ({
       console.error("❌ ERROR uploading file:", err);
       toast.error("Upload failed");
 
-      // Revert optimistic UI update
       setFilesByField(prev => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
@@ -333,8 +387,9 @@ const GenericCriteriaForm4_8 = ({
           {!isCompleted && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
-                }`}
+              className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${
+                isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c1]" : "bg-white hover:bg-gray-100 text-[#2163c1]"
+              }`}
               title={isEditMode ? "Cancel Editing" : "Edit Section"}
             >
               {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
@@ -352,7 +407,7 @@ const GenericCriteriaForm4_8 = ({
             </h3>
 
             {field.hasTable ? (
-              <GenericTable
+              <PlacementTable
                 columns={field.tableConfig.columns}
                 data={tableData}
                 onChange={setTableData}
@@ -409,7 +464,9 @@ const GenericCriteriaForm4_8 = ({
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
-                                  className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"}`}
+                                  className={`flex items-center gap-3 p-4 bg-white rounded-lg border transition-all ${
+                                    snapshot.isDragging ? "border-indigo-500 shadow-lg" : "border-gray-300"
+                                  }`}
                                 >
                                   <div {...provided.dragHandleProps} className="cursor-grab">
                                     <GripVertical className="w-5 h-5 text-gray-400" />
@@ -451,13 +508,21 @@ const GenericCriteriaForm4_8 = ({
                                       <Plus className="w-5 h-5" />
                                     </button>
                                     <button
-  onClick={() => removeFileRow(field.name, index)}
-  className={`text-red-500 p-2 rounded transition ${ (filesByField[field.name]?.length || 0) <= 1 ? 'opacity-50 cursor-not-allowed hover:bg-transparent' : 'hover:bg-red-50' }`}
-  title={(filesByField[field.name]?.length || 0) <= 1 ? "Cannot delete the only document" : "Remove document"}
-  disabled={(filesByField[field.name]?.length || 0) <= 1}
->
-  <Trash2 className="w-5 h-5" />
-</button>
+                                      onClick={() => removeFileRow(field.name, index)}
+                                      className={`text-red-500 p-2 rounded transition ${
+                                        (filesByField[field.name]?.length || 0) <= 1
+                                          ? "opacity-50 cursor-not-allowed hover:bg-transparent"
+                                          : "hover:bg-red-50"
+                                      }`}
+                                      title={
+                                        (filesByField[field.name]?.length || 0) <= 1
+                                          ? "Cannot delete the only document"
+                                          : "Remove document"
+                                      }
+                                      disabled={(filesByField[field.name]?.length || 0) <= 1}
+                                    >
+                                      <Trash2 className="w-5 h-5" />
+                                    </button>
                                   </div>
                                 </div>
                               )}
@@ -478,10 +543,11 @@ const GenericCriteriaForm4_8 = ({
           <div className="text-center pt-10 flex gap-4 justify-center">
             <button
               onClick={handleSave}
-              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${saving || !isContributorEditable
-                ? "bg-[#2163c1] cursor-pointer opacity-60"
-                : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
-                }`}
+              className={`inline-flex items-center justify-center w-12 h-12 rounded-lg transition-all ${
+                saving || !isContributorEditable
+                  ? "bg-[#2163c1] cursor-pointer opacity-60"
+                  : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
+              }`}
               title={saving ? "Saving..." : !isContributorEditable ? "Not allowed to save" : "Save"}
             >
               <Save className="w-6 h-6" />
@@ -536,7 +602,6 @@ const GenericCriteriaForm4_8 = ({
         pdfFiles={filesByField[mergeModal.fieldName] || []}
         onClose={() => setMergeModal({ isOpen: false, fieldName: null })}
         onFileAdd={(mergedDocument) => {
-          // Add merged document to the field's file list
           const mergedFile = {
             id: mergedDocument.id,
             filename: mergedDocument.filename,
