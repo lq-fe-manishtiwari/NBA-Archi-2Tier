@@ -1,358 +1,228 @@
-// src/screens/pages/NEWNBA/Components/Criteria8/Criterion8_6Form.jsx
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import GenericCriteriaForm from "../GenericCriteriaForm";
-import { newnbaCriteria8Service } from "../../Services/NewNBA-Criteria8.service";
-import SweetAlert from "react-bootstrap-sweetalert";
-import { getAllProfileFlags } from "@/_services/adminProfileUtils";
 import StatusBadge from "../StatusBadge";
+import SweetAlert from "react-bootstrap-sweetalert";
+import { newnbaCriteria8Service } from "../../Services/NewNBA-Criteria8.service";
 
 const Criterion8_6Form = ({
   nba_accredited_program_id,
+  academic_year,
   nba_criteria_sub_level2_id,
-  nba_contributor_allocation_id,
-  isContributorEditable = true,
+  contributor_allocation_id: nba_contributor_allocation_id,
   completed = false,
-  onSaveSuccess,
+  isContributorEditable = true,
   otherStaffId = null,
   editMode = false,
-  professionalDevelopmentId: propProfessionalDevelopmentId = null,
+  coPoPsoActionsId = null,
+  onSuccess = () => {},
+  readOnly = false,
+  cardData = null
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [professionalDevelopmentId, setProfessionalDevelopmentId] = useState(propProfessionalDevelopmentId);
-  const [initialData, setInitialData] = useState({
-    content: {},
-    tableData: [],
-    filesByField: {},
-  });
+  const [deleting, setDeleting] = useState(false);
+  const [initialData, setInitialData] = useState(null);
   const [approvalStatus, setApprovalStatus] = useState(null);
+  const [currentId, setCurrentId] = useState(null);
   const [userRole, setUserRole] = useState({});
-  const [contributorName, setContributorName] = useState("");
   const [alert, setAlert] = useState(null);
-  const [hasExistingData, setHasExistingData] = useState(false);
+
+  // Force edit mode from the beginning (like Criterion 1.3)
+  const isEditMode = true;
 
   useEffect(() => {
     const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
     setUserRole(userInfo);
   }, []);
 
-  const config = {
-    title: "8.6 Entrepreneurship Cell",
+  const getEffectiveStaffId = () => {
+    const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+
+    return (
+      otherStaffId ||
+      userProfile?.rawData?.other_staff_id ||
+      userProfile?.user_id ||
+      userInfo?.other_staff_id ||
+      userInfo?.user_id ||
+      null
+    );
+  };
+
+  const sectionConfig = {
+    title: "8.6. Mentoring System to Help at Individual Levels",
     totalMarks: 5,
     fields: [
       {
-        name: "entrepreneurship_details",
+        name: "8.6.1",
+        label: "8.6.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        marks: 20,
         type: "textarea",
-        rows: 6,
-        placeholder: "Describe entrepreneurship cell activities and initiatives...",
+        rows: 8,
+        placeholder: "Describe the student support system / mentoring system...",
+        allowFiles: true
       }
     ]
   };
 
-  const loadData = useCallback(async () => {
-    if (!nba_criteria_sub_level2_id) {
-      setLoading(false);
-      return;
-    }
+  const createEmptyFile = () => ({
+    id: `file-8.6.1-default-${Date.now()}`,
+    description: "",
+    file: null,
+    filename: "",
+    s3Url: "",
+    uploading: false,
+    category: "Student Support Documents"
+  });
 
-    try {
-      setLoading(true);
-      
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffIdToUse = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
-      
-      if (!staffIdToUse) {
-        setInitialData({
-          content: { entrepreneurship_details: "" },
-          tableData: [],
-          filesByField: {}
-        });
+  const ensureFileSlot = (files = []) => {
+    return files.length === 0 ? [createEmptyFile()] : files;
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      const staffId = getEffectiveStaffId();
+
+      if (!nba_criteria_sub_level2_id || !staffId) {
+        loadEmptyForm();
         setLoading(false);
         return;
       }
 
-      const response = await newnbaCriteria8Service.getCriteria8_6_Data(
-        nba_criteria_sub_level2_id,
-        staffIdToUse
-      );
+      setLoading(true);
 
-      let dataItem = null;
-      if (Array.isArray(response)) {
-        if (response.length > 0) {
-          dataItem = response[0];
-        }
-      } else {
-        dataItem = response;
-      }
-
-      if (dataItem && dataItem.entrepreneurship_id) {
-        setHasExistingData(true);
-        
-        if (dataItem.other_staff_name) {
-          setContributorName(dataItem.other_staff_name);
-        } else if (dataItem.firstname) {
-          const name = `${dataItem.firstname || ''} ${dataItem.middlename || ''} ${dataItem.lastname || ''}`.trim();
-          setContributorName(name);
-        }
-
-        setProfessionalDevelopmentId(dataItem.entrepreneurship_id);
-
-        if (dataItem.approval_status) {
-          setApprovalStatus({
-            status: dataItem.approval_status,
-            rejectionReason: dataItem.rejection_reason,
-            approvalReason: dataItem.approval_status === 'APPROVED' ? dataItem.rejection_reason : null,
-            approvedByName: dataItem.approved_by_name,
-            submittedTime: dataItem.submitted_time
-          });
-        }
-
-        const filesArray = Array.isArray(dataItem.supporting_documents) 
-          ? dataItem.supporting_documents 
-          : [];
-
-        const filesByField = {
-          "entrepreneurship_details": filesArray.length > 0
-            ? filesArray.map((f, i) => ({
-                id: f.id || `file-entrepreneur-${i}`,
-                filename: f.filename || f.name || f.file_url || "",
-                s3Url: f.file_url || f.url || f.s3Url || "",
-                url: f.file_url || f.url || f.s3Url || "",
-                description: f.description || "",
-                category: f.category || "Supporting Documents",
-                uploading: false
-              }))
-            : [{ 
-                id: `file-entrepreneur-0`, 
-                description: "", 
-                file: null, 
-                filename: "", 
-                s3Url: "", 
-                url: "",
-                category: "Supporting Documents",
-                uploading: false 
-              }]
-        };
-
-        setInitialData({
-          content: { entrepreneurship_details: dataItem.entrepreneurship_details || "" },
-          tableData: response,
-          filesByField: filesByField
-        });
-
-      } else {
-        setHasExistingData(false);
-        setProfessionalDevelopmentId(null);
-        setApprovalStatus(null);
-        setContributorName("");
-        
-        setInitialData({
-          content: { entrepreneurship_details: "" },
-          tableData: [],
-          filesByField: {
-            "entrepreneurship_details": [{
-              id: `file-entrepreneur-0`,
-              description: "",
-              file: null,
-              filename: "",
-              s3Url: "",
-              url: "",
-              category: "Supporting Documents",
-              uploading: false
-            }]
-          }
-        });
-      }
-
-    } catch (err) {
-      console.error("Load failed:", err);
-      
-      if (err.response && err.response.status !== 404) {
-        setAlert(
-          <SweetAlert
-            danger
-            title="Load Failed"
-            confirmBtnText="OK"
-            confirmBtnCssClass="btn-confirm"
-            onConfirm={() => setAlert(null)}
-          >
-            Failed to load saved data
-          </SweetAlert>
+      try {
+        const response = await newnbaCriteria8Service.getStudentSupportSystemByStaff(
+          nba_criteria_sub_level2_id,
+          staffId
         );
-      }
-      
-      setHasExistingData(false);
-      setInitialData({ 
-        content: { entrepreneurship_details: "" }, 
-        tableData: [], 
-        filesByField: {
-          "entrepreneurship_details": [{ 
-            id: `file-entrepreneur-0`, 
-            description: "", 
-            file: null, 
-            filename: "", 
-            s3Url: "", 
-            url: "",
-            category: "Supporting Documents",
-            uploading: false 
-          }]
-        }
-      });
-      setProfessionalDevelopmentId(null);
-      setApprovalStatus(null);
-      setContributorName("");
-      
-    } finally {
-      setLoading(false);
-    }
-  }, [nba_accredited_program_id, nba_criteria_sub_level2_id, nba_contributor_allocation_id, otherStaffId, propProfessionalDevelopmentId, editMode]);
 
-  useEffect(() => {
+        let selectedRecord = null;
+
+        if (Array.isArray(response) && response.length > 0) {
+          selectedRecord = response.reduce((prev, curr) => {
+            const prevTime = prev.updated_at ? new Date(prev.updated_at) : new Date(0);
+            const currTime = curr.updated_at ? new Date(curr.updated_at) : new Date(0);
+            return currTime > prevTime ? curr : prev;
+          });
+        } else if (response && typeof response === 'object') {
+          selectedRecord = response;
+        }
+
+        if (selectedRecord) {
+          processData(selectedRecord);
+        } else {
+          loadEmptyForm();
+        }
+      } catch (err) {
+        toast.error("Failed to load data");
+        loadEmptyForm();
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadData();
-  }, [loadData]);
+  }, [nba_criteria_sub_level2_id, otherStaffId]);
+
+  const processData = (d) => {
+    const files = (d.student_support_document || []).map((doc, i) => ({
+      id: doc.id || `file-8.6.1-${i}`,
+      filename: doc.filename || "",
+      description: doc.description || "",
+      s3Url: doc.file_url || "",
+      category: "Student Support Documents"
+    }));
+
+    setInitialData({
+      content: {
+        "8.6.1": d.student_support_description || ""
+      },
+      tableData: {},
+      filesByField: {
+        "8.6.1": ensureFileSlot(files)
+      }
+    });
+
+    setCurrentId(d.id || null);
+
+    if (d.approval_status) {
+      setApprovalStatus({
+        status: d.approval_status,
+        rejectionReason: d.rejection_reason,
+        approvedByName: d.approved_by_name
+      });
+    }
+  };
+
+  const loadEmptyForm = () => {
+    setInitialData({
+      content: { "8.6.1": "" },
+      tableData: {},
+      filesByField: {
+        "8.6.1": ensureFileSlot([])
+      }
+    });
+    setCurrentId(null);
+    setApprovalStatus(null);
+  };
 
   const handleSave = async (formData) => {
-    const profileFlags = getAllProfileFlags();
-    const isContributor = profileFlags?.isContributor || false;
-    
-    if (!isContributorEditable && isContributor) {
-      setAlert(
-        <SweetAlert
-          warning
-          title="Permission Denied"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          You don't have permission to edit
-        </SweetAlert>
-      );
+    const staffId = getEffectiveStaffId();
+    if (!staffId) {
+      toast.error("Cannot save: Staff ID not found");
       return;
     }
 
-    setSaving(true);
-    
     try {
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo2?.other_staff_id;
+      setSaving(true);
 
-      if (!staffId) {
-        throw new Error("Staff ID not found");
-      }
-
-      if (!nba_criteria_sub_level2_id) {
-        throw new Error("Cycle sub-category ID is required");
-      }
-
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-        (field) =>
-          (formData.filesByField[field] || []).map((file) => ({
-            ...file,
-            category: file.category || "Supporting Documents",
-            url: file.url || file.s3Url || "",
-            file_url: file.url || file.s3Url || "",
-          }))
-      );
+      const documents = (formData.filesByField?.["8.6.1"] || [])
+        .filter(f => f.s3Url)
+        .map(f => ({
+          filename: f.filename,
+          description: f.description,
+          file_url: f.s3Url
+        }));
 
       const payload = {
-        other_staff_id: parseInt(staffId),
-        cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        entrepreneurship_details: formData.content?.entrepreneurship_details || "",
-        supporting_documents: filesWithCategory
-          .filter((f) => f.url || f.s3Url || f.file)
-          .map((f) => ({
-            description: f.description || "",
-            filename: f.filename || f.name || f.file?.name || "",
-            file_url: f.url || f.s3Url || "",
-            url: f.url || f.s3Url || "",
-            category: f.category || "Supporting Documents",
-            id: f.id,
-          })),
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        student_support_description: formData.content?.["8.6.1"] || "",
+        student_support_document: documents
       };
 
-      let response;
-      const hasExistingEntry = professionalDevelopmentId || propProfessionalDevelopmentId;
+      let newId;
 
-      if (hasExistingEntry) {
-        const idToUse = professionalDevelopmentId || propProfessionalDevelopmentId;
-        response = await newnbaCriteria8Service.updateData8_6(idToUse, payload);
+      if (currentId) {
+        await newnbaCriteria8Service.updateStudentSupportSystem(currentId, payload, staffId);
+        toast.success("Updated successfully");
+        newId = currentId;
       } else {
-        response = await newnbaCriteria8Service.saveCriteria8_6_Data(payload);
+        const response = await newnbaCriteria8Service.saveStudentSupportSystem(payload, staffId);
+        toast.success("Saved successfully");
+        // If your create API returns the new ID, capture it
+        newId = response?.id || null; // adjust according to your API response
       }
 
-      const updatedFilesByField = {};
-      
-      Object.keys(formData.filesByField || {}).forEach(field => {
-        const files = formData.filesByField[field] || [];
-        updatedFilesByField[field] = files.map(file => {
-          const savedFile = payload.supporting_documents?.find(
-            f => f.id === file.id || f.filename === (file.filename || file.file?.name)
-          );
-          
-          return {
-            ...file,
-            s3Url: savedFile?.url || savedFile?.file_url || file.s3Url || file.url || "",
-            url: savedFile?.url || savedFile?.file_url || file.s3Url || file.url || "",
-            filename: savedFile?.filename || file.filename || file.file?.name || "",
-            category: savedFile?.category || file.category || "Supporting Documents",
-            uploading: false
-          };
-        });
-      });
+      // Very important: update currentId after create → delete becomes available immediately
+      setCurrentId(newId);
 
-      setInitialData(prev => ({
-        ...prev,
-        content: formData.content,
-        filesByField: updatedFilesByField
-      }));
-
-      if (response?.entrepreneurship_id && !professionalDevelopmentId) {
-        setProfessionalDevelopmentId(response.entrepreneurship_id);
-        setHasExistingData(true);
-      }
-
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          Criterion 8.6 saved successfully
-        </SweetAlert>
-      );
-
-      onSaveSuccess?.();
-
+      onSuccess();
     } catch (err) {
-      console.error("Save failed:", err);
-      setAlert(
-        <SweetAlert
-          danger
-          title="Save Failed"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          {err.response?.data?.message || err.message || "Failed to save"}
-        </SweetAlert>
-      );
+      toast.error(err.message || "Save failed");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!professionalDevelopmentId) {
+  const handleDelete = () => {
+    if (!currentId) {
       setAlert(
         <SweetAlert
-          info
-          title="Nothing to Delete"
-          confirmBtnText="OK"
+          warning
+          title="No Data"
           confirmBtnCssClass="btn-confirm"
           onConfirm={() => setAlert(null)}
         >
@@ -367,97 +237,67 @@ const Criterion8_6Form = ({
         warning
         showCancel
         confirmBtnText="Yes, delete it!"
-        cancelBtnText="Cancel"
-        confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
+        confirmBtnBsStyle="danger"
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria8Service.deleteData8_6(professionalDevelopmentId);
-            setAlert(
-              <SweetAlert
-                success
-                title="Deleted!"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                Entrepreneurship Cell record deleted successfully
-              </SweetAlert>
-            );
-            await loadData();
-            setProfessionalDevelopmentId(null);
-            setHasExistingData(false);
-            onSaveSuccess?.();
-          } catch (error) {
-            console.error(error);
-            setAlert(
-              <SweetAlert
-                danger
-                title="Delete Failed"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                An error occurred while deleting
-              </SweetAlert>
-            );
+            setDeleting(true);
+            await newnbaCriteria8Service.deleteStudentSupportSystem(currentId);
+            toast.success("Deleted successfully");
+
+            // Reset form completely - like Criterion 1.3
+            loadEmptyForm();
+            onSuccess();
+          } catch (err) {
+            toast.error("Failed to delete");
+          } finally {
+            setDeleting(false);
           }
         }}
         onCancel={() => setAlert(null)}
       >
-        You won't be able to revert this deletion!
+        This will permanently delete Criterion 8.6 data
       </SweetAlert>
     );
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">
-        Loading {config.title}...
+      <div className="py-32 text-center text-indigo-600 text-xl">
+        Loading {sectionConfig.title}...
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {approvalStatus && approvalStatus.status !== 'COORDINATORS_DATA' && userRole.nba_coordinator !== true && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <StatusBadge
-              status={approvalStatus.status}
-              rejectionReason={approvalStatus.rejectionReason}
-              approvalReason={approvalStatus.approvalReason}
-              approvedByName={approvalStatus.approvedByName}
-            />
-            {approvalStatus.submittedTime && (
-              <span className="text-sm text-gray-500">
-                Submitted: {new Date(approvalStatus.submittedTime).toLocaleString()}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      <GenericCriteriaForm
-        title={config.title}
-        marks={config.totalMarks}
-        fields={config.fields}
-        initialData={initialData}
-        onSave={handleSave}
-        onDelete={professionalDevelopmentId ? handleDelete : null}
-        isCompleted={completed}
-        isContributorEditable={isContributorEditable}
-        saving={saving}
-        hasExistingData={hasExistingData}
-        showFileCategories={true}
-        deleteButtonText={professionalDevelopmentId ? "Delete Record" : null}
-        saveButtonText={professionalDevelopmentId ? "Update Record" : "Save Record"}
-      />
-
+    <>
       {alert}
-    </div>
+
+      <div className="space-y-4">
+        {approvalStatus && userRole.nba_coordinator !== true && (
+          <div className="bg-white border rounded-lg p-4">
+            <StatusBadge {...approvalStatus} />
+          </div>
+        )}
+
+        <GenericCriteriaForm
+          title={sectionConfig.title}
+          marks={sectionConfig.totalMarks}
+          fields={sectionConfig.fields}
+          initialData={initialData}
+          onSave={handleSave}
+          onDelete={handleDelete}
+          isCompleted={completed}
+          isContributorEditable={isContributorEditable && !readOnly}
+          saving={saving || deleting}
+          hasExistingData={!!currentId}
+          readOnly={readOnly}
+          // Force edit mode (like Criterion 1.3)
+          initialEditMode={true}
+        />
+      </div>
+    </>
   );
 };
 

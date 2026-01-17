@@ -158,45 +158,45 @@ const NBACriteria8Optimized = () => {
 
     if (sectionName.includes("8.1")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_1,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_1,
-        getSectionData: newnbaCriteria8Service.getCriteria8_1_Data
+        updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.2")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_2,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_2,
-        getSectionData: newnbaCriteria8Service.getCriteria8_2_Data
+        updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.3")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_3,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_3,
-        getSectionData: newnbaCriteria8Service.getCriteria8_3_Data
+        updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.4")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_4,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_4,
-        getSectionData: newnbaCriteria8Service.getCriteria8_4_Data
+         updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.5")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_5,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_5,
-        getSectionData: newnbaCriteria8Service.getCriteria8_5_Data
+        updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.6")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_6,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_6,
-        getSectionData: newnbaCriteria8Service.getCriteria8_6_Data
+         updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else if (sectionName.includes("8.7")) {
       return {
-        updateCardStatus: newnbaCriteria8Service.updateCardStatus8_7,
-        getCardData: newnbaCriteria8Service.getallCardDetails8_7,
-        getSectionData: newnbaCriteria8Service.getCriteria8_7_Data
+         updateCardStatus: newnbaCriteria8Service.updateStudentSupportApprovalStatus,
+        getCardData: newnbaCriteria8Service.getAllStudentSupportContributors,
+        getSectionData: newnbaCriteria8Service.getStudentSupportSystemByStaff
       };
     } else {
       return {};
@@ -705,19 +705,19 @@ const NBACriteria8Optimized = () => {
       // Dynamic ID extraction based on section
       let primaryId = null;
       if (sectionName.includes("8.1")) {
-        primaryId = cardItem?.co_po_pso_actions_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.2")) {
-        primaryId = cardItem?.academic_audit_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.3")) {
-        primaryId = cardItem?.faculty_qualification_improvement_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.4")) {
-        primaryId = cardItem?.academic_performance_improvement_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.5")) {
-        primaryId = cardItem?.career_guidance_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.6")) {
-        primaryId = cardItem?.entrepreneurship_id || null;
+        primaryId = cardItem?.id || null;
       } else if (sectionName.includes("8.7")) {
-        primaryId = cardItem?.activities_id || null;
+        primaryId = cardItem?.id || null;
       }
 
       const selectedCardData = {
@@ -793,19 +793,19 @@ const NBACriteria8Optimized = () => {
       let updateResult;
 
       if (sectionName.includes("8.1")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_1(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.2")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_2(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.3")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_3(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.4")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_4(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.5")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_5(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.6")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_6(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else if (sectionName.includes("8.7")) {
-        updateResult = await newnbaCriteria8Service.updateCardStatus8_7(cardId, statusUpdateData);
+        updateResult = await newnbaCriteria8Service.updateStudentSupportApprovalStatus(cardId, statusUpdateData);
       } else {
         throw new Error(`Unknown section: ${sectionName}`);
       }
