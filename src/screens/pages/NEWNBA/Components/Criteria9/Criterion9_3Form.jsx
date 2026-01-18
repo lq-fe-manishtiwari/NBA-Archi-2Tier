@@ -101,8 +101,7 @@ const Criterion9_3Form = ({
       console.log("  - staffId:", staffIdToUse);
 
       // Use the new service API call
-      const response = await newnbaCriteria9Service.getCriteria9Data(
-        '9.3', // section
+      const response = await newnbaCriteria9Service.getCriteria9_3_Data(
         nba_criteria_sub_level2_id, // cycleSubCategoryId
         staffIdToUse // otherStaffId
       );
@@ -124,7 +123,7 @@ const Criterion9_3Form = ({
 
       console.log("📊 Final dataItem:", dataItem);
 
-      if (dataItem && dataItem.feedback_analysis_id) {
+      if (dataItem && dataItem.id) {
         console.log("✅ Criterion9_3Form - Found existing data");
         
         // Set contributor name for display
@@ -136,7 +135,7 @@ const Criterion9_3Form = ({
         }
 
         // Set ID
-        setFeedbackAnalysisId(dataItem.feedback_analysis_id);
+        setFeedbackAnalysisId(dataItem.id);
 
         // Set approval status if available
         if (dataItem.approval_status) {
@@ -150,8 +149,8 @@ const Criterion9_3Form = ({
         }
 
         // Transform files to filesByField structure
-        const filesArray = Array.isArray(dataItem.supporting_documents)
-          ? dataItem.supporting_documents
+        const filesArray = Array.isArray(dataItem.library_internet_document)
+          ? dataItem.library_internet_document
           : [];
 
         const filesByField = {
@@ -197,7 +196,7 @@ const Criterion9_3Form = ({
 
         setInitialData({
           content: {
-            quality_learning_resource: dataItem.quality_learning_resource || "",
+            quality_learning_resource: dataItem.quality_learning_resources || "",
             internet: dataItem.internet || ""
           },
           tableData: [],
@@ -352,9 +351,9 @@ const Criterion9_3Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        quality_learning_resource: formData.content?.quality_learning_resource || "",
+        quality_learning_resources: formData.content?.quality_learning_resource || "",
         internet: formData.content?.internet || "",
-        supporting_documents: filesWithCategory
+        library_internet_document: filesWithCategory
           .filter((f) => f.url || f.s3Url)
           .map((f) => ({
             description: f.description || "",
@@ -374,11 +373,11 @@ const Criterion9_3Form = ({
         // Update existing record
         const idToUse = feedbackAnalysisId || propFeedbackAnalysisId;
         console.log("🔄 Criterion9_3Form - Updating existing entry with ID:", idToUse);
-        response = await newnbaCriteria9Service.updateCriteria9('9.3', idToUse, payload);
+        response = await newnbaCriteria9Service.putCriteria9_3_Data(idToUse, staffId, payload);
       } else {
         // Create new record
         console.log("🆕 Criterion9_3Form - Creating new entry");
-        response = await newnbaCriteria9Service.saveCriteria9Data('9.3', payload);
+        response = await newnbaCriteria9Service.saveCriteria9_3_Data(staffId, payload);
       }
 
       console.log("Save response:", response);
@@ -391,7 +390,7 @@ const Criterion9_3Form = ({
         const files = formData.filesByField[field] || [];
         updatedFilesByField[field] = files.map(file => {
           // Find matching file in payload
-          const savedFile = payload.supporting_documents?.find(
+          const savedFile = payload.library_internet_document?.find(
             f => f.id === file.id || f.filename === (file.filename || file.file?.name)
           );
           
@@ -414,8 +413,8 @@ const Criterion9_3Form = ({
       }));
 
       // If this is a new entry, set the ID from response
-      if (response?.feedback_analysis_id && !feedbackAnalysisId) {
-        setFeedbackAnalysisId(response.feedback_analysis_id);
+      if (response?.id && !feedbackAnalysisId) {
+        setFeedbackAnalysisId(response.id);
       }
 
       setAlert(
@@ -480,7 +479,7 @@ const Criterion9_3Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria9Service.deleteCriteria9('9.3', feedbackAnalysisId);
+            await newnbaCriteria9Service.deleteCriteria9_3Data(feedbackAnalysisId);
             setAlert(
               <SweetAlert
                 success

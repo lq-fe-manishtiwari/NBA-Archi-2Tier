@@ -140,8 +140,7 @@ const Criterion9_1Form = ({
       console.log("  - staffId:", staffIdToUse);
 
       // Use the new service API call
-      const response = await newnbaCriteria9Service.getCriteria9Data(
-        '9.1', // section
+      const response = await newnbaCriteria9Service.getCriteria9_1_Data(
         nba_criteria_sub_level2_id, // cycleSubCategoryId
         staffIdToUse // otherStaffId
       );
@@ -163,7 +162,7 @@ const Criterion9_1Form = ({
 
       console.log("📊 Final dataItem:", dataItem);
 
-      if (dataItem && dataItem.fysfr_id) {
+      if (dataItem && dataItem.id) {
         console.log("✅ Criterion9_1Form - Found existing data");
         
         // Set contributor name for display
@@ -175,7 +174,7 @@ const Criterion9_1Form = ({
         }
 
         // Set ID
-        setFysfrId(dataItem.fysfr_id);
+        setFysfrId(dataItem.id);
 
         // Set approval status if available
         if (dataItem.approval_status) {
@@ -189,8 +188,8 @@ const Criterion9_1Form = ({
         }
 
         // Transform files to filesByField structure
-        const filesArray = Array.isArray(dataItem.supporting_documents)
-          ? dataItem.supporting_documents
+        const filesArray = Array.isArray(dataItem.governance_document)
+          ? dataItem.governance_document
           : [];
 
         const filesByField = {
@@ -306,12 +305,12 @@ const Criterion9_1Form = ({
 
         setInitialData({
           content: {
-            governing_body: dataItem.governing_body || "",
-            education_policy: dataItem.education_policy || "",
-            sdg_initiatives: dataItem.sdg_initiatives || "",
-            decentralization: dataItem.decentralization || "",
-            financial_powers: dataItem.financial_powers || "",
-            transparency: dataItem.transparency || ""
+            governing_body: dataItem.governing_body_setup || "",
+            education_policy: dataItem.implementation_strategies || "",
+            sdg_initiatives: dataItem.sustainable_dev_initiatives || "",
+            decentralization: dataItem.decentralization_grievance || "",
+            financial_powers: dataItem.delegation_financial_powers || "",
+            transparency: dataItem.transparency_public_info || ""
           },
           tableData: [],
           filesByField: filesByField
@@ -545,13 +544,13 @@ const Criterion9_1Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(nba_criteria_sub_level2_id),
-        governing_body: formData.content?.governing_body || "",
-        education_policy: formData.content?.education_policy || "",
-        sdg_initiatives: formData.content?.sdg_initiatives || "",
-        decentralization: formData.content?.decentralization || "",
-        financial_powers: formData.content?.financial_powers || "",
-        transparency: formData.content?.transparency || "",
-        supporting_documents: filesWithCategory
+        governing_body_setup: formData.content?.governing_body || "",
+        implementation_strategies: formData.content?.education_policy || "",
+        sustainable_dev_initiatives: formData.content?.sdg_initiatives || "",
+        decentralization_grievance: formData.content?.decentralization || "",
+        delegation_financial_powers: formData.content?.financial_powers || "",
+        transparency_public_info: formData.content?.transparency || "",
+        governance_document: filesWithCategory
           .filter((f) => f.url || f.s3Url)
           .map((f) => ({
             description: f.description || "",
@@ -571,11 +570,11 @@ const Criterion9_1Form = ({
         // Update existing record
         const idToUse = fysfrId || propFysfrId;
         console.log("🔄 Criterion9_1Form - Updating existing entry with ID:", idToUse);
-        response = await newnbaCriteria9Service.updateCriteria9('9.1', idToUse, payload);
+        response = await newnbaCriteria9Service.putCriteria9_1_Data(idToUse, staffId, payload);
       } else {
         // Create new record
         console.log("🆕 Criterion9_1Form - Creating new entry");
-        response = await newnbaCriteria9Service.saveCriteria9Data('9.1', payload);
+        response = await newnbaCriteria9Service.saveCriteria9_1_Data(staffId, payload);
       }
 
       console.log("Save response:", response);
@@ -587,7 +586,7 @@ const Criterion9_1Form = ({
         const files = formData.filesByField[field] || [];
         updatedFilesByField[field] = files.map(file => {
           // Find matching file in payload
-          const savedFile = payload.supporting_documents?.find(
+          const savedFile = payload.governance_document?.find(
             f => f.id === file.id || f.filename === (file.filename || file.file?.name)
           );
           
@@ -609,8 +608,8 @@ const Criterion9_1Form = ({
       }));
 
       // If this is a new entry, set the ID from response
-      if (response?.fysfr_id && !fysfrId) {
-        setFysfrId(response.fysfr_id);
+      if (response?.id && !fysfrId) {
+        setFysfrId(response.id);
       }
 
       setAlert(
@@ -675,7 +674,7 @@ const Criterion9_1Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria9Service.deleteCriteria9('9.1', fysfrId);
+            await newnbaCriteria9Service.deleteCriteria9_1Data(fysfrId);
             setAlert(
               <SweetAlert
                 success
@@ -761,4 +760,4 @@ const Criterion9_1Form = ({
   );
 };
 
-export default Criterion9_1Form;
+export default Criterion9_1Form; 
