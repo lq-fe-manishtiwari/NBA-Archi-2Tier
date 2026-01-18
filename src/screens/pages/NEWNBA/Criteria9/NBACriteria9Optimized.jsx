@@ -54,17 +54,6 @@ const NBACriteria9Optimized = () => {
       '9.1': 5,
       '9.2': 5,
       '9.3': 20,
-      '9.4': 10,
-      '9.5': 5,
-      '9.6': 15,
-      '9.7': 12,
-      '9.8': 8,
-      '9.9': 5,
-      '9.10': 5,
-      '9.11': 10,
-      '9.12': 5,
-      '9.13': 10,
-      '9.14': 5,
     };
     return marks[sectionCode] || 0;
   };
@@ -81,8 +70,7 @@ const NBACriteria9Optimized = () => {
 
   // Dynamic card configuration based on section type
   const getCardConfig = (sectionName) => {
-    // Check if this is a section that supports card workflow (text editor + file upload sections)
-    const cardSupportedSections = ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7', '9.8', '9.9', '9.10', '9.11', '9.12', '9.13', '9.14'];
+    const cardSupportedSections = ['9.1', '9.2', '9.3'];
     const sectionCode = sectionName ? sectionName.match(/9\.(\d+)/)?.[0] : null;
 
     if (cardSupportedSections.includes(sectionCode)) {
@@ -96,26 +84,15 @@ const NBACriteria9Optimized = () => {
       };
     }
 
-    return null; // No card support for this section
+    return null;
   };
 
   // Get the ID field name based on section
   const getSectionIdField = (sectionCode) => {
     const idFieldMap = {
-      '9.1': 'fysfr_id',
+      '9.1': 'governance_transparency_id',
       '9.2': 'mentoring_system_id',
-      '9.3': 'feedback_analysis_id',
-      '9.4': 'nba_training_placement_support_id',
-      '9.5': 'startup_entrepreneurship_id',
-      '9.6': 'governance_transparency_id',
-      "9.7": 'institute_budget_id',
-      '9.8': "program_budget_id",
-      '9.9': 'learning_resources_quality_id',
-      '9.10': 'egovernance_id',
-      '9.11': 'sdg_id',
-      '9.12': 'innovative_initiatives_id',
-      '9.13': 'fpads_id',
-      '9.14': 'outreach_activities_id'
+      '9.3': 'library_internet_id',
     };
     return idFieldMap[sectionCode] || 'id';
   };
@@ -124,7 +101,17 @@ const NBACriteria9Optimized = () => {
   const getApiService = (sectionName) => {
     const sectionCode = sectionName ? sectionName.match(/9\.(\d+)/)?.[0] : null;
 
-    if (sectionCode) {
+    if (sectionCode === '9.1') {
+      return {
+        updateCardStatus: (statusPayload, approverId) => newnbaCriteria9Service.updateCriteria9_1Status(statusPayload, approverId),
+        getCardData: (cycleSubCategoryId) => newnbaCriteria9Service.getAllCriteria9_1_Data(cycleSubCategoryId)
+      };
+    } else if (sectionCode === '9.3') {
+      return {
+        updateCardStatus: (statusPayload, approverId) => newnbaCriteria9Service.updateCriteria9_3Status(statusPayload, approverId),
+        getCardData: (cycleSubCategoryId) => newnbaCriteria9Service.getAllCriteria9_3_Data(cycleSubCategoryId)
+      };
+    } else if (sectionCode) {
       return {
         updateCardStatus: (statusPayload, approverId) => newnbaCriteria9Service.updateCardStatus9(sectionCode, statusPayload, approverId),
         getCardData: (cycleSubCategoryId) => newnbaCriteria9Service.getAllCardDetails9(sectionCode, cycleSubCategoryId)
@@ -429,7 +416,7 @@ const NBACriteria9Optimized = () => {
 
       if (indicator && indicator.rawName) {
         const sectionCode = indicator.rawName.match(/9\.(\d+)/)?.[0];
-        const cardSupportedSections = ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7', '9.8', '9.9', '9.10', '9.11', '9.12', '9.13', '9.14'];
+        const cardSupportedSections = ['9.1', '9.2', '9.3'];
 
         if (cardSupportedSections.includes(sectionCode)) {
           console.log("✅ DEBUG: This is a card-supported section, fetching card details...");
@@ -450,13 +437,26 @@ const NBACriteria9Optimized = () => {
     try {
       // Determine which service to use based on section
       const sectionCode = sectionName ? sectionName.match(/9\.(\d+)/)?.[0] : '9.2';
-      const cardService = newnbaCriteria9Service.getAllCardDetails9;
-      const dataService = newnbaCriteria9Service.getCriteria9Data;
+      
+      let cardService, dataService;
+      if (sectionCode === '9.1') {
+        cardService = newnbaCriteria9Service.getAllCriteria9_1_Data;
+        dataService = newnbaCriteria9Service.getCriteria9_1_Data;
+      } else if (sectionCode === '9.3') {
+        cardService = newnbaCriteria9Service.getAllCriteria9_3_Data;
+        dataService = newnbaCriteria9Service.getCriteria9_3_Data;
+      } else {
+        cardService = newnbaCriteria9Service.getAllCardDetails9;
+        dataService = newnbaCriteria9Service.getCriteria9Data;
+      }
+      
       const idField = getSectionIdField(sectionCode);
 
       // Fetch contributor cards
       console.log("📡 CRITERIA 9 DEBUG: Fetching contributor cards...");
-      const cardDetails = await cardService(sectionCode, cycleSubCategoryId);
+      const cardDetails = (sectionCode === '9.1' || sectionCode === '9.3')
+        ? await cardService(cycleSubCategoryId)
+        : await cardService(sectionCode, cycleSubCategoryId);
 
       // Log each card's structure
       if (cardDetails && cardDetails.length > 0) {
@@ -483,15 +483,18 @@ const NBACriteria9Optimized = () => {
       if (currentStaffId) {
         try {
           console.log("📡 DEBUG: Fetching coordinator's own data...");
-          const coordinatorData = await dataService(sectionCode, cycleSubCategoryId, currentStaffId);
+          const coordinatorData = (sectionCode === '9.1' || sectionCode === '9.3')
+            ? await dataService(cycleSubCategoryId, currentStaffId)
+            : await dataService(sectionCode, cycleSubCategoryId, currentStaffId);
           console.log("📊 DEBUG: Coordinator data received:", coordinatorData);
 
           // Handle coordinator data - it might be an array or object
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
           console.log("📊 DEBUG: Coordinator record extracted:", coordinatorRecord, sectionCode);
           const fallbackIdFields = {
-            '9.4': 'nba_training_placement_support_id',
-            '9.1': "fysfr_id"
+            '9.1': "governance_transparency_id",
+            '9.2': "mentoring_system_id",
+            '9.3': "library_internet_id"
           };
           // If coordinator has data, add it to the cards array
           if (coordinatorRecord && coordinatorRecord[idField] || fallbackIdFields[sectionCode]) {
@@ -970,7 +973,7 @@ const NBACriteria9Optimized = () => {
                         ) : hasAllocation ? (
                           (() => {
                             // Check if this section supports card workflow
-                            const cardSupportedSections = ['9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7', '9.8', '9.9', '9.10', '9.11', '9.12', '9.13', '9.14'];
+                            const cardSupportedSections = ['9.1', '9.2', '9.3'];
                             const supportsCards = cardSupportedSections.includes(sectionCode);
 
                             if (supportsCards && (hasDataFilled || (cardData[subLevel2Id] && cardData[subLevel2Id].length > 0))) {
@@ -1184,4 +1187,4 @@ const NBACriteria9Optimized = () => {
   );
 };
 
-export default NBACriteria9Optimized;
+export default NBACriteria9Optimized;  
