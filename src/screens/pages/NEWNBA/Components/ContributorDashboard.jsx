@@ -570,7 +570,7 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
         "Facilities and Technical Support": "/nba/criterion-7",
 
         // Criterion 8 - Continuous Improvement
-        "Continuous Improvement": "/nba/criterion-8",
+        "Student Support Systems": "/nba/criterion-8",
 
         // Criterion 9 - Quality in Research
         "Governance, Institutional Support and Financial Resources": "/nba/criterion-9"
@@ -596,7 +596,7 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
           criteriaRoute = "/nba/criterion-6";
         } else if (categoryLower.includes("facilities") || categoryLower.includes("technical support")) {
           criteriaRoute = "/nba/criterion-7";
-        } else if (categoryLower.includes("continuous improvement")) {
+        } else if (categoryLower.includes("Student Support Systems")) {
           criteriaRoute = "/nba/criterion-8";
         } else if (categoryLower.includes("quality") && categoryLower.includes("research")) {
           criteriaRoute = "/nba/criterion-9";
