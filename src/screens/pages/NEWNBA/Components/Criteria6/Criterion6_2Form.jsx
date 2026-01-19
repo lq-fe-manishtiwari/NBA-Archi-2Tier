@@ -1,8 +1,8 @@
-// src/screens/pages/NEWNBA/Components/Criteria1/Criterion6_2Form.jsx
+// src/screens/pages/NEWNBA/Components/Criteria6/Criterion6_2Form.jsx
 
-import React, { useState, useEffect } from "react";
-import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
-import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import React, { useState, useEffect, useCallback } from "react";
+import GenericCriteriaForm from "../GenericCriteriaForm"; // ← same as 6.1
+import { newnbaCriteria6Service } from "../../Services/NewNBA-Criteria6.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
 
@@ -14,208 +14,252 @@ const Criterion6_2Form = ({
   otherStaffId = null,
   showCardView = false,
   onCardClick = null,
-  onStatusChange = null,
-  cardData = [],
-  editMode = false,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [facultyRoomsId, setFacultyRoomsId] = useState(null);
+  const [isContributor, setIsContributor] = useState(false);
+
   const [initialData, setInitialData] = useState({
     content: {},
-    tableData: {},
+    tableData: [],
     files: [],
-    faculty_rooms_id: null,
-  });
-  const [cardLoading, setCardLoading] = useState(false);
-  const [alert, setAlert] = useState(null);
-  
-  // Faculty rooms data
-  const [facultyRooms, setFacultyRooms] = useState([]);
-  const [qualityMetrics, setQualityMetrics] = useState({
-    availability_score: 0,
-    quality_score: 0,
-    comfort_score: 0,
-    facilities_score: 0,
-    maintenance_score: 0
   });
 
+  const [alert, setAlert] = useState(null);
+  const [cardData, setCardData] = useState([]);
+  const [cardLoading, setCardLoading] = useState(false);
+
+  // ---------------- CONFIG ----------------
   const config = {
-    title: "6.2 Faculty Rooms (15)",
+    title: "6.2 Availability of Faculty Rooms / Staff Rooms",
     totalMarks: 15,
     fields: [
       {
-        name: "availability_description",
-        label: "Availability of Faculty Rooms",
-        marks: 5,
-        type: "richText",
-        placeholder: "Describe the availability and sufficiency of faculty rooms...",
+        name: "6.2",
+        label: "6.2 Availability of Adequate, Well-Equipped Faculty Rooms",
+        marks: 15,
+        type: "textarea",           // or "richText" if you prefer
+        placeholder: "Describe the availability, adequacy, quality, furniture, facilities, internet, maintenance, etc. of faculty rooms...",
       },
-      // {
-      //   name: "quality_description",
-      //   label: "Quality of Faculty Rooms",
-      //   marks: 10,
-      //   type: "richText",
-      //   placeholder: "Describe the quality, comfort, facilities, and conducive environment...",
-      // },
-    ]
+    ],
   };
 
-  // Calculate marks based on metrics
-  const calculateMarks = () => {
-    const totalScore = 
-      qualityMetrics.availability_score * 0.2 +
-      qualityMetrics.quality_score * 0.2 +
-      qualityMetrics.comfort_score * 0.2 +
-      qualityMetrics.facilities_score * 0.2 +
-      qualityMetrics.maintenance_score * 0.2;
-    
-    const marks = Math.round((totalScore / 100) * 15); // Convert to 15 marks scale
-    
-    return {
-      availabilityMarks: Math.round((qualityMetrics.availability_score / 100) * 5),
-      qualityMarks: Math.round((totalScore / 100) * 10),
-      totalMarks: marks
-    };
-  };
-
-  // Load data from API function
-  const loadData = async () => {
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-    
-    console.log("🟠 Criterion6_2Form - useEffect triggered:");
-    console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
-    console.log("  - currentOtherStaffId:", currentOtherStaffId);
-
-    if (!cycle_sub_category_id) {
-      console.log("❌ Criterion6_2Form: cycle_sub_category_id is missing, exiting");
-      setLoading(false);
-      return;
-    }
-
-    let d = {};
-    setLoading(true);
-
-    try {
-      const res = await newnbaCriteria1Service.getCriteria6_2_Data?.(cycle_sub_category_id, currentOtherStaffId) || { data: {} };
-      const rawResponse = res?.data || res || {};
-      d = rawResponse;
-      console.log("🟢 Loaded Criterion 6.2 data:", d);
-    } catch (err) {
-      console.error("❌ Failed to load Criterion 6.2 data:", err);
-      toast.error("Failed to load Criterion 6.2 data");
-      d = {};
-    }
-
-    // Parse faculty rooms list
-    if (d.faculty_rooms && Array.isArray(d.faculty_rooms)) {
-      setFacultyRooms(d.faculty_rooms);
-    } else {
-      // Default sample data
-      setFacultyRooms([
-        {
-          id: 1,
-          room_number: "F-101",
-          room_type: "Faculty Room",
-          capacity: 4,
-          area_sqft: 200,
-          facilities: ["AC", "Desk", "Chair", "Internet", "Cabinet", "Whiteboard"],
-          condition: "Excellent",
-          department: "Computer Science",
-          remarks: "Well maintained, good ventilation"
-        },
-        {
-          id: 2,
-          room_number: "F-102",
-          room_type: "HOD Room",
-          capacity: 1,
-          area_sqft: 180,
-          facilities: ["AC", "Conference Table", "Visitor Chairs", "Internet", "Phone"],
-          condition: "Excellent",
-          department: "Computer Science",
-          remarks: "Spacious and well-equipped"
-        }
-      ]);
-    }
-
-    // Parse quality metrics
-    if (d.quality_metrics) {
-      setQualityMetrics(d.quality_metrics);
-    }
-
-    setInitialData({
-      content: {
-        availability_description: d.availability_description || "The department/institution provides adequate and sufficient faculty rooms to accommodate all teaching faculty members. Each department has dedicated faculty rooms with appropriate seating arrangements to ensure comfortable working spaces for academic preparation, student consultations, and collaborative work.",
-        quality_description: d.quality_description || "Faculty rooms are designed to provide a conducive and comfortable environment for academic activities. They are well-equipped with essential furniture, proper lighting, ventilation, internet connectivity, and storage facilities. Regular maintenance ensures clean, hygienic, and functional spaces that support faculty productivity and well-being.",
-      },
-      tableData: {},
-      faculty_rooms_id: d.faculty_rooms_id || null,
-      filesByField: {
-        "room_layouts": (d.room_layout_documents || []).length > 0 
-          ? (d.room_layout_documents || []).map((f, i) => ({
-              id: `file-layout-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "Room Layout/Floor Plan",
-              uploading: false
-            }))
-          : [{ id: `file-layout-0`, description: "Faculty Room Layout Plan", file: null, filename: "", s3Url: "", uploading: false }],
-        "photographs": (d.photograph_documents || []).length > 0 
-          ? (d.photograph_documents || []).map((f, i) => ({
-              id: `file-photo-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "Room Photographs",
-              uploading: false
-            }))
-          : [{ id: `file-photo-0`, description: "Faculty Room Photographs", file: null, filename: "", s3Url: "", uploading: false }],
-        "inventory_documents": (d.inventory_documents || []).length > 0 
-          ? (d.inventory_documents || []).map((f, i) => ({
-              id: `file-inventory-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "Furniture & Equipment Inventory",
-              uploading: false
-            }))
-          : [{ id: `file-inventory-0`, description: "Furniture Inventory List", file: null, filename: "", s3Url: "", uploading: false }],
-      }
-    });
-
-    console.log("✅ Criterion6_2Form: Data loaded and set successfully");
-    setLoading(false);
-  };
-
-  // Load contributors data for card view
+  // Load list of contributors (for coordinator card view)
   const loadContributorsData = async () => {
     if (!showCardView || !cycle_sub_category_id) return;
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria6_2_Data?.(cycle_sub_category_id);
-      if (onStatusChange) {
-        onStatusChange(contributorsResponse || []);
-      }
+      const contributorsResponse = await newnbaCriteria6Service.getAllCriteria6_2_Data(cycle_sub_category_id);
+      setCardData(contributorsResponse?.data || contributorsResponse || []);
     } catch (err) {
-      console.error("Failed to load contributors data:", err);
+      console.error("Failed to load 6.2 contributors:", err);
+      setCardData([]);
     } finally {
       setCardLoading(false);
     }
   };
 
-  // Delete function that calls API
+  // ---------------- LOAD DATA ----------------
+  const loadData = useCallback(async () => {
+    if (!cycle_sub_category_id) return setLoading(false);
+
+    try {
+      setLoading(true);
+
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const userIsContributor = userInfo?.rawData?.is_contributor || false;
+      setIsContributor(userIsContributor);
+
+      const currentStaffId = otherStaffId ||
+        userInfoo?.other_staff_id ||
+        userInfo?.rawData?.other_staff_id ||
+        userInfo?.user_id;
+
+      console.log("Loading 6.2 data for staff:", currentStaffId);
+
+      const res = await newnbaCriteria6Service.getCriteria6_2_Data(cycle_sub_category_id, currentStaffId);
+      const rawResponse = res?.data || res || [];
+      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
+
+      setFacultyRoomsId(d.id || null);
+
+      setInitialData({
+        content: {
+          "6.2": d.faculty_rooms_description || "",
+        },
+        tableData: [],
+        filesByField: {
+          "6.2": (d.faculty_rooms_documents || []).length > 0
+            ? (d.faculty_rooms_documents || []).map((f, i) => ({
+                id: `file-6.2-${i}`,
+                filename: f.file_name || f.name || "",
+                s3Url: f.file_url || f.url || "",
+                description: f.description || "",
+                uploading: false
+              }))
+            : [{ id: `file-6.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+        }
+      });
+    } catch (err) {
+      console.warn("6.2 load failed:", err);
+
+      setFacultyRoomsId(null);
+      setInitialData({
+        content: { "6.2": "" },
+        tableData: [],
+        filesByField: {
+          "6.2": [{ id: `file-6.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
+        }
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [cycle_sub_category_id, otherStaffId]);
+
+  useEffect(() => {
+    loadData();
+    if (showCardView) {
+      loadContributorsData();
+    }
+  }, [cycle_sub_category_id, programId, showCardView, otherStaffId, loadData]);
+
+  // ---------------- SAVE ----------------
+// ---------------- SAVE ----------------
+// ---------------- SAVE ----------------
+const handleSave = async (formData) => {
+  setSaving(true);
+
+  try {
+    if (!cycle_sub_category_id) {
+      throw new Error("cycle_sub_category_id is missing");
+    }
+
+    const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
+      (field) =>
+        (formData.filesByField[field] || []).map((file) => ({
+          ...file,
+          category: "Faculty Rooms",
+        }))
+    );
+
+    const faculty_rooms_document = filesWithCategory
+      .filter((f) => f.s3Url && f.s3Url.trim() !== "")
+      .map((f) => ({
+        file_name: f.filename || f.name || "unnamed-file",
+        file_url: f.s3Url,
+        description: f.description?.trim() || "",
+      }));
+
+    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+
+    const currentUserStaffId =
+      userInfoo?.other_staff_id ||
+      userInfo?.rawData?.other_staff_id ||
+      userInfo?.user_id;
+
+    if (!currentUserStaffId) {
+      throw new Error("Staff ID not found. Please login again.");
+    }
+
+    const targetStaffId = otherStaffId || currentUserStaffId;
+
+    const payload = {
+      other_staff_id: parseInt(targetStaffId, 10),
+      cycle_sub_category_id: parseInt(cycle_sub_category_id, 10),
+      faculty_rooms_description: formData.content["6.2"]?.trim() || "",
+      faculty_rooms_document,
+    };
+
+    console.log("[SAVE 6.2] Sending payload:", payload);
+
+    let newId = facultyRoomsId;
+
+    if (facultyRoomsId) {
+      // UPDATE
+      console.log("[SAVE 6.2] → Performing PUT with ID:", facultyRoomsId);
+      await newnbaCriteria6Service.putCriteria6_2_Data(
+        facultyRoomsId,
+        payload,
+        currentUserStaffId
+      );
+    } else {
+      // CREATE
+      console.log("[SAVE 6.2] → Performing POST (create)");
+      const createResponse = await newnbaCriteria6Service.saveCriteria6_2_Data(
+        payload,
+        currentUserStaffId
+      );
+
+      console.log("[SAVE 6.2] POST response:", createResponse);
+
+      // Try to extract the new ID from response (most common patterns)
+      newId =
+        createResponse?.id ||
+        createResponse?.data?.id ||
+        createResponse?.record?.id ||
+        createResponse?.data?.record?.id ||
+        null;
+
+      if (!newId) {
+        console.warn("[SAVE 6.2] Warning: POST did not return new ID → will reload to find it");
+      }
+    }
+
+    // Always reload after save to get fresh data + ID
+    await loadData();
+
+    // If we still don't have ID after reload → show warning
+    if (!facultyRoomsId && !newId) {
+      console.warn("[SAVE 6.2] No ID found after save + reload");
+    }
+
+    setAlert(
+      <SweetAlert
+        success
+        title="Saved!"
+        confirmBtnCssClass="btn-confirm"
+        onConfirm={() => setAlert(null)}
+      >
+        Criterion 6.2 saved successfully!
+      </SweetAlert>
+    );
+
+    onSaveSuccess?.();
+  } catch (err) {
+    console.error("[SAVE 6.2] failed:", err);
+    let msg = err.message || "Save failed";
+
+    if (err.message?.includes("null") || err.message?.includes("IllegalArgumentException")) {
+      msg = "Update failed: Record ID is missing. This usually happens when the system couldn't find the previously saved record.";
+    }
+
+    setAlert(
+      <SweetAlert
+        danger
+        title="Save Failed"
+        confirmBtnCssClass="btn-confirm"
+        onConfirm={() => setAlert(null)}
+      >
+        {msg}
+      </SweetAlert>
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  // ---------------- DELETE ----------------
   const handleDelete = async () => {
-    if (!initialData?.faculty_rooms_id) {
+    if (!facultyRoomsId) {
       setAlert(
         <SweetAlert
-          warning
-          title="No Data"
+          info
+          title="Nothing to Delete"
           confirmBtnCssClass="btn-confirm"
           onConfirm={() => setAlert(null)}
         >
@@ -230,31 +274,30 @@ const Criterion6_2Form = ({
         warning
         showCancel
         confirmBtnText="Yes, delete it!"
-        confirmBtnBsStyle="danger"
+        cancelBtnText="Cancel"
         confirmBtnCssClass="btn-confirm"
         cancelBtnCssClass="btn-cancel"
         title="Are you sure?"
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria6_2_Data?.(initialData.faculty_rooms_id);
-            
+            await newnbaCriteria6Service.deleteCriteria6_2_Data(facultyRoomsId);
+
             setAlert(
               <SweetAlert
                 success
                 title="Deleted!"
                 confirmBtnCssClass="btn-confirm"
-                onConfirm={async () => {
-                  setAlert(null);
-                  await loadData();
-                  onSaveSuccess?.();
-                }}
+                onConfirm={() => setAlert(null)}
               >
-                Criterion 6.2 data has been deleted successfully.
+                Criterion 6.2 deleted successfully.
               </SweetAlert>
             );
+
+            setFacultyRoomsId(null);
+            loadData();
+            onSaveSuccess?.();
           } catch (err) {
-            console.error("Delete Error:", err);
             setAlert(
               <SweetAlert
                 danger
@@ -262,198 +305,62 @@ const Criterion6_2Form = ({
                 confirmBtnCssClass="btn-confirm"
                 onConfirm={() => setAlert(null)}
               >
-                {err.message || 'Failed to delete data'}
+                Failed to delete record.
               </SweetAlert>
             );
           }
         }}
         onCancel={() => setAlert(null)}
       >
-        This will permanently delete all Criterion 6.2 data!
+        This action cannot be undone!
       </SweetAlert>
     );
   };
 
-  // Load initial data
-  useEffect(() => {
-    loadData();
-    if (showCardView) {
-      loadContributorsData();
-    }
-  }, [cycle_sub_category_id, showCardView, otherStaffId]);
-
-  // Handle quality metrics changes
-  const handleQualityMetricChange = (metric, value) => {
-    setQualityMetrics(prev => ({
-      ...prev,
-      [metric]: parseInt(value) || 0
-    }));
-  };
-
-  // Add new faculty room
-  const handleAddRoom = () => {
-    const newRoom = {
-      id: Date.now(),
-      room_number: "",
-      room_type: "Faculty Room",
-      capacity: 1,
-      area_sqft: 0,
-      facilities: [],
-      condition: "Good",
-      department: "",
-      remarks: ""
-    };
-    setFacultyRooms([...facultyRooms, newRoom]);
-  };
-
-  const handleRoomChange = (index, field, value) => {
-    const newList = [...facultyRooms];
-    newList[index][field] = value;
-    setFacultyRooms(newList);
-  };
-
-  const handleRemoveRoom = (index) => {
-    const newList = facultyRooms.filter((_, i) => i !== index);
-    setFacultyRooms(newList);
-  };
-
-  const handleSave = async (formData) => {
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-    
-    console.log("🟠 Criterion6_2Form handleSave called");
-    setSaving(true);
-
-    try {
-      // Transform filesByField → flat files with correct category
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
-        return (formData.filesByField[fieldName] || []).map(file => {
-          let category = "Other";
-          if (fieldName === "room_layouts") category = "Layout Documents";
-          if (fieldName === "photographs") category = "Photographs";
-          if (fieldName === "inventory_documents") category = "Inventory Documents";
-          return { ...file, category };
-        });
-      });
-
-      const marks = calculateMarks();
-
-      const payload = {
-        cycle_sub_category_id,
-        other_staff_id: currentOtherStaffId,
-        program_id: programId,
-        availability_description: formData.content.availability_description || "",
-        quality_description: formData.content.quality_description || "",
-        faculty_rooms: facultyRooms,
-        quality_metrics: qualityMetrics,
-        calculated_marks: marks,
-        total_faculty_rooms: facultyRooms.length,
-        total_capacity: facultyRooms.reduce((sum, room) => sum + (room.capacity || 0), 0),
-        total_area: facultyRooms.reduce((sum, room) => sum + (room.area_sqft || 0), 0),
-        room_layout_documents: filesWithCategory
-          .filter(f => f.category === "Layout Documents" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-        photograph_documents: filesWithCategory
-          .filter(f => f.category === "Photographs" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-        inventory_documents: filesWithCategory
-          .filter(f => f.category === "Inventory Documents" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-      };
-
-      console.log("FINAL API CALL → payload:", payload);
-      
-      const newFiles = filesWithCategory.filter(f => f.file);
-      console.log("New files to upload:", newFiles.length);
-
-      // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.faculty_rooms_id) {
-        await newnbaCriteria1Service.putCriteria6_2_Data?.(
-          initialData.faculty_rooms_id,
-          currentOtherStaffId,
-          payload
-        );
-      } else {
-        await newnbaCriteria1Service.saveCriteria6_2_Data?.(currentOtherStaffId, payload);
-      }
-
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={async () => {
-            setAlert(null);
-            await loadData();
-            onSaveSuccess?.();
-          }}
-        >
-          Criterion 6.2 saved successfully!
-        </SweetAlert>
-      );
-    } catch (err) {
-      console.error("Save error:", err);
-      toast.error(err.message || "Save failed");
-    }
-
-    setSaving(false);
-  };
-
+  // ---------------- RENDER ----------------
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criterion 6.2..
+        Loading Criterion 6.2...
       </div>
     );
   }
 
-  const marks = calculateMarks();
-
-  // Show card view for coordinators
   if (showCardView) {
     return (
       <>
-        <div className="space-y-4">
-          {cardData && cardData.length > 0 ? (
-            cardData.map((card, index) => (
-              <div key={index} className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50"
-                   onClick={() => onCardClick?.(cycle_sub_category_id, card.other_staff_id, card)}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h4 className="font-medium">{card.firstname} {card.lastname}</h4>
-                    <p className="text-sm text-gray-600">Staff ID: {card.other_staff_id}</p>
-                    <p className="text-sm text-gray-600">Total Rooms: {card.total_faculty_rooms || 0}</p>
-                    <p className="text-sm text-gray-600">Calculated Marks: {card.calculated_marks?.totalMarks || 0}/15</p>
-                  </div>
-                  <div className="text-right">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-bold text-blue-700 mb-4">
+            6.2 Faculty Rooms - Contributors
+          </h3>
+          {cardData.length > 0 ? (
+            <div className="space-y-3">
+              {cardData.map((item, index) => (
+                <div
+                  key={index}
+                  className="border p-3 rounded hover:bg-gray-50 cursor-pointer"
+                  onClick={() => onCardClick?.(cycle_sub_category_id, item.other_staff_id, item)}
+                >
+                  <div className="flex justify-between">
+                    <div>
+                      <span className="font-medium">
+                        {item.firstname} {item.lastname}
+                      </span>
+                      <p className="text-sm text-gray-600">Staff ID: {item.other_staff_id}</p>
+                    </div>
                     <span className={`px-2 py-1 rounded text-xs ${
-                      card.approval_status === 'APPROVED_BY_COORDINATOR' ? 'bg-green-100 text-green-800' :
-                      card.approval_status === 'REJECTED_BY_COORDINATOR' ? 'bg-red-100 text-red-800' :
+                      item.approval_status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                      item.approval_status === 'REJECTED' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {card.approval_status || 'Pending'}
+                      {item.approval_status || 'PENDING'}
                     </span>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No contributor submissions found
+              ))}
             </div>
+          ) : (
+            <p className="text-gray-500">No contributors found</p>
           )}
         </div>
         {alert}
@@ -462,325 +369,20 @@ const Criterion6_2Form = ({
   }
 
   return (
-    <>
-      <GenericCriteriaForm1_2
+    <div>
+      <GenericCriteriaForm
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}
         initialData={initialData}
         saving={saving}
-        isCompleted={!isEditable}
         isContributorEditable={isEditable}
+        showFileCategories={true}
+        onSave={handleSave}
         onDelete={handleDelete}
-        customContent={{
-          "faculty_rooms_section": (
-            <div className="space-y-6">
-              {/* Marks Calculation Summary */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h5 className="font-semibold text-blue-700">Marks Calculation (0-15)</h5>
-                    <p className="text-sm text-gray-700">
-                      Availability: <span className="font-bold">{marks.availabilityMarks}/5</span> | 
-                      Quality: <span className="font-bold">{marks.qualityMarks}/10</span>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-blue-700">Total: {marks.totalMarks}/15</p>
-                    <p className="text-xs text-gray-600">
-                      Based on quality metrics below
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quality Assessment Metrics */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-[#2163c1] text-white px-4 py-2">
-                  <h5 className="font-semibold">Faculty Rooms Quality Assessment Metrics</h5>
-                </div>
-                <div className="p-4 bg-gray-50">
-                  <div className="space-y-4">
-                    {Object.entries({
-                      availability_score: "Availability & Sufficiency",
-                      quality_score: "Quality of Construction",
-                      comfort_score: "Comfort & Ergonomics",
-                      facilities_score: "Facilities & Amenities",
-                      maintenance_score: "Maintenance & Cleanliness"
-                    }).map(([key, label], idx) => (
-                      <div key={key} className="flex items-center justify-between">
-                        <div className="w-48">
-                          <label className="text-sm font-medium text-gray-700">{label}</label>
-                          <div className="text-xs text-gray-500">0-100 points</div>
-                        </div>
-                        <div className="flex-1 max-w-md">
-                          <div className="flex items-center space-x-4">
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={qualityMetrics[key]}
-                              onChange={(e) => handleQualityMetricChange(key, e.target.value)}
-                              className="w-full"
-                              disabled={!isEditable}
-                            />
-                            <div className="w-16 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={qualityMetrics[key]}
-                                onChange={(e) => handleQualityMetricChange(key, e.target.value)}
-                                className="w-full p-1 border rounded text-center text-sm"
-                                disabled={!isEditable}
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>Poor</span>
-                            <span>Average</span>
-                            <span>Good</span>
-                            <span>Very Good</span>
-                            <span>Excellent</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Faculty Rooms Inventory Table */}
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-[#2163c1] text-white px-4 py-2 flex justify-between items-center">
-                  <h5 className="font-semibold">Faculty Rooms Inventory</h5>
-                  {isEditable && (
-                    <button
-                      onClick={handleAddRoom}
-                      className="px-3 py-1 bg-white text-blue-600 rounded text-sm font-medium hover:bg-gray-100"
-                    >
-                      + Add Room
-                    </button>
-                  )}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full border text-sm">
-                    <thead className="bg-blue-50">
-                      <tr>
-                        <th className="border px-3 py-2 w-24">Room No.</th>
-                        <th className="border px-3 py-2 w-32">Room Type</th>
-                        <th className="border px-3 py-2 w-20">Capacity</th>
-                        <th className="border px-3 py-2 w-24">Area (sq.ft)</th>
-                        <th className="border px-3 py-2">Facilities</th>
-                        <th className="border px-3 py-2 w-28">Condition</th>
-                        <th className="border px-3 py-2">Remarks</th>
-                        {isEditable && <th className="border px-3 py-2 w-20">Actions</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {facultyRooms.length > 0 ? (
-                        facultyRooms.map((room, idx) => (
-                          <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="text"
-                                value={room.room_number}
-                                onChange={(e) => handleRoomChange(idx, 'room_number', e.target.value)}
-                                className="w-full p-1 border rounded text-center"
-                                disabled={!isEditable}
-                                placeholder="Room No."
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                value={room.room_type}
-                                onChange={(e) => handleRoomChange(idx, 'room_type', e.target.value)}
-                                className="w-full p-1 border rounded text-sm"
-                                disabled={!isEditable}
-                              >
-                                <option value="Faculty Room">Faculty Room</option>
-                                <option value="HOD Room">HOD Room</option>
-                                <option value="Common Room">Common Room</option>
-                                <option value="Meeting Room">Meeting Room</option>
-                                <option value="Discussion Room">Discussion Room</option>
-                                <option value="Staff Room">Staff Room</option>
-                              </select>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="number"
-                                value={room.capacity}
-                                onChange={(e) => handleRoomChange(idx, 'capacity', e.target.value)}
-                                className="w-full p-1 border rounded text-center"
-                                min="1"
-                                disabled={!isEditable}
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <input
-                                type="number"
-                                value={room.area_sqft}
-                                onChange={(e) => handleRoomChange(idx, 'area_sqft', e.target.value)}
-                                className="w-full p-1 border rounded text-center"
-                                min="0"
-                                disabled={!isEditable}
-                              />
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                multiple
-                                value={room.facilities || []}
-                                onChange={(e) => {
-                                  const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                  handleRoomChange(idx, 'facilities', selected);
-                                }}
-                                className="w-full p-1 border rounded text-sm h-24"
-                                disabled={!isEditable}
-                              >
-                                <option value="AC">Air Conditioning</option>
-                                <option value="Desk">Study Desk</option>
-                                <option value="Chair">Comfortable Chair</option>
-                                <option value="Internet">Internet Connectivity</option>
-                                <option value="Cabinet">Storage Cabinet</option>
-                                <option value="Whiteboard">Whiteboard</option>
-                                <option value="Bookshelf">Bookshelf</option>
-                                <option value="Lighting">Adequate Lighting</option>
-                                <option value="Ventilation">Good Ventilation</option>
-                                <option value="Power Outlets">Power Outlets</option>
-                                <option value="Phone">Telephone</option>
-                                <option value="Computer">Computer</option>
-                                <option value="Printer">Printer</option>
-                                <option value="Water Dispenser">Water Dispenser</option>
-                              </select>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {room.facilities?.length || 0} facility(ies)
-                              </div>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <select
-                                value={room.condition}
-                                onChange={(e) => handleRoomChange(idx, 'condition', e.target.value)}
-                                className="w-full p-1 border rounded text-sm"
-                                disabled={!isEditable}
-                              >
-                                <option value="Excellent">Excellent</option>
-                                <option value="Very Good">Very Good</option>
-                                <option value="Good">Good</option>
-                                <option value="Average">Average</option>
-                                <option value="Poor">Poor</option>
-                                <option value="Needs Repair">Needs Repair</option>
-                              </select>
-                            </td>
-                            <td className="border px-3 py-2">
-                              <textarea
-                                value={room.remarks}
-                                onChange={(e) => handleRoomChange(idx, 'remarks', e.target.value)}
-                                className="w-full p-1 border rounded text-sm"
-                                rows="2"
-                                disabled={!isEditable}
-                                placeholder="Additional remarks..."
-                              />
-                            </td>
-                            {isEditable && (
-                              <td className="border px-3 py-2 text-center">
-                                <button
-                                  onClick={() => handleRemoveRoom(idx)}
-                                  className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200"
-                                >
-                                  Remove
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={isEditable ? 8 : 7} className="border px-3 py-8 text-center text-gray-500">
-                            No faculty rooms added. Click "Add Room" to add room details.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                    <tfoot className="bg-gray-100">
-                      <tr>
-                        <td className="border px-3 py-2 text-center font-medium">Total</td>
-                        <td className="border px-3 py-2 text-center">
-                          {facultyRooms.length} rooms
-                        </td>
-                        <td className="border px-3 py-2 text-center font-bold">
-                          {facultyRooms.reduce((sum, room) => sum + (room.capacity || 0), 0)}
-                        </td>
-                        <td className="border px-3 py-2 text-center font-bold">
-                          {facultyRooms.reduce((sum, room) => sum + (room.area_sqft || 0), 0)} sq.ft
-                        </td>
-                        <td className="border px-3 py-2 text-center">
-                          {facultyRooms.flatMap(r => r.facilities || []).filter((v, i, a) => a.indexOf(v) === i).length} unique facilities
-                        </td>
-                        <td className="border px-3 py-2 text-center">
-                          {facultyRooms.filter(r => r.condition === 'Excellent' || r.condition === 'Very Good').length} rooms in good condition
-                        </td>
-                        <td colSpan={isEditable ? 2 : 1} className="border px-3 py-2"></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-
-              {/* Facilities Checklist */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h6 className="font-semibold text-gray-700 mb-3">Essential Facilities Checklist for Conductive Faculty Rooms:</h6>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Ergonomic furniture (desk & chair)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Adequate lighting and ventilation</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Internet connectivity (WiFi/LAN)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Storage facilities (cabinets/shelves)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Power outlets with surge protection</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Whiteboard/Notice board</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Thermal comfort (AC/fans/heating)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Noise control measures</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">Clean and hygienic environment</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }}
-        onSave={(data) => {
-          handleSave({
-            content: data.content,
-            tableData: data.tableData,
-            filesByField: data.filesByField,
-          });
-        }}
       />
       {alert}
-    </>
+    </div>
   );
 };
 
