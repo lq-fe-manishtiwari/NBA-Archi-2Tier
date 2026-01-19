@@ -1,8 +1,8 @@
 // src/screens/pages/NEWNBA/Components/Criteria6/Criterion6_1Form.jsx
 
-import React, { useState, useEffect } from "react";
-import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
-import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import React, { useState, useEffect,useCallback } from "react";
+import GenericCriteriaForm from "../GenericCriteriaForm";
+import { newnbaCriteria6Service } from "../../Services/NewNBA-Criteria6.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import { POService } from "../../../OBE/Settings/Services/po.service";
@@ -17,6 +17,7 @@ const Criterion6_1Form = ({
   showCardView = false,
   onCardClick = null,
 }) => {
+  console.log("cyclesubcategoriid",cycle_sub_category_id);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [classroomsWorkshopsId, setClassroomsWorkshopsId] = useState(null);
@@ -162,7 +163,7 @@ const Criterion6_1Form = ({
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       
       // Get currentUserStaffId correctly
-      const currentUserStaffId = userInfoo?.staff_id || userInfo?.staff_id || userInfo?.rawData?.staff_id;
+      const currentUserStaffId = userInfoo?.other_staff_id || userInfo?.rawData?.other_staff_id;
       
       if (!currentUserStaffId) {
         console.error("❌ currentUserStaffId not found in user data");
@@ -351,7 +352,7 @@ const Criterion6_1Form = ({
 
   return (
     <div>
-      <GenericCriteriaForm6_1
+      <GenericCriteriaForm
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

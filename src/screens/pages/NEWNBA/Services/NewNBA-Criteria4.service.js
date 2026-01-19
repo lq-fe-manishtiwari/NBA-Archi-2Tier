@@ -98,6 +98,15 @@ export const newnbaCriteria4Service = {
   getAllCriteria4_7_Data,
   updateCardStatus4_7,
   getallCardDetails4_7,
+
+  //4.8
+  getAllCriteria4_8_Data,
+  updateCardStatus4_8,
+  saveCriteria4_8_Data,
+  getCriteria4_8_Data,
+  getallCardDetails4_8,
+  deleteCriteria4_8_Data,
+  putCriteria4_8_Data,
 };
 
 /// 4A //////////
@@ -849,6 +858,96 @@ function deleteCriteria4_7Data(Id) {
 
 function putCriteria4_7_Data(id,values,currentUserStaffId) {
   const url = `/admin/nba/4.7/new-academic-performance-first-year/${id}?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+//// 48  ///////////////////
+
+/**
+ * Get all contributors for Criteria 4.8
+ */
+function getAllCriteria4_8_Data(cycleSubCategoryId) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+/**
+ * Update approval status for Criteria 4.8
+ */
+function updateCardStatus4_8(statusPayload, approverStaffId) {
+  const payload = {
+    id: statusPayload.id,
+    approval_status: statusPayload.approval_status,
+    rejection_reason: statusPayload.rejection_reason || null,
+    approved_by: statusPayload.approved_by,
+    approved_by_name: statusPayload.approved_by_name
+  };
+
+  const url = `/admin/nba/4.8/new-placement-higher-studies/approval-status?approverStaffId=${approverStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(payload),
+  }).then(handleResponse);
+}
+
+/**
+ * Save (Create) Criteria 4.8 data
+ */
+function saveCriteria4_8_Data(values, currentUserStaffId) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'POST',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+/**
+ * Get Criteria 4.8 data by cycle subcategory and staff
+ */
+function getCriteria4_8_Data(cycleSubCategoryId, otherStaffId) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+/**
+ * Get all card details for Criteria 4.8 (contributors view)
+ */
+function getallCardDetails4_8(cycleSubCategoryId) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+/**
+ * Delete Criteria 4.8 data (Soft Delete)
+ */
+function deleteCriteria4_8_Data(id) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies/${id}`;
+  return apiNBARequest(url, {
+    method: 'DELETE',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+/**
+ * Update Criteria 4.8 data
+ */
+function putCriteria4_8_Data(id, values, currentUserStaffId) {
+  const url = `/admin/nba/4.8/new-placement-higher-studies/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
