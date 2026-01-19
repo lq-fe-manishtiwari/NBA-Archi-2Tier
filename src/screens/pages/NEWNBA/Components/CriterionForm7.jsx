@@ -109,6 +109,7 @@ const CriterionForm = ({
       totalMarks: 10,
       fields: [
         {
+          name: "7.5",
           hasTable: true,
           tableConfig: {
             title:
@@ -158,7 +159,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: {},
       tableData: d.success_index_data || [],
-      filesByField: fileMap(d.success_index_document),
+      filesByField: fileMap(d.success_index_document, "7.1"),
     }),
   },
 
@@ -177,7 +178,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: { "7.2": d.placement_higher_studies_description || "" },
       tableData: [],
-      filesByField: fileMap(d.placement_higher_studies_document),
+      filesByField: fileMap(d.placement_higher_studies_document, "7.2"),
     }),
   },
 
@@ -196,7 +197,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: { "7.3": d.projects_consultancy_description || "" },
       tableData: [],
-      filesByField: fileMap(d.projects_consultancy_document),
+      filesByField: fileMap(d.projects_consultancy_document, "7.3"),
     }),
   },
 
@@ -215,7 +216,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: { "7.4": d.academic_audit_description || "" },
       tableData: [],
-      filesByField: fileMap(d.academic_audit_document),
+      filesByField: fileMap(d.academic_audit_document, "7.4"),
     }),
   },
 
@@ -234,7 +235,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: {},
       tableData: d.students_admitted_data || [],
-      filesByField: fileMap(d.students_admitted_document),
+      filesByField: fileMap(d.students_admitted_document, "7.5"),
     }),
   },
 
@@ -253,7 +254,7 @@ const CriterionForm = ({
     mapResponse: (d) => ({
       content: { "7.6": d.continuous_improvement_description || "" },
       tableData: [],
-      filesByField: fileMap(d.continuous_improvement_document),
+      filesByField: fileMap(d.continuous_improvement_document, "7.6"),
     }),
   },
 };
@@ -383,20 +384,35 @@ const CriterionForm = ({
 const mapFiles = (data) =>
   Object.values(data.filesByField || {})
     .flat()
+    .filter((f) => f.s3Url || f.url)
     .map((f) => ({
       filename: f.filename,
       url: f.s3Url || f.url,
       description: f.description,
     }));
 
-const fileMap = (docs = []) => ({
-  default: docs.map((d, i) => ({
-    id: d.id || `file-${i}`,
-    filename: d.filename,
-    url: d.url,
-    s3Url: d.url,
-    description: d.description || "",
-  })),
-});
+const fileMap = (docs = [], fieldName = "default") => {
+  const files =
+    docs && docs.length > 0
+      ? docs.map((d, i) => ({
+          id: d.id || `file-${i}`,
+          filename: d.filename || d.name || "",
+          url: d.url || d.file_url || "",
+          s3Url: d.url || d.file_url || "",
+          description: d.description || "",
+          uploading: false,
+        }))
+      : [
+          {
+            id: `file-${fieldName}-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            uploading: false,
+          },
+        ];
+  return { [fieldName]: files };
+};
 
 export default CriterionForm;
