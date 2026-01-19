@@ -73,7 +73,7 @@ const CriterionForm = ({
       <Criterion6_3Form
         nba_accredited_program_id={nba_accredited_program_id}
         academic_year={academic_year}
-        nba_criteria_sub_level2_id={nba_criteria_sub_level2_id}
+        cycle_sub_category_id={nba_criteria_sub_level2_id}
         contributor_allocation_id={nba_contributor_allocation_id}
         completed={completed}
         isContributorEditable={isContributorEditable}
