@@ -1,5 +1,3 @@
-// src/screens/pages/NEWNBA/Components/Criteria3/Criterion3_3Form.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm3_8 from "./GenericCriteriaForm3_8";
 import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
@@ -89,6 +87,33 @@ const Criterion3_3Form = ({
     ],
   };
 
+  // Helper to always ensure at least one empty file upload entry
+  const ensureFileUploadSlot = (files = []) => {
+    if (Array.isArray(files) && files.length > 0) {
+      return files.map((f, i) => ({
+        id: `file-3.3.1-${i}-${Date.now()}`,
+        filename: f.file_name || "",
+        file: null,
+        s3Url: f.file_url || "",
+        url: f.file_url || "",
+        description: f.description || "",
+        uploading: false,
+      }));
+    }
+
+    // Default empty upload row when no documents exist
+    return [
+      {
+        id: `file-3.3.1-empty-${Date.now()}`,
+        filename: "",
+        file: null,
+        s3Url: "",
+        description: "",
+        uploading: false,
+      },
+    ];
+  };
+
   // ────────────────────────────────────────────────
   //                   LOAD DATA
   // ────────────────────────────────────────────────
@@ -118,34 +143,13 @@ const Criterion3_3Form = ({
       const id = data?.id || null;
       setRecordId(id);
 
-      // Files mapping
-      const documents = Array.isArray(data?.attainment_po_pso_document)
-        ? data.attainment_po_pso_document.map((f, i) => ({
-            id: `file-3.3.1-${i}`,
-            filename: f.file_name || "",
-            s3Url: f.file_url || "",
-            url: f.file_url || "",
-            description: f.description || "",
-            uploading: false,
-          }))
-        : [
-            {
-              id: "file-3.3.1-default",
-              description: "",
-              file: null,
-              filename: "",
-              s3Url: "",
-              uploading: false,
-            },
-          ];
-
       setInitialData({
         content: {
           "3.3.1": data?.assessment_tools_description || "",
         },
         tableData: {
           "3.3.2": Array.isArray(data?.evaluation_results)
-            ? data.evaluation_results.map(item => ({
+            ? data.evaluation_results.map((item) => ({
                 ...item,
                 po_code: item.po_code || item.code || "",
                 direct_attainment: String(item.direct_attainment ?? item.direct ?? ""),
@@ -156,26 +160,19 @@ const Criterion3_3Form = ({
             : [],
         },
         filesByField: {
-          "3.3.1": documents,
+          "3.3.1": ensureFileUploadSlot(data?.attainment_po_pso_document),
         },
       });
     } catch (err) {
       console.error("[Criterion 3.3] Load failed:", err);
       setRecordId(null);
+
+      // Even on error → show at least one empty file upload
       setInitialData({
         content: { "3.3.1": "" },
         tableData: { "3.3.2": [] },
         filesByField: {
-          "3.3.1": [
-            {
-              id: "file-3.3.1-default",
-              description: "",
-              file: null,
-              filename: "",
-              s3Url: "",
-              uploading: false,
-            },
-          ],
+          "3.3.1": ensureFileUploadSlot(),
         },
       });
     } finally {
@@ -202,8 +199,8 @@ const Criterion3_3Form = ({
 
       // Prepare documents array exactly as backend expects
       const documentsArray = (formData.filesByField["3.3.1"] || [])
-        .filter(f => f.s3Url || f.url)
-        .map(f => ({
+        .filter((f) => f.s3Url || f.url)
+        .map((f) => ({
           file_name: (f.filename || "").trim(),
           file_url: (f.s3Url || f.url || "").trim(),
           description: (f.description || "").trim(),
@@ -215,8 +212,7 @@ const Criterion3_3Form = ({
 
         assessment_tools_description: (formData.content["3.3.1"] || "").trim(),
 
-        // This field name is very important — must be evaluation_results
-        evaluation_results: (formData.tableData["3.3.2"] || []).map(item => ({
+        evaluation_results: (formData.tableData["3.3.2"] || []).map((item) => ({
           po_code: (item.po_code || "").trim(),
           direct_attainment: Number(item.direct_attainment) || 0,
           indirect_attainment: Number(item.indirect_attainment) || 0,

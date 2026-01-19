@@ -22,9 +22,7 @@ import { collegeService } from "../../../Academics/Services/college.service";
 import { AcademicService } from "../../../Academics/Services/Academic.service";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 
-// ──────────────────────────────────────────────────────────────
-// Component to display attainment tables (read-only visualization)
-// ──────────────────────────────────────────────────────────────
+// Attainment Visualization Component (unchanged)
 const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
@@ -56,9 +54,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
   }, []);
 
   useEffect(() => {
-    if (programId) {
-      setSelectedProgram(programId);
-    }
+    if (programId) setSelectedProgram(programId);
   }, [programId]);
 
   useEffect(() => {
@@ -71,11 +67,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
           );
           setAttainmentData(response || null);
           if (onFormChange) {
-            onFormChange({
-              selectedProgram,
-              selectedYear,
-              attainmentData: response,
-            });
+            onFormChange({ selectedProgram, selectedYear, attainmentData: response });
           }
         } catch (err) {
           console.error("Failed to fetch attainment data:", err);
@@ -104,7 +96,6 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 setSelectedProgram(e.target.value);
                 setSelectedYear("");
               }}
-              // disabled={!isEditable}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Program</option>
@@ -123,7 +114,6 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              // disabled={!isEditable || !selectedProgram}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Academic Year</option>
@@ -161,9 +151,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
         <div className="space-y-12">
           {/* Direct Attainment */}
           <div>
-            <h4 className="text-xl font-semibold text-blue-700 mb-4">
-              Direct Attainment
-            </h4>
+            <h4 className="text-xl font-semibold text-blue-700 mb-4">Direct Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-blue-600 text-white">
@@ -178,9 +166,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      Attainment Value
-                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
                     {Object.values(attainmentData.direct_attainments).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
                         {val.toFixed(2)}
@@ -194,9 +180,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
 
           {/* Indirect Attainment */}
           <div>
-            <h4 className="text-xl font-semibold text-green-700 mb-4">
-              Indirect Attainment
-            </h4>
+            <h4 className="text-xl font-semibold text-green-700 mb-4">Indirect Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-green-600 text-white">
@@ -211,9 +195,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      Attainment Value
-                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
                     {Object.values(attainmentData.indirect_attainments).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
                         {val.toFixed(2)}
@@ -227,9 +209,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
 
           {/* Overall Attainment */}
           <div>
-            <h4 className="text-xl font-semibold text-purple-700 mb-4">
-              Overall Attainment
-            </h4>
+            <h4 className="text-xl font-semibold text-purple-700 mb-4">Overall Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-purple-600 text-white">
@@ -244,9 +224,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      Attainment Value
-                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
                     {Object.values(attainmentData.overall_attainments).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
                         {val.toFixed(2)}
@@ -278,8 +256,8 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
 const GenericCriteriaForm3_8 = ({
   cycle_sub_category_id,
   programId,
-  title = "3.8. Attainment of Program Outcomes and Program Specific Outcomes",
-  marks = 25,
+  title = "3.3. Attainment of Program Outcomes and Program Specific Outcomes",
+  marks = 40,
   isEditable = true,
   onSave,
   onDelete,
@@ -289,45 +267,79 @@ const GenericCriteriaForm3_8 = ({
 }) => {
   const [isEditMode, setIsEditMode] = useState(isEditable && !hasData);
   const [formValues, setFormValues] = useState(
-    initialData?.content || { "3.8.1": "" }
+    initialData?.content || { "3.3.1": "" }
   );
-  const [filesByField, setFilesByField] = useState(
-    initialData?.filesByField || {
+
+  // Initialize files with at least one empty row if none exist
+  const [filesByField, setFilesByField] = useState(() => {
+    const incomingFiles = initialData?.filesByField?.["3.8"] || [];
+
+    if (Array.isArray(incomingFiles) && incomingFiles.length > 0) {
+      return {
+        "3.8": incomingFiles.map((f, i) => ({
+          id: f.id || `file-3.8-${i}-${Date.now()}`,
+          filename: f.filename || f.file_name || "",
+          file: null,
+          s3Url: f.s3Url || f.file_url || "",
+          description: f.description || "",
+          uploading: false,
+        })),
+      };
+    }
+
+    // Default: always show one empty upload slot
+    return {
       "3.8": [
         {
-          id: `file-3.8-${Date.now()}`,
-          description: "",
-          file: null,
+          id: `file-3.8-empty-${Date.now()}`,
           filename: "",
+          file: null,
           s3Url: "",
+          description: "",
           uploading: false,
         },
       ],
-    }
-  );
+    };
+  });
 
   const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
   const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
 
-  // Sync with initial data
+  // Sync with parent initialData changes
   useEffect(() => {
     if (initialData?.content) {
       setFormValues(initialData.content);
     }
-    if (initialData?.filesByField) {
-      setFilesByField(initialData.filesByField);
+    if (initialData?.filesByField?.["3.8"]) {
+      const files = initialData.filesByField["3.8"];
+      setFilesByField({
+        "3.8": files.length > 0 
+          ? files.map((f, i) => ({
+              id: f.id || `file-3.8-${i}-${Date.now()}`,
+              filename: f.filename || "",
+              file: null,
+              s3Url: f.s3Url || "",
+              description: f.description || "",
+              uploading: false,
+            }))
+          : [{
+              id: `file-3.8-empty-${Date.now()}`,
+              filename: "",
+              file: null,
+              s3Url: "",
+              description: "",
+              uploading: false,
+            }],
+      });
     }
   }, [initialData]);
 
-  const addFileRow = (fieldName) => {
+  const addFileRow = () => {
     setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: [
-        ...(prev[fieldName] || []),
+      "3.8": [
+        ...(prev["3.8"] || []),
         {
-          id: `file-${Date.now()}-${fieldName}-${Math.random()
-            .toString(36)
-            .substr(2, 9)}`,
+          id: `file-3.8-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           description: "",
           file: null,
           filename: "",
@@ -338,63 +350,52 @@ const GenericCriteriaForm3_8 = ({
     }));
   };
 
-  const updateFileDescription = (fieldName, index, value) => {
+  const updateFileDescription = (index, value) => {
     setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: prev[fieldName].map((f, i) =>
+      "3.8": prev["3.8"].map((f, i) =>
         i === index ? { ...f, description: value } : f
       ),
     }));
   };
 
-  const handleFileChange = async (fieldName, index, newFile) => {
-    if (!newFile || !(newFile instanceof File)) {
-      toast.error("Invalid file selected");
-      return;
-    }
-
-    const currentRow = filesByField[fieldName]?.[index] || {};
+  const handleFileChange = async (index, newFile) => {
+    if (!newFile || !(newFile instanceof File)) return;
 
     setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: prev[fieldName]?.map((f, i) =>
+      "3.8": prev["3.8"].map((f, i) =>
         i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
-      ) || [],
+      ),
     }));
 
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      if (currentRow.description?.trim()) {
-        formData.append("description", currentRow.description.trim());
-      }
+      const currentDesc = filesByField["3.8"][index]?.description?.trim();
+      if (currentDesc) formData.append("description", currentDesc);
 
       const resData = await nbaDashboardService.uploadFile(formData);
       const s3Url = resData?.url || resData || "";
 
       setFilesByField((prev) => ({
-        ...prev,
-        [fieldName]: prev[fieldName]?.map((f, i) =>
+        "3.8": prev["3.8"].map((f, i) =>
           i === index ? { ...f, s3Url, filename: newFile.name, uploading: false } : f
-        ) || [],
+        ),
       }));
 
       toast.success("File uploaded successfully!");
     } catch (err) {
       toast.error("File upload failed");
       setFilesByField((prev) => ({
-        ...prev,
-        [fieldName]: prev[fieldName]?.map((f, i) =>
+        "3.8": prev["3.8"].map((f, i) =>
           i === index ? { ...f, uploading: false, file: null, filename: "" } : f
-        ) || [],
+        ),
       }));
     }
   };
 
-  const removeFileRow = (fieldName, index) => {
+  const removeFileRow = (index) => {
     setFilesByField((prev) => ({
-      ...prev,
-      [fieldName]: prev[fieldName]?.filter((_, i) => i !== index) || [],
+      "3.8": prev["3.8"].filter((_, i) => i !== index),
     }));
   };
 
@@ -417,20 +418,15 @@ const GenericCriteriaForm3_8 = ({
           <h2 className="text-2xl font-bold flex items-center gap-4">
             <FileText className="w-10 h-10" />
             {title}
-            <span className="text-xl font-medium text-indigo-200">
-              ({marks} Marks)
-            </span>
+            <span className="text-xl font-medium text-indigo-200">({marks} Marks)</span>
           </h2>
 
           {isEditable && (
             <button
               onClick={() => setIsEditMode(!isEditMode)}
               className={`p-4 rounded-xl transition-all shadow-lg flex items-center justify-center ${
-                isEditMode
-                  ? "bg-white hover:bg-gray-200 text-[#2163c5]"
-                  : "bg-white hover:bg-gray-100 text-[#2163c5]"
+                isEditMode ? "bg-white hover:bg-gray-200 text-[#2163c5]" : "bg-white hover:bg-gray-100 text-[#2163c5]"
               }`}
-              title={isEditMode ? "Cancel Edit" : "Edit Section"}
             >
               {isEditMode ? <X className="w-7 h-7" /> : <Edit className="w-7 h-7" />}
             </button>
@@ -439,18 +435,16 @@ const GenericCriteriaForm3_8 = ({
       </div>
 
       <div className="p-8 space-y-12">
-        {/* 3.8.1 - Rich Text Description */}
+        {/* 3.3.1 Description */}
         <div className="space-y-6">
           <h3 className="text-xl font-bold text-blue-700">
-            3.8.1 Describe the assessment tools and processes used to gather the data upon which the evaluation of each of the PO is based indicating the frequency with which these processes are carried out. Describe the assessment processes that demonstrate the degree to which the Program Outcomes are attained and document the attainment levels.
+            3.3.1 Describe Assessment Tools and Processes Used for Assessing the Attainment of Each PO/PSO (10)
           </h3>
 
           <div className="border-2 border-gray-300 rounded-lg bg-white overflow-hidden">
             <Editor
-              value={formValues["3.8.1"] || ""}
-              onChange={(val) =>
-                setFormValues((prev) => ({ ...prev, "3.8.1": val }))
-              }
+              value={formValues["3.3.1"] || ""}
+              onChange={(val) => setFormValues((prev) => ({ ...prev, "3.3.1": val }))}
               disabled={!isEditMode}
               style={{ minHeight: 360, padding: 20, fontSize: 16 }}
               placeholder="Describe the assessment tools, processes, frequency, attainment evaluation methods..."
@@ -458,17 +452,12 @@ const GenericCriteriaForm3_8 = ({
           </div>
         </div>
 
-        {/* Attainment Visualization Section */}
+        {/* Attainment Visualization */}
         <div className="space-y-6">
           <h3 className="text-xl font-bold text-blue-700">
             Attainment of Program Outcomes & Program Specific Outcomes
           </h3>
-
-          <Criterion3_8Content
-            programId={programId}
-            isEditable={false}
-            // onFormChange={(data) => setFormValues(prev => ({ ...prev, ...data }))}
-          />
+          <Criterion3_8Content programId={programId} isEditable={false} />
         </div>
 
         {/* Supporting Documents Section */}
@@ -495,51 +484,36 @@ const GenericCriteriaForm3_8 = ({
               <DragDropContext
                 onDragEnd={(result) => {
                   if (!result.destination) return;
-                  const items = Array.from(filesByField["3.8"] || []);
+                  const items = [...(filesByField["3.8"] || [])];
                   const [moved] = items.splice(result.source.index, 1);
                   items.splice(result.destination.index, 0, moved);
-                  setFilesByField((prev) => ({ ...prev, "3.8": items }));
+                  setFilesByField({ "3.8": items });
                 }}
               >
                 <Droppable droppableId="files-3.8">
                   {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-4"
-                    >
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                       {(filesByField["3.8"] || []).map((file, index) => {
                         const isOnlyOne = (filesByField["3.8"]?.length || 0) <= 1;
 
                         return (
-                          <Draggable
-                            key={file.id}
-                            draggableId={file.id}
-                            index={index}
-                          >
+                          <Draggable key={file.id} draggableId={file.id} index={index}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-white rounded-xl border transition-all ${
-                                  snapshot.isDragging
-                                    ? "border-blue-500 shadow-xl"
-                                    : "border-gray-300 hover:border-blue-300"
+                                  snapshot.isDragging ? "border-blue-500 shadow-xl" : "border-gray-300 hover:border-blue-300"
                                 }`}
                               >
-                                <div
-                                  {...provided.dragHandleProps}
-                                  className="cursor-grab self-center sm:self-start mt-1 sm:mt-0"
-                                >
+                                <div {...provided.dragHandleProps} className="cursor-grab self-center sm:self-start mt-1 sm:mt-0">
                                   <GripVertical className="w-6 h-6 text-gray-400" />
                                 </div>
 
                                 <input
                                   type="text"
                                   value={file.description || ""}
-                                  onChange={(e) =>
-                                    updateFileDescription("3.8", index, e.target.value)
-                                  }
+                                  onChange={(e) => updateFileDescription(index, e.target.value)}
                                   placeholder="Document description (optional)"
                                   className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
@@ -547,15 +521,11 @@ const GenericCriteriaForm3_8 = ({
                                 <div className="w-full sm:w-72 space-y-3">
                                   {file.filename && !file.uploading && (
                                     <button
-                                      onClick={() =>
-                                        setPreviewModal({ isOpen: true, file })
-                                      }
+                                      onClick={() => setPreviewModal({ isOpen: true, file })}
                                       className="w-full text-left text-blue-600 hover:underline flex items-center gap-2 py-1 truncate"
                                     >
                                       <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                      <span className="truncate font-medium">
-                                        {file.filename}
-                                      </span>
+                                      <span className="truncate font-medium">{file.filename}</span>
                                     </button>
                                   )}
 
@@ -571,8 +541,7 @@ const GenericCriteriaForm3_8 = ({
                                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                     onChange={(e) => {
                                       const newFile = e.target.files?.[0];
-                                      if (newFile)
-                                        handleFileChange("3.8", index, newFile);
+                                      if (newFile) handleFileChange(index, newFile);
                                     }}
                                     className="block w-full text-sm text-gray-700 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#2163c5] file:text-white file:hover:bg-[#1d57a8] cursor-pointer"
                                     disabled={file.uploading}
@@ -581,7 +550,7 @@ const GenericCriteriaForm3_8 = ({
 
                                 <div className="flex gap-2 self-start sm:self-center">
                                   <button
-                                    onClick={() => addFileRow("3.8")}
+                                    onClick={addFileRow}
                                     className="text-green-600 hover:bg-green-50 p-2 rounded-full transition"
                                     title="Add another document"
                                   >
@@ -589,20 +558,12 @@ const GenericCriteriaForm3_8 = ({
                                   </button>
 
                                   <button
-                                    onClick={
-                                      isOnlyOne ? undefined : () => removeFileRow("3.8", index)
-                                    }
+                                    onClick={isOnlyOne ? undefined : () => removeFileRow(index)}
                                     disabled={isOnlyOne}
                                     className={`p-2 rounded-full transition ${
-                                      isOnlyOne
-                                        ? "text-gray-300 cursor-not-allowed"
-                                        : "text-red-600 hover:bg-red-50"
+                                      isOnlyOne ? "text-gray-300 cursor-not-allowed" : "text-red-600 hover:bg-red-50"
                                     }`}
-                                    title={
-                                      isOnlyOne
-                                        ? "At least one document required"
-                                        : "Remove document"
-                                    }
+                                    title={isOnlyOne ? "At least one document required" : "Remove document"}
                                   >
                                     <Trash2 className="w-5 h-5" />
                                   </button>
@@ -619,32 +580,36 @@ const GenericCriteriaForm3_8 = ({
               </DragDropContext>
             ) : (
               <div className="space-y-4">
-                {(filesByField["3.8"] || []).map((file, idx) => (
-                  <div
-                    key={file.id}
-                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-white rounded-xl border border-gray-200"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">
-                        {file.description || `Supporting Document ${idx + 1}`}
-                      </p>
-                    </div>
-                    <div>
-                      {file.filename && (file.s3Url || file.url) ? (
-                        <button
-                          onClick={() => setPreviewModal({ isOpen: true, file })}
-                          className="text-blue-600 hover:underline flex items-center gap-2 font-medium"
-                        >
-                          <CheckCircle className="w-5 h-5" /> {file.filename}
-                        </button>
-                      ) : (
-                        <span className="text-gray-400 italic">
-                          No file uploaded
-                        </span>
-                      )}
-                    </div>
+                {(filesByField["3.8"] || []).length === 0 ? (
+                  <div className="p-8 text-center text-gray-500 italic bg-white rounded-xl border-2 border-dashed border-gray-300">
+                    No supporting documents uploaded yet
                   </div>
-                ))}
+                ) : (
+                  (filesByField["3.8"] || []).map((file, idx) => (
+                    <div
+                      key={file.id}
+                      className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-white rounded-xl border border-gray-200"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800">
+                          {file.description || `Supporting Document ${idx + 1}`}
+                        </p>
+                      </div>
+                      <div>
+                        {file.filename && (file.s3Url || file.url) ? (
+                          <button
+                            onClick={() => setPreviewModal({ isOpen: true, file })}
+                            className="text-blue-600 hover:underline flex items-center gap-2 font-medium"
+                          >
+                            <CheckCircle className="w-5 h-5" /> {file.filename}
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 italic">No file uploaded</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -683,7 +648,7 @@ const GenericCriteriaForm3_8 = ({
         )}
       </div>
 
-      {/* Document Preview Modal */}
+      {/* Preview Modal */}
       <Modal
         isOpen={previewModal.isOpen}
         onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}

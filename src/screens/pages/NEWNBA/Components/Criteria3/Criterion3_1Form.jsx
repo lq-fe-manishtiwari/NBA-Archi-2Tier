@@ -25,7 +25,11 @@ const Criterion3_1Form = ({
       "3.1.2": [],
       "3.1.3": [],
     },
-    filesByField: {},
+    filesByField: {
+      "3.1.1": [],
+      "3.1.2": [],
+      "3.1.3": [],
+    },
   });
 
   const [poData, setPoData] = useState([]);
@@ -72,7 +76,7 @@ const Criterion3_1Form = ({
               header: `PO${i + 1}`,
               width: "w-16",
               type: "select",
-              options: ["-", "1", "2", "3"].map(v => ({
+              options: ["-", "1", "2", "3"].map((v) => ({
                 value: v,
                 label: v,
               })),
@@ -96,7 +100,7 @@ const Criterion3_1Form = ({
               header: `PO${i + 1}`,
               width: "w-16",
               type: "select",
-              options: ["-", "1", "2", "3"].map(v => ({
+              options: ["-", "1", "2", "3"].map((v) => ({
                 value: v,
                 label: v,
               })),
@@ -111,14 +115,38 @@ const Criterion3_1Form = ({
 
   const getStaffId = () =>
     otherStaffId ||
-    JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
-      ?.other_staff_id ||
+    JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData?.other_staff_id ||
     JSON.parse(localStorage.getItem("userInfo") || "{}")?.other_staff_id;
+
+  // Always ensure at least one empty file upload entry
+  const ensureFileUploadSlot = (files = []) => {
+    if (files?.length > 0) {
+      return files.map((f, i) => ({
+        id: `file-${f.field || "doc"}-${i}-${Date.now()}`,
+        filename: f.file_name || f.name || "",
+        file: null,
+        s3Url: f.file_url || f.url || "",
+        description: f.description || "",
+        uploading: false,
+      }));
+    }
+
+    return [
+      {
+        id: `file-empty-${Date.now()}`,
+        filename: "",
+        file: null,
+        s3Url: "",
+        description: "",
+        uploading: false,
+      },
+    ];
+  };
 
   /* ---------- 3.1.1 Semester-wise COs ---------- */
 
   const mapCourseOutcomesTo311 = (data = []) =>
-    data.map(co => ({
+    data.map((co) => ({
       course_code: co.subject?.subjectCode || "",
       course_name: co.subject?.name || "",
       year_of_study: co.subject?.semester
@@ -133,7 +161,7 @@ const Criterion3_1Form = ({
   const buildCoPoMatrix312 = (mapping = []) => {
     const rows = {};
 
-    mapping.forEach(m => {
+    mapping.forEach((m) => {
       const coCode = m.co?.coCode;
       if (!coCode) return;
 
@@ -156,19 +184,17 @@ const Criterion3_1Form = ({
   const buildCoursePoMatrix313 = (mapping = []) => {
     const courseMap = {};
 
-    mapping.forEach(m => {
+    mapping.forEach((m) => {
       const courseCode = m.subject?.subjectCode;
       const poCode = m.po?.poCode;
       if (!courseCode || !poCode) return;
 
       if (!courseMap[courseCode]) {
         courseMap[courseCode] = { course_code: courseCode };
-        for (let i = 1; i <= 12; i++)
-          courseMap[courseCode][`PO${i}`] = "-";
+        for (let i = 1; i <= 12; i++) courseMap[courseCode][`PO${i}`] = "-";
       }
 
-      courseMap[courseCode][poCode] =
-        m.averageCorrelation?.toString() || "-";
+      courseMap[courseCode][poCode] = m.averageCorrelation?.toString() || "-";
     });
 
     return Object.values(courseMap);
@@ -179,8 +205,7 @@ const Criterion3_1Form = ({
   const fetchProgramCOs = useCallback(async () => {
     if (!programId) return;
     try {
-      const res =
-        await newnbaCriteria1Service.getCourseOutcomesByProgram(programId);
+      const res = await newnbaCriteria1Service.getCourseOutcomesByProgram(programId);
       setProgramCourseOutcomes(res?.data || res || []);
     } catch {
       toast.error("Failed to fetch Course Outcomes");
@@ -199,7 +224,7 @@ const Criterion3_1Form = ({
       const data = res?.data?.[0] || {};
       setCorrelationId(data?.course_outcome_correlation_id || null);
 
-      setInitialData(prev => ({
+      setInitialData((prev) => ({
         ...prev,
         tableData: {
           "3.1.1": data?.course_outcomes || [],
@@ -207,15 +232,25 @@ const Criterion3_1Form = ({
           "3.1.3": data?.course_po_matrix || [],
         },
         filesByField: {
-          "3.1.1": data?.course_outcome_document || [],
-          "3.1.2": data?.co_po_matrices_document || [],
-          "3.1.3": data?.course_po_matrix_document || [],
+          "3.1.1": ensureFileUploadSlot(data?.course_outcome_document),
+          "3.1.2": ensureFileUploadSlot(data?.co_po_matrices_document),
+          "3.1.3": ensureFileUploadSlot(data?.course_po_matrix_document),
         },
       }));
-    } catch {
-      console.warn("No previous Criterion 3.1 data");
+    } catch (err) {
+      console.warn("No previous Criterion 3.1 data found", err);
+
+      // Show empty file upload slots even when no data exists
+      setInitialData((prev) => ({
+        ...prev,
+        filesByField: {
+          "3.1.1": ensureFileUploadSlot(),
+          "3.1.2": ensureFileUploadSlot(),
+          "3.1.3": ensureFileUploadSlot(),
+        },
+      }));
     }
-  }, [cycle_sub_category_id, otherStaffId]);
+  }, [cycle_sub_category_id]);
 
   const loadReferenceData = useCallback(async () => {
     if (!programId) return;
@@ -231,7 +266,7 @@ const Criterion3_1Form = ({
 
     const mappings = mappingRes?.content || [];
 
-    setInitialData(prev => ({
+    setInitialData((prev) => ({
       ...prev,
       tableData: {
         ...prev.tableData,
@@ -246,11 +281,7 @@ const Criterion3_1Form = ({
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await Promise.all([
-        fetchProgramCOs(),
-        loadReferenceData(),
-        loadUserData(),
-      ]);
+      await Promise.all([fetchProgramCOs(), loadReferenceData(), loadUserData()]);
       setLoading(false);
     };
     init();
@@ -264,7 +295,7 @@ const Criterion3_1Form = ({
       initialData.tableData["3.1.1"].length === 0 &&
       programCourseOutcomes.length > 0
     ) {
-      setInitialData(prev => ({
+      setInitialData((prev) => ({
         ...prev,
         tableData: {
           ...prev.tableData,
@@ -272,11 +303,11 @@ const Criterion3_1Form = ({
         },
       }));
     }
-  }, [loading, programCourseOutcomes]);
+  }, [loading, programCourseOutcomes, initialData.tableData]);
 
   /* ---------------- SAVE ---------------- */
 
-  const handleSave = async formData => {
+  const handleSave = async (formData) => {
     setSaving(true);
     try {
       const payload = {
