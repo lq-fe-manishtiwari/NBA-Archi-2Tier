@@ -27,14 +27,14 @@ const Criterion3_3Form = ({
     fields: [
       {
         name: "3.3.1",
-        label: "3.3.1 Describe Assessment Tools and Processes Used for Assessing the Attainment of Each PO/PSO (10)",
+        label: "3.3.1. Describe Assessment Tools and Processes Used for Assessing the Attainment of Each PO/PSO (10)",
         marks: 10,
         type: "textarea",
         hasFile: true,
       },
       {
         name: "3.3.2",
-        label: "3.3.2 Record of Program Outcome / PSO Attainment (30)",
+        label: "3.3.2. Provide Results of Evaluation of Each PO/PSO (30)",
         marks: 30,
         hasTable: true,
         hasFile: true,

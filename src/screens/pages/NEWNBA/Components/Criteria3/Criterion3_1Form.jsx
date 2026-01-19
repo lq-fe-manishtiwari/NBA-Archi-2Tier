@@ -39,12 +39,12 @@ const Criterion3_1Form = ({
   /* ---------------- CONFIG ---------------- */
 
   const config = {
-    title: "3.1 Course Outcomes and Program Outcomes Mapping",
+    title: "3.1. Establish the Correlation between the Courses and the Program Outcomes (20)",
     totalMarks: 20,
     fields: [
       {
         name: "3.1.1",
-        label: "3.1.1 Course Outcomes (05)",
+        label: "3.1.1. Course Outcomes (SAR Should include Course Outcomes of One Course from Each Semester ofStudy, however, should be Prepared for all Courses) (05)",
         marks: 5,
         hasTable: true,
         hasFile: true,
@@ -62,7 +62,7 @@ const Criterion3_1Form = ({
       },
       {
         name: "3.1.2",
-        label: "3.1.2 CO–PO Matrices (05)",
+        label: "3.1.2. CO-PO Matrices of Courses Selected in 3.1.1 (Ten Matrices to be Mentioned; One per Semester from 1st to 10th Semester) (05)",
         marks: 5,
         hasTable: true,
         hasFile: true,
@@ -86,7 +86,7 @@ const Criterion3_1Form = ({
       },
       {
         name: "3.1.3",
-        label: "3.1.3 Course–PO Matrix (10)",
+        label: "3.1.3. Course-PO Matrix of all Five Years of Study (10)",
         marks: 10,
         hasTable: true,
         hasFile: true,
