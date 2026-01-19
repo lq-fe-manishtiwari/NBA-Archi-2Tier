@@ -2,11 +2,12 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import GenericCriteriaForm7 from "./GenericCriteriaForm7";
+import GenericCriteriaForm7_6 from "./GenericCriteriaForm7_6";
 import StatusBadge from "./StatusBadge";
 import { newnbaCriteria7Service } from "../Services/NewNBA-Criteria7.service";
 
 /* =========================================================
-   Criterion Form – Criteria 7.x (FULL WORKING)
+   Criterion Form – Criteria 7.x (UPDATED)
    ========================================================= */
 
 const CriterionForm = ({
@@ -37,7 +38,7 @@ const CriterionForm = ({
   }, []);
 
   /* =========================================================
-     SECTION UI CONFIG (DRIVES EDITOR / TABLE / FILE UPLOAD)
+     SECTION UI CONFIG
      ========================================================= */
   const sectionConfig = {
     "7.1": {
@@ -46,7 +47,9 @@ const CriterionForm = ({
       totalMarks: 15,
       fields: [
         {
+          name: "7.1",
           hasTable: true,
+           hasFileUpload: true,
           tableConfig: {
             title: "Teaching–Learning Activities",
             columns: [
@@ -121,112 +124,140 @@ const CriterionForm = ({
         },
       ],
     },
+
+    "7.6": {
+      title: "7.6. Continuous Improvement Initiatives",
+      totalMarks: 10,
+      fields: [
+        {
+          name: "7.6",
+          label: "Description",
+          hasEditor: true,
+          hasFileUpload: true,
+        },
+      ],
+    },
   };
 
   /* =========================================================
-     API + PAYLOAD MAPPING CONFIG
+     API CONFIG
      ========================================================= */
-  const apiConfig = {
-    "7.1": {
-      save: newnbaCriteria7Service.saveCriteria7_1_Data,
-      update: newnbaCriteria7Service.updateCriteria7_1_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_1_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_1_Data,
+ const apiConfig = {
+  /* ======================= 7.1 ======================= */
+  "7.1": {
+    save: newnbaCriteria7Service.saveCriteria7_1_Data,
+    update: newnbaCriteria7Service.updateCriteria7_1_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_1_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_1_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      success_index_data: data.tableData || [],
+      success_index_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: {},
+      tableData: d.success_index_data || [],
+      filesByField: fileMap(d.success_index_document),
+    }),
+  },
 
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        success_index_data: data.tableData || [],
-        success_index_document: mapFiles(data),
-      }),
+  /* ======================= 7.2 ======================= */
+  "7.2": {
+    save: newnbaCriteria7Service.saveCriteria7_2_Data,
+    update: newnbaCriteria7Service.updateCriteria7_2_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_2_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_2_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      placement_higher_studies_description: data.content?.["7.2"] || "",
+      placement_higher_studies_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: { "7.2": d.placement_higher_studies_description || "" },
+      tableData: [],
+      filesByField: fileMap(d.placement_higher_studies_document),
+    }),
+  },
 
-      mapResponse: (d) => ({
-        content: {},
-        tableData: d.success_index_data || [],
-        filesByField: fileMap(d.success_index_document),
-      }),
-    },
+  /* ======================= 7.3 ======================= */
+  "7.3": {
+    save: newnbaCriteria7Service.saveCriteria7_3_Data,
+    update: newnbaCriteria7Service.updateCriteria7_3_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_3_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_3_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      projects_consultancy_description: data.content?.["7.3"] || "",
+      projects_consultancy_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: { "7.3": d.projects_consultancy_description || "" },
+      tableData: [],
+      filesByField: fileMap(d.projects_consultancy_document),
+    }),
+  },
 
-    "7.2": {
-      save: newnbaCriteria7Service.saveCriteria7_2_Data,
-      update: newnbaCriteria7Service.updateCriteria7_2_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_2_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_2_Data,
+  /* ======================= 7.4 ======================= */
+  "7.4": {
+    save: newnbaCriteria7Service.saveCriteria7_4_Data,
+    update: newnbaCriteria7Service.updateCriteria7_4_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_4_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_4_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      academic_audit_description: data.content?.["7.4"] || "",
+      academic_audit_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: { "7.4": d.academic_audit_description || "" },
+      tableData: [],
+      filesByField: fileMap(d.academic_audit_document),
+    }),
+  },
 
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        placement_higher_studies_description: data.content?.["7.2"] || "",
-        placement_higher_studies_document: mapFiles(data),
-      }),
+  /* ======================= 7.5 ======================= */
+  "7.5": {
+    save: newnbaCriteria7Service.saveCriteria7_5_Data,
+    update: newnbaCriteria7Service.updateCriteria7_5_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_5_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_5_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      students_admitted_data: data.tableData || [],
+      students_admitted_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: {},
+      tableData: d.students_admitted_data || [],
+      filesByField: fileMap(d.students_admitted_document),
+    }),
+  },
 
-      mapResponse: (d) => ({
-        content: { "7.2": d.placement_higher_studies_description || "" },
-        tableData: [],
-        filesByField: fileMap(d.placement_higher_studies_document),
-      }),
-    },
+  /* ======================= 7.6 ======================= */
+  "7.6": {
+    save: newnbaCriteria7Service.saveCriteria7_6_Data,
+    update: newnbaCriteria7Service.updateCriteria7_6_Data,
+    refresh: newnbaCriteria7Service.getCriteria7_6_Data,
+    delete: newnbaCriteria7Service.deleteCriteria7_6_Data,
+    mapPayload: (data, staffId) => ({
+      other_staff_id: staffId,
+      cycle_sub_category_id: nba_criteria_sub_level2_id,
+      continuous_improvement_description: data.content?.["7.6"] || "",
+      continuous_improvement_document: mapFiles(data),
+    }),
+    mapResponse: (d) => ({
+      content: { "7.6": d.continuous_improvement_description || "" },
+      tableData: [],
+      filesByField: fileMap(d.continuous_improvement_document),
+    }),
+  },
+};
 
-    "7.3": {
-      save: newnbaCriteria7Service.saveCriteria7_3_Data,
-      update: newnbaCriteria7Service.updateCriteria7_3_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_3_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_3_Data,
-
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        projects_consultancy_description: data.content?.["7.3"] || "",
-        projects_consultancy_document: mapFiles(data),
-      }),
-
-      mapResponse: (d) => ({
-        content: { "7.3": d.projects_consultancy_description || "" },
-        tableData: [],
-        filesByField: fileMap(d.projects_consultancy_document),
-      }),
-    },
-
-    "7.4": {
-      save: newnbaCriteria7Service.saveCriteria7_4_Data,
-      update: newnbaCriteria7Service.updateCriteria7_4_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_4_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_4_Data,
-
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        academic_audit_description: data.content?.["7.4"] || "",
-        academic_audit_document: mapFiles(data),
-      }),
-
-      mapResponse: (d) => ({
-        content: { "7.4": d.academic_audit_description || "" },
-        tableData: [],
-        filesByField: fileMap(d.academic_audit_document),
-      }),
-    },
-
-    "7.5": {
-      save: newnbaCriteria7Service.saveCriteria7_5_Data,
-      update: newnbaCriteria7Service.updateCriteria7_5_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_5_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_5_Data,
-
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        students_admitted_data: data.tableData || [],
-        students_admitted_document: mapFiles(data),
-      }),
-
-      mapResponse: (d) => ({
-        content: {},
-        tableData: d.students_admitted_data || [],
-        filesByField: fileMap(d.students_admitted_document),
-      }),
-    },
-  };
 
   /* =========================================================
      LOAD DATA
@@ -237,7 +268,6 @@ const CriterionForm = ({
 
       try {
         setLoading(true);
-
         const staffId =
           otherStaffId ||
           JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
@@ -253,10 +283,7 @@ const CriterionForm = ({
         if (item) {
           setRecordId(item.id);
           setInitialData(apiConfig[section].mapResponse(item));
-
-          if (item.approval_status) {
-            setApprovalStatus(item);
-          }
+          if (item.approval_status) setApprovalStatus(item);
         }
       } catch {
         toast.error("Failed to load saved data");
@@ -274,7 +301,6 @@ const CriterionForm = ({
   const handleSave = async (data) => {
     try {
       setSaving(true);
-
       const staffId =
         otherStaffId ||
         JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
@@ -283,8 +309,8 @@ const CriterionForm = ({
       const payload = apiConfig[section].mapPayload(data, staffId);
 
       recordId
-        ? await apiConfig[section].update(recordId, payload,staffId)
-        : await apiConfig[section].save(payload,staffId);
+        ? await apiConfig[section].update(recordId, payload, staffId)
+        : await apiConfig[section].save(payload, staffId);
 
       toast.success("Saved successfully");
     } catch (err) {
@@ -309,25 +335,22 @@ const CriterionForm = ({
     if (!confirm.isConfirmed) return;
 
     await apiConfig[section].delete(recordId);
-
     setRecordId(null);
-    setInitialData({
-      content: {},
-      tableData: [],
-      filesByField: {},
-    });
-
+    setInitialData({ content: {}, tableData: [], filesByField: {} });
     toast.success("Deleted successfully");
   };
 
-  if (loading) {
-    return <div className="py-20 text-center">Loading…</div>;
-  }
+  if (loading) return <div className="py-20 text-center">Loading…</div>;
+
+  const FormComponent =
+    section === "7.5" || section === "7.6"
+      ? GenericCriteriaForm7_6
+      : GenericCriteriaForm7;
 
   return (
     <div className="space-y-4">
       {approvalStatus &&
-        userRole?.nba_contributor === true &&
+        userRole?.nba_contributor &&
         approvalStatus.approval_status !== "COORDINATORS_DATA" && (
           <StatusBadge
             status={approvalStatus.approval_status}
@@ -336,7 +359,8 @@ const CriterionForm = ({
           />
         )}
 
-      <GenericCriteriaForm7
+      <FormComponent
+        section={section} 
         title={sectionConfig[section].title}
         marks={sectionConfig[section].totalMarks}
         fields={sectionConfig[section].fields}
