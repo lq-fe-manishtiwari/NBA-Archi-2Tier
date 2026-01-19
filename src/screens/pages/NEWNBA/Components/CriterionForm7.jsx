@@ -4,629 +4,375 @@ import Swal from "sweetalert2";
 import GenericCriteriaForm7 from "./GenericCriteriaForm7";
 import StatusBadge from "./StatusBadge";
 import { newnbaCriteria7Service } from "../Services/NewNBA-Criteria7.service";
-import { newnbaCriteria7_2_Service } from "../Services/NewNBA-Criteria7_2.service";
-import { newnbaCriteria7_3_Service } from "../Services/NewNBA-Criteria7_3.service";
-import { newnbaCriteria7_4_Service } from "../Services/NewNBA-Criteria7_4.service";
-import { newnbaCriteria7_5_Service } from "../Services/NewNBA-Criteria7_5.service";
+
+/* =========================================================
+   Criterion Form – Criteria 7.x (FULL WORKING)
+   ========================================================= */
 
 const CriterionForm = ({
   section,
-  nba_accredited_program_id,
-  academic_year,
   nba_criteria_sub_level2_id,
-  contributor_allocation_id: nba_contributor_allocation_id,
+  contributor_allocation_id,
   completed = false,
   isContributorEditable = true,
-  otherStaffId = null, // For coordinator viewing specific contributor's data
-  editMode = false, // For editing existing entries
-  innovationLabId = null, // For PUT operations
+  otherStaffId = null,
+  editMode = false,
 }) => {
-
+  /* ---------------- STATE ---------------- */
   const [loading, setLoading] = useState(true);
-  const [initialData, setInitialData] = useState(null);
-  const [saveLoading, setSaveLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [initialData, setInitialData] = useState({
+    content: {},
+    tableData: [],
+    filesByField: {},
+  });
+  const [recordId, setRecordId] = useState(null);
   const [approvalStatus, setApprovalStatus] = useState(null);
-  const [currentInnovationLabId, setCurrentInnovationLabId] = useState(innovationLabId);
-  const [userRole, setUserRole] = useState("");
+  const [userRole, setUserRole] = useState({});
+
+  /* ---------------- USER ROLE ---------------- */
   useEffect(() => {
-    const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const roles = userInfo || {};
-    setUserRole(roles);
+    const info = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    setUserRole(info || {});
   }, []);
 
+  /* =========================================================
+     SECTION UI CONFIG (DRIVES EDITOR / TABLE / FILE UPLOAD)
+     ========================================================= */
   const sectionConfig = {
-  
     "7.1": {
-      title: "7.1. Improvement in Success Index of Students without the Backlogs",
+      title:
+        "7.1. Improvement in Success Index of Students without the Backlogs",
       totalMarks: 15,
       fields: [
         {
-          // name: "7.1.1",
-          // label: "7.1.1 Adequate and Well-Equipped Laboratories and Technical Manpower ",
-          // marks: 50,
           hasTable: true,
           tableConfig: {
-            title: "Teaching-Learning Activities",
+            title: "Teaching–Learning Activities",
             columns: [
-              { field: "items", header: "Items", placeholder: "" },
-              { field: "lyg", header: "LYG", placeholder: "" },
-              { field: "lyg_1", header: "LYGm1", placeholder: "" },
-              { field: "lyg_2", header: "LYGm2", placeholder: "" },
-              // { field: "technical_manpower", header: "Technical Manpower support", placeholder: "" },
+              { field: "items", header: "Items" },
+              { field: "lyg", header: "LYG" },
+              { field: "lyg_1", header: "LYGm1" },
+              { field: "lyg_2", header: "LYGm2" },
             ],
           },
         },
       ],
     },
-     "7.2": {
-      title: "7.2.Improvement in Placement and Higher Studies",
+
+    "7.2": {
+      title: "7.2. Improvement in Placement and Higher Studies",
       totalMarks: 10,
-      fields: [ 
-        { name: "7.3", marks: 10 },
+      fields: [
+        {
+          name: "7.2",
+          label: "Description",
+          hasEditor: true,
+          hasFileUpload: true,
+        },
       ],
     },
+
     "7.3": {
       title: "7.3. Improvement in Sponsored Projects and Consultancy",
       totalMarks: 10,
-      fields: [ 
-        { name: "7.3", marks: 10 },
+      fields: [
+        {
+          name: "7.3",
+          label: "Description",
+          hasEditor: true,
+          hasFileUpload: true,
+        },
       ],
     },
-     "7.4": {
-      title: "7.4. Academic Audit and Actions Taken thereof during the Assessment Period",
+
+    "7.4": {
+      title:
+        "7.4. Academic Audit and Actions Taken thereof during the Assessment Period",
       totalMarks: 10,
-      fields: [ 
-        { name: "7.3", marks: 10 },
+      fields: [
+        {
+          name: "7.4",
+          label: "Academic Audit Description",
+          hasEditor: true,
+          hasFileUpload: true,
+        },
       ],
     },
 
     "7.5": {
-  title: "7.5. Improvement in the Quality of Students Admitted to the Program",
-  totalMarks: 10,
-  fields: [
-    {
-      name: "7.5",
-      hasTable: true,
-      tableConfig: {
-        title: "Table No.7.5. Improvement in the quality of students admitted to the program for 3 years.",
-
-        columns: [
-          {
-            field: "item",
-            header: "Item",
-            width: "45%",
+      title:
+        "7.5. Improvement in the Quality of Students Admitted to the Program",
+      totalMarks: 10,
+      fields: [
+        {
+          hasTable: true,
+          tableConfig: {
+            title:
+              "Table 7.5 – Improvement in the Quality of Students Admitted (3 Years)",
+            columns: [
+              { field: "item", header: "Item" },
+              { field: "cay", header: "CAY" },
+              { field: "caym1", header: "CAYm1" },
+              { field: "caym2", header: "CAYm2" },
+            ],
+            readOnlyRows: [0, 4],
           },
-          {
-            field: "cay",
-            header: "CAY",
-            width: "18%",
-          },
-          {
-            field: "caym1",
-            header: "CAYm1",
-            width: "18%",
-          },
-          {
-            field: "caym2",
-            header: "CAYm2",
-            width: "18%",
-          },
-        ],
-
-        // Title rows (non-editable, non-draggable)
-        readOnlyRows: [0, 4],
-      },
+        },
+      ],
     },
-  ],
-},
+  };
 
+  /* =========================================================
+     API + PAYLOAD MAPPING CONFIG
+     ========================================================= */
+  const apiConfig = {
+    "7.1": {
+      save: newnbaCriteria7Service.saveCriteria7_1_Data,
+      update: newnbaCriteria7Service.updateCriteria7_1_Data,
+      refresh: newnbaCriteria7Service.getCriteria7_1_Data,
+      delete: newnbaCriteria7Service.deleteCriteria7_1_Data,
 
-  }
+      mapPayload: (data, staffId) => ({
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        success_index_data: data.tableData || [],
+        success_index_document: mapFiles(data),
+      }),
 
-  const sectionPayloadConfig = {
-  "7.1": {
-    mapPayload: (data, staffId, ids) => ({
-      cycleSubCategoryId: ids.subLevelId,
-      otherStaffId: staffId,
-      innovationLabDetails: data.content?.["7.1.1"] || "",
-      innovationLabProjectTable: data.tableData || [],
-      innovationLabStartupTable: [],
-      innovationLabDocument: Object.values(data?.filesByField || {})
-        .flat()
-        .map(f => ({
-          filename: f.filename,
-          url: f.s3Url || f.url,
-          description: f.description
-        })),
-      isCoordinatorEntry: !ids.contributorAllocationId
-    }),
-    mapResponse: (data) => ({
-      content: {
-                "7.1.1": data.innovation_lab_details || "",
-                data: data.innovation_lab_details || ""
-              },
-      tableData: [
-                ...(data.innovation_lab_project_table || []),
-                ...(data.innovation_lab_startup_table || [])
-              ],
-      filesByField: {
-        "7.1.1": (data.innovation_lab_document || []).map((file, i) => ({
-          id: file.id || `file-${i}`,
-          description: file.description || "",
-          filename: file.filename || "",
-          url: file.url,
-          s3Url: file.url,
-        }))
-      }
-    }),
-    save: newnbaCriteria7Service.saveCriteria7_1_Data,
-    update: newnbaCriteria7Service.updateInnovationLab,
-    refresh: newnbaCriteria7Service.getCriteria7_1_Data,
-    delete: newnbaCriteria7Service.deleteInnovationLab,
-  },
-
-  "7.2": {
-    mapPayload: (data, staffId, ids) => ({
-      cycleSubCategoryId: ids.subLevelId,
-      otherStaffId: staffId,
-      facility_details: data.content?.["7.2.1"] || "",
-      facility_table: data.tableData || [],
-      facility_document: Object.values(data.filesByField || {})
-        .flat()
-        .map(f => ({
-          filename: f.filename,
-          url: f.s3Url || f.url,
-          description: f.description
-        })),
-      isCoordinatorEntry: !ids.contributorAllocationId
-    }),
-    mapResponse: (data) => ({
-      id: data.lab_learning_facilities_id,
-      content: {
-        "7.2.1": data.facility_details || "",
-      },
-      tableData: data.facility_table || [],
-      filesByField: {
-        "7.2.1": (data.facility_document || []).map((file, i) => ({
-          id: file.id || `file-${i}`,
-          filename: file.filename,
-          url: file.url,
-          s3Url: file.url,
-          description: file.description || ""
-        }))
-      }
-    }),
-    save: newnbaCriteria7_2_Service.saveCriteria7_2_Data,
-    update: newnbaCriteria7_2_Service.updateCriteria7_2,
-    refresh: newnbaCriteria7_2_Service.getCriteria7_2_Data, 
-    delete: newnbaCriteria7_2_Service.deleteCriteria7_2,
-  },
-
-  "7.3": {
-  mapPayload: (data, staffId, ids) => ({
-    cycleSubCategoryId: ids.subLevelId,
-    otherStaffId: staffId,
-    maintenance_details: data.content?.["7.3"] || "",
-    maintenance_document: Object.values(data.filesByField || {}).flat().map(f => ({
-      filename: f.filename,
-      url: f.s3Url || f.url,
-      description: f.description
-    })),
-    isCoordinatorEntry: !ids.contributorAllocationId
-  }),
-
-  mapResponse: (data) => ({
-    id: data.lab_maintenance_id,
-    content: {
-      "7.3": data.maintenance_details || ""
+      mapResponse: (d) => ({
+        content: {},
+        tableData: d.success_index_data || [],
+        filesByField: fileMap(d.success_index_document),
+      }),
     },
-    tableData: [],
-    filesByField: {
-      "7.3": (data.maintenance_document || []).map((file, i) => ({
-        id: file.id || `file-${i}`,
-        filename: file.filename,
-        url: file.url,
-        s3Url: file.url,
-        description: file.description || ""
-      }))
-    }
-  }),
 
-  save: newnbaCriteria7_3_Service.saveCriteria7_3_Data,
-  update: newnbaCriteria7_3_Service.updateCriteria7_3,
-  refresh: newnbaCriteria7_3_Service.getCriteria7_3_Data,
-  delete: newnbaCriteria7_3_Service.deleteCriteria7_3
-},
+    "7.2": {
+      save: newnbaCriteria7Service.saveCriteria7_2_Data,
+      update: newnbaCriteria7Service.updateCriteria7_2_Data,
+      refresh: newnbaCriteria7Service.getCriteria7_2_Data,
+      delete: newnbaCriteria7Service.deleteCriteria7_2_Data,
 
-  "7.4": {
-  mapPayload: (data, staffId, ids) => ({
-    cycleSubCategoryId: ids.subLevelId,
-    otherStaffId: staffId,
-    lab_safety_table: data.tableData || [],
-    lab_safety_document: Object.values(data.filesByField || {}).flat().map(f => ({
-      filename: f.filename,
-      url: f.s3Url || f.url,
-      description: f.description
-    })),
-    isCoordinatorEntry: !ids.contributorAllocationId
-  }),
+      mapPayload: (data, staffId) => ({
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        placement_higher_studies_description: data.content?.["7.2"] || "",
+        placement_higher_studies_document: mapFiles(data),
+      }),
 
-  mapResponse: (data) => ({
-    id: data.lab_safety_id,
-    content: {},
-    tableData: data.lab_safety_table || [],
-    filesByField: {
-      "7.4": (data.lab_safety_document || []).map((file, i) => ({
-        id: file.id || `file-${i}`,
-        filename: file.filename,
-        url: file.url,
-        s3Url: file.url,
-        description: file.description || ""
-      }))
-    }
-  }),
+      mapResponse: (d) => ({
+        content: { "7.2": d.placement_higher_studies_description || "" },
+        tableData: [],
+        filesByField: fileMap(d.placement_higher_studies_document),
+      }),
+    },
 
-  save: newnbaCriteria7_4_Service.saveCriteria7_4_Data,
-  update: newnbaCriteria7_4_Service.updateCriteria7_4,
-  refresh: newnbaCriteria7_4_Service.getCriteria7_4_Data,
-  delete: newnbaCriteria7_4_Service.deleteCriteria7_4
-},
+    "7.3": {
+      save: newnbaCriteria7Service.saveCriteria7_3_Data,
+      update: newnbaCriteria7Service.updateCriteria7_3_Data,
+      refresh: newnbaCriteria7Service.getCriteria7_3_Data,
+      delete: newnbaCriteria7Service.deleteCriteria7_3_Data,
 
-  "7.5": {
-  mapPayload: (data, staffId, ids) => ({
-    cycleSubCategoryId: ids.subLevelId,
-    otherStaffId: staffId,
-    project_table: data.tableData || [],
-    documents: Object.values(data.filesByField || {}).flat().map(f => ({
-      filename: f.filename,
-      url: f.url,
-      description: f.description
-    })),
-    isCoordinatorEntry: !ids.contributorAllocationId
-  }),
+      mapPayload: (data, staffId) => ({
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        projects_consultancy_description: data.content?.["7.3"] || "",
+        projects_consultancy_document: mapFiles(data),
+      }),
 
-  mapResponse: (data) => ({
-    id: data.project_research_lab_id,
-    content: {},
-    tableData: data.project_table || [],
-    filesByField: {
-      "7.5": (data.documents || []).map((file, i) => ({
-        id: file.id || `file-${i}`,
-        filename: file.filename,
-        url: file.url,
-        s3Url: file.url,
-        description: file.description || ""
-      }))
-    }
-  }),
+      mapResponse: (d) => ({
+        content: { "7.3": d.projects_consultancy_description || "" },
+        tableData: [],
+        filesByField: fileMap(d.projects_consultancy_document),
+      }),
+    },
 
-  save: newnbaCriteria7_5_Service.saveCriteria7_5_Data,
-  update: newnbaCriteria7_5_Service.updateCriteria7_5,
-  refresh: newnbaCriteria7_5_Service.getCriteria7_5_Data,
-  delete: newnbaCriteria7_5_Service.deleteCriteria7_5
-}
-};
+    "7.4": {
+      save: newnbaCriteria7Service.saveCriteria7_4_Data,
+      update: newnbaCriteria7Service.updateCriteria7_4_Data,
+      refresh: newnbaCriteria7Service.getCriteria7_4_Data,
+      delete: newnbaCriteria7Service.deleteCriteria7_4_Data,
 
+      mapPayload: (data, staffId) => ({
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        academic_audit_description: data.content?.["7.4"] || "",
+        academic_audit_document: mapFiles(data),
+      }),
 
+      mapResponse: (d) => ({
+        content: { "7.4": d.academic_audit_description || "" },
+        tableData: [],
+        filesByField: fileMap(d.academic_audit_document),
+      }),
+    },
 
+    "7.5": {
+      save: newnbaCriteria7Service.saveCriteria7_5_Data,
+      update: newnbaCriteria7Service.updateCriteria7_5_Data,
+      refresh: newnbaCriteria7Service.getCriteria7_5_Data,
+      delete: newnbaCriteria7Service.deleteCriteria7_5_Data,
 
+      mapPayload: (data, staffId) => ({
+        other_staff_id: staffId,
+        cycle_sub_category_id: nba_criteria_sub_level2_id,
+        students_admitted_data: data.tableData || [],
+        students_admitted_document: mapFiles(data),
+      }),
 
+      mapResponse: (d) => ({
+        content: {},
+        tableData: d.students_admitted_data || [],
+        filesByField: fileMap(d.students_admitted_document),
+      }),
+    },
+  };
 
-  const config = sectionConfig[section];
-
+  /* =========================================================
+     LOAD DATA
+     ========================================================= */
   useEffect(() => {
-  const loadData = async () => {
-    if (!nba_criteria_sub_level2_id || !section) {
-      setInitialData({ content: {}, tableData: [], files: [] });
-      setLoading(false);
-      return;
-    }
+    const load = async () => {
+      if (!apiConfig[section]) return;
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-        // Use provided otherStaffId or get from current user info
-      let staffId = otherStaffId;
-      if (!staffId) {
-        const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-            const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-          staffId = userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-      }
+        const staffId =
+          otherStaffId ||
+          JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
+            ?.other_staff_id;
 
-      const config = sectionPayloadConfig[section];
-      if (!config?.refresh) {
-        setInitialData({ content: {}, tableData: [], files: [] });
-          setLoading(false);
-        return;
-      }
+        const res = await apiConfig[section].refresh(
+          nba_criteria_sub_level2_id,
+          staffId
+        );
 
-      const response = await config.refresh(nba_criteria_sub_level2_id, staffId);
+        const item = Array.isArray(res) ? res[0] : res;
 
-      const dataItem = Array.isArray(response) ? response[0] : response;
+        if (item) {
+          setRecordId(item.id);
+          setInitialData(apiConfig[section].mapResponse(item));
 
-      if (dataItem && config.mapResponse) {
-        const transformed = config.mapResponse(dataItem);
-
-        setInitialData(transformed);
-
-        // store record ID for PUT updates
-        if (dataItem.id || dataItem.innovation_lab_id || dataItem.lab_learning_facilities_id || dataItem.lab_maintenance_id || dataItem.lab_safety_id || dataItem.project_research_lab_id) {
-          setCurrentInnovationLabId(dataItem.id || dataItem.innovation_lab_id || dataItem.lab_learning_facilities_id  || dataItem.lab_maintenance_id || dataItem.lab_safety_id || dataItem.project_research_lab_id);
+          if (item.approval_status) {
+            setApprovalStatus(item);
+          }
         }
-
-            
-
-            // Set approval status if available
-        if (dataItem.approval_status) {
-          setApprovalStatus({
-            status: dataItem.approval_status,
-            rejectionReason: dataItem.rejection_reason,
-                approvalReason: dataItem.approval_status === 'APPROVED' ? dataItem.rejection_reason : null,
-            approvedByName: dataItem.approved_by_name
-          });
-
-        }
-      } else {
-            
-        setInitialData({ content: {}, tableData: [], files: [] });
-      }
-
-    } catch (err) {
+      } catch {
         toast.error("Failed to load saved data");
-      setInitialData({ content: {}, tableData: [], files: [] });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [section, nba_criteria_sub_level2_id, otherStaffId]);
+
+  /* =========================================================
+     SAVE
+     ========================================================= */
+  const handleSave = async (data) => {
+    try {
+      setSaving(true);
+
+      const staffId =
+        otherStaffId ||
+        JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
+          ?.other_staff_id;
+
+      const payload = apiConfig[section].mapPayload(data, staffId);
+
+      recordId
+        ? await apiConfig[section].update(recordId, payload,staffId)
+        : await apiConfig[section].save(payload,staffId);
+
+      toast.success("Saved successfully");
+    } catch (err) {
+      toast.error(err.message || "Save failed");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  loadData();
-  }, [section, nba_accredited_program_id, nba_criteria_sub_level2_id, nba_contributor_allocation_id, otherStaffId]);
-
-  const handleSave = async (data) => {
-    console.log("🚀 handleSave called with data:", data);
-  console.log("🔍 isContributorEditable:", isContributorEditable);
-    console.log("🔍 section:", section);
-
-    if (!isContributorEditable && userRole.nba_contributor === true) {
-      console.log("❌ Permission denied - not editable");
-      toast.error("You don't have permission to edit");
-      return;
-    }
-
-    console.log("✅ Starting save process...");
-
-  const config = sectionPayloadConfig[section];
-
-  if (!config) {
-    toast.error(`Save not implemented for Section ${section}`);
-    return;
-  }
-
-  try {
-    setSaveLoading(true);
-
-    // Extract logged-in user
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-
-    const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
-
-    const payload = config.mapPayload(data, staffId, {
-      subLevelId: nba_criteria_sub_level2_id,
-      contributorAllocationId: nba_contributor_allocation_id
-    });
-
-        console.log("📦 Payload to be sent:", payload);
-
-    // POST or PUT depending if entry exists
-    const exists = currentInnovationLabId || innovationLabId;
-    console.log("exists", exists);
-    const response = exists
-      ? await config.update(exists, payload)
-      : await config.save(payload);
-
-    const successMessage = exists ?
-          "✅ Innovation Lab data updated successfully!" :
-          "✅ Innovation Lab data saved successfully!";
-
-        toast.success(successMessage, {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-
-    // Refresh
-    const refreshed = await config.refresh(nba_criteria_sub_level2_id, staffId);
-    const refreshedItem = Array.isArray(refreshed) ? refreshed[0] : refreshed;
-
-    setInitialData({
-      content: data.content,
-      tableData: data.tableData,
-      files: Object.values(data.filesByField || {}).flat()
-    });
-
-    // Store new ID if needed
-    const newId = 
-      refreshedItem?.id || 
-      refreshedItem?.innovation_lab_id || 
-      refreshedItem?.facility_id;
-
-    if (newId) {
-      setCurrentInnovationLabId(newId);
-    }
-
-    // Update approval status from refreshed data
-    if (refreshedItem.approval_status) {
-            setApprovalStatus({
-              status: refreshedItem.approval_status,
-              rejectionReason: refreshedItem.rejection_reason,
-              approvalReason: refreshedItem.approval_status === 'APPROVED' ? refreshedItem.rejection_reason : null,
-              approvedByName: refreshedItem.approved_by_name
-            });
-    console.log("✅ Data refresh completed successfully");
-    } else {
-          console.log("⚠️ No refreshed data item found");
-        }
-  } catch (err) {
-      console.error("💥 Save failed:", err);
-      console.error("💥 Error details:", err.message, err.stack);
-
-      // Show detailed error message
-      const errorMessage = err.message || "Failed to save Innovation Lab data";
-      toast.error(`❌ ${errorMessage}`, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
-
-      // Log additional error context
-      if (err.response) {
-        console.error("💥 API Response Error:", err.response);
-        toast.error(`🔥 API Error: ${err.response.status} - ${err.response.statusText}`, {
-          position: "top-right",
-          autoClose: 5000,
-        });
-      } else if (err.request) {
-        console.error("💥 Network Error:", err.request);
-        toast.error("🌐 Network Error: Unable to reach server", {
-          position: "top-right",
-          autoClose: 5000,
-        });
-      }
-  } finally {
-    setSaveLoading(false);
-  }
-};
-
-
+  /* =========================================================
+     DELETE
+     ========================================================= */
   const handleDelete = async () => {
-  if (!currentInnovationLabId && !innovationLabId) {
-    toast.error("❌ No record available to delete");
-    return;
-  }
+    if (!recordId) return;
 
-  const config = sectionPayloadConfig[section];
+    const confirm = await Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+    });
 
-  if (!config || !config.delete) {
-    toast.error(`❌ Delete not implemented for section ${section}`);
-    return;
-  }
+    if (!confirm.isConfirmed) return;
 
-  const recordId = currentInnovationLabId || innovationLabId;
+    await apiConfig[section].delete(recordId);
 
-  const confirmed = await Swal.fire({
-    title: "Are you sure?",
-    text: `This will permanently delete data for Section ${section}.`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete it!",
-  });
-
-  if (!confirmed.isConfirmed) {
-    return;
-  }
-
-  try {
-    setSaveLoading(true);
-
-    await config.delete(recordId);
-       Swal.fire("Deleted!", "Entry has been deleted.", "success");
-
-    // Reset state
-    setInitialData(null); // Clear UI
-    setCurrentInnovationLabId(null); // temporary reset
-
-
-    // Refresh UI if needed
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const staffId = userInfo?.rawData?.other_staff_id || userInfo.user_id;
-    const refreshed = await config.refresh(nba_criteria_sub_level2_id, staffId);
-    const refreshedItem = Array.isArray(refreshed) ? refreshed[0] : refreshed;
-
-    if (refreshedItem) {
-    const newId = 
-      refreshedItem.id ||
-      refreshedItem.innovation_lab_id ||
-      refreshedItem.lab_learning_facilities_id ||
-      refreshedItem.lab_maintenance_id ||
-      refreshedItem.lab_safety_id ||
-      refreshedItem.project_research_lab_id;
-
-    setCurrentInnovationLabId(newId);
-
-    setInitialData(config.mapResponse(refreshedItem));
-  } else {
-    // No more records exist → form becomes fresh entry
+    setRecordId(null);
     setInitialData({
       content: {},
       tableData: [],
-      files: []
+      filesByField: {},
     });
 
-    setCurrentInnovationLabId(null);
-  }
-
-  } catch (err) {
-    console.error("❌ Delete error →", err);
-    toast.error(`❌ Delete failed: ${err.message}`);
-  } finally {
-    setSaveLoading(false);
-  }
-};
-
-
-  if (!config) {
-    return <div className="p-12 text-center text-red-600 text-2xl font-bold bg-red-50 rounded-xl">Section {section} not configured</div>;
-  }
+    toast.success("Deleted successfully");
+  };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-32 text-2xl text-indigo-600 font-medium">Loading {config.title}...</div>;
+    return <div className="py-20 text-center">Loading…</div>;
   }
 
   return (
     <div className="space-y-4">
-      {/* Show approval status if available - but hide for coordinator's own entries */}
-        {approvalStatus && approvalStatus.status !== 'COORDINATORS_DATA' && userRole.nba_coordinator !== true && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <StatusBadge
-              status={approvalStatus.status}
-              rejectionReason={approvalStatus.rejectionReason}
-              approvalReason={approvalStatus.approvalReason}
-              approvedByName={approvalStatus.approvedByName}
-            />
-          </div>
-        </div>
-      )}
+      {approvalStatus &&
+        userRole?.nba_contributor === true &&
+        approvalStatus.approval_status !== "COORDINATORS_DATA" && (
+          <StatusBadge
+            status={approvalStatus.approval_status}
+            rejectionReason={approvalStatus.rejection_reason}
+            approvedByName={approvalStatus.approved_by_name}
+          />
+        )}
 
-      {/* Main form */}
       <GenericCriteriaForm7
-        title={config.title}
-        marks={config.totalMarks}
-        fields={config.fields || []}
-        tableConfig={config.tableConfig || null}
+        title={sectionConfig[section].title}
+        marks={sectionConfig[section].totalMarks}
+        fields={sectionConfig[section].fields}
         initialData={initialData}
         onSave={handleSave}
-        onDelete={currentInnovationLabId ? handleDelete : null}
+        onDelete={recordId ? handleDelete : null}
         isCompleted={completed}
-        isContributorEditable={
-    // if no existing record → editable
-    !currentInnovationLabId
-      ? true
-      : // if record exists → editable only when editMode=true
-        editMode
-  }
-        saving={saveLoading}
-        hasExistingData={!!currentInnovationLabId}
+        isContributorEditable={!recordId || editMode}
+        saving={saving}
+        hasExistingData={!!recordId}
       />
     </div>
   );
 };
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+const mapFiles = (data) =>
+  Object.values(data.filesByField || {})
+    .flat()
+    .map((f) => ({
+      filename: f.filename,
+      url: f.s3Url || f.url,
+      description: f.description,
+    }));
+
+const fileMap = (docs = []) => ({
+  default: docs.map((d, i) => ({
+    id: d.id || `file-${i}`,
+    filename: d.filename,
+    url: d.url,
+    s3Url: d.url,
+    description: d.description || "",
+  })),
+});
 
 export default CriterionForm;
