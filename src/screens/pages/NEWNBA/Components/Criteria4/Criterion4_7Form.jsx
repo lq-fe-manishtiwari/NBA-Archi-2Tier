@@ -112,11 +112,11 @@ const Criterion4_7Form = ({
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
 
-      setFirstYearStudentsId(d.cri47_first_year_students_id || null);
+      setFirstYearStudentsId(d.id || null);
 
       // Transform table data from API response
-      const transformedTableData = d.cri47_first_year_students_table ? 
-        d.cri47_first_year_students_table.map((row, index) => ({
+      const transformedTableData = d.academic_performance_data ? 
+        d.academic_performance_data.map((row, index) => ({
           id: `row-${Date.now()}-${index}`,
           item: getRowLabel(index),
           caym1: row.caym1 || "",
@@ -128,8 +128,8 @@ const Criterion4_7Form = ({
         content: { "4.7": "" },
         tableData: transformedTableData,
         filesByField: {
-          "4.7": (d.cri47_first_year_students_document || []).length > 0
-            ? (d.cri47_first_year_students_document || []).map((f, i) => ({
+          "4.7": (d.academic_performance_document || []).length > 0
+            ? (d.academic_performance_document || []).map((f, i) => ({
                 id: `file-4.7-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
@@ -185,7 +185,7 @@ const Criterion4_7Form = ({
           }))
       );
 
-      const cri47_first_year_students_document = filesWithCategory
+      const academic_performance_document = filesWithCategory
         .filter((f) => {
           const hasUrl = f.s3Url && f.s3Url.trim() !== "";
           return hasUrl;
@@ -200,19 +200,19 @@ const Criterion4_7Form = ({
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-      const cri47_first_year_students_table = transformAcademicPerformance(formData.tableData);
+      const academic_performance_data = transformAcademicPerformance(formData.tableData);
 
       const payload = {
         other_staff_id: staffId,
         cycle_sub_category_id: cycle_sub_category_id,
-        cri47_first_year_students_table,
-        cri47_first_year_students_document
+        academic_performance_data,
+        academic_performance_document
       };
 
       if (firstYearStudentsId) {
-        await newnbaCriteria4Service.putCriteria4_7_Data(firstYearStudentsId, payload);
+        await newnbaCriteria4Service.putCriteria4_7_Data(firstYearStudentsId, payload,staffId);
       } else {
-        await newnbaCriteria4Service.saveCriteria4_7_Data(payload);
+        await newnbaCriteria4Service.saveCriteria4_7_Data(payload,staffId);
       }
 
       setAlert(

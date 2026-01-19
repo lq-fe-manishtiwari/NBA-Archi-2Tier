@@ -112,11 +112,11 @@ const Criterion4_6Form = ({
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
 
-      setSecondYearStudentsId(d.cri46_second_year_students_id || null);
+      setSecondYearStudentsId(d.id || null);
 
       // Transform table data from API response
-      const transformedTableData = d.cri46_second_year_students_table ? 
-        d.cri46_second_year_students_table.map((row, index) => ({
+      const transformedTableData = d.academic_performance_data ? 
+        d.academic_performance_data.map((row, index) => ({
           id: `row-${Date.now()}-${index}`,
           item: getRowLabel(index),
           caym1: row.caym1 || "",
@@ -128,8 +128,8 @@ const Criterion4_6Form = ({
         content: { "4.6": "" },
         tableData: transformedTableData,
         filesByField: {
-          "4.6": (d.cri46_second_year_students_document || []).length > 0
-            ? (d.cri46_second_year_students_document || []).map((f, i) => ({
+          "4.6": (d.academic_performance_document || []).length > 0
+            ? (d.academic_performance_document || []).map((f, i) => ({
                 id: `file-4.6-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
@@ -185,7 +185,7 @@ const Criterion4_6Form = ({
           }))
       );
 
-      const cri46_second_year_students_document = filesWithCategory
+      const academic_performance_document = filesWithCategory
         .filter((f) => {
           const hasUrl = f.s3Url && f.s3Url.trim() !== "";
           return hasUrl;
@@ -200,19 +200,19 @@ const Criterion4_6Form = ({
       const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-      const cri46_second_year_students_table = transformAcademicPerformance(formData.tableData);
+      const academic_performance_data = transformAcademicPerformance(formData.tableData);
 
       const payload = {
         other_staff_id: staffId,
         cycle_sub_category_id: cycle_sub_category_id,
-        cri46_second_year_students_table,
-        cri46_second_year_students_document
+        academic_performance_data,
+        academic_performance_document
       };
 
       if (secondYearStudentsId) {
-        await newnbaCriteria4Service.putCriteria4_6_Data(secondYearStudentsId, payload);
+        await newnbaCriteria4Service.putCriteria4_6_Data(secondYearStudentsId, payload,staffId);
       } else {
-        await newnbaCriteria4Service.saveCriteria4_6_Data(payload);
+        await newnbaCriteria4Service.saveCriteria4_6_Data(payload,staffId);
       }
 
       setAlert(

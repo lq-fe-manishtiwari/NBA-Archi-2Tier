@@ -99,9 +99,9 @@ const Criterion4_3Form = ({
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[rawResponse.length - 1] : rawResponse;
 
-      setAcademicPerformanceId(d.cri43_academic_performance_id || null);
+      setAcademicPerformanceId(d.id || null);
 
-      const files = (d.cri43_academic_performance_document || []).map((f, i) => ({
+      const files = (d.academic_performance_document || []).map((f, i) => ({
         id: f.id || `file-${i}`,
         filename: f.filename || f.file_name || "",
         s3Url: f.url || f.file_url || "",
@@ -109,7 +109,7 @@ const Criterion4_3Form = ({
         uploading: false,
       }));
 
-      const tableArray = d.cri43_academic_performance_table || [];
+      const tableArray = d.academic_performance_data || [];
       const tableData = tableArray.length > 0 ? tableArray.map((row, i) => ({
         id: `row-${Date.now()}-${i}`,
         item: config.fields[0].tableConfig.predefinedRows[i]?.item || "",
@@ -183,14 +183,14 @@ const handleSave = async (formData) => {
     const payload = {
       other_staff_id: staffId,
       cycle_sub_category_id: cycle_sub_category_id,
-      cri43_academic_performance_table: transformTableData(formData.tableData),
-      cri43_academic_performance_document: transformFiles(formData.filesByField["4.3"])
+      academic_performance_data: transformTableData(formData.tableData),
+      academic_performance_document: transformFiles(formData.filesByField["4.3"])
     };
 
     if (academicPerformanceId) {
-      await newnbaCriteria4Service.putCriteria4_3_Data(academicPerformanceId, payload);
+      await newnbaCriteria4Service.putCriteria4_3_Data(academicPerformanceId, payload,staffId);
     } else {
-      await newnbaCriteria4Service.saveCriteria4_3_Data(payload);
+      await newnbaCriteria4Service.saveCriteria4_3_Data(payload,staffId);
     }
 
     setAlert(

@@ -80,71 +80,141 @@ const Criterion4_2Form = ({
     }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
 
   // ---------------- LOAD DATA----------------
-  const loadData = useCallback(async () => {
-    if (!cycle_sub_category_id) return setLoading(false);
+const loadData = useCallback(async () => {
+  if (!cycle_sub_category_id) {
+    setLoading(false);
+    return;
+  }
 
-    try {
-      setLoading(true);
-      
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+  try {
+    setLoading(true);
 
-      const res = await newnbaCriteria4Service.getCriteria4_2_Data(
-        cycle_sub_category_id,
-        currentOtherStaffId
-      );
+    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-      const rawResponse = res?.data || res || [];
-      const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[rawResponse.length - 1] : rawResponse;
-      
-      setRecordId(d.cri42_success_rate_id || null);
+    const currentOtherStaffId =
+      otherStaffId ||
+      userInfo?.rawData?.other_staff_id ||
+      userInfo.user_id ||
+      userInfoo?.other_staff_id;
 
-      // Map uploaded files
-      const files = (d.cri42_success_rate_document || []).map((f, i) => ({
-        id: f.id || `file-${i}`,
-        filename: f.filename || f.file_name || "",
-        s3Url: f.url || f.file_url || "",
-        description: f.description || f.filename || f.file_name || "",
-        uploading: false,
+    const res = await newnbaCriteria4Service.getCriteria4_2_Data(
+      cycle_sub_category_id,
+      currentOtherStaffId
+    );
+
+    const rawResponse = res?.data || res || [];
+    const d =
+      Array.isArray(rawResponse) && rawResponse.length > 0
+        ? rawResponse[rawResponse.length - 1]
+        : rawResponse;
+
+    setRecordId(d?.id || null);
+
+    // ================= TABLE MAPPERS =================
+    const mapTableToUI = (tableArray = []) =>
+      tableArray.map((row, i) => ({
+        id: `row-${Date.now()}-${i}`,
+        item:
+          config.fields[0].tableConfig.predefinedRows[i]?.item || "",
+        lyg: row.lyg || row.academic_year || "",
+        lygm1: row.lygm1 || row.sanctioned_intake || "",
+        lygm2:
+          row.lygm2 || row.no_of_students_admitted || "",
       }));
 
-      // Map table data - API returns flat array, need to map to UI structure
-      const tableArray = d.cri42_success_rate_table || [];
-      const tableData = tableArray.length > 0 ? tableArray.map((row, i) => ({
-        id: `row-${Date.now()}-${i}`,
-        item: config.fields[0].tableConfig.predefinedRows[i]?.item || "",
-        lyg: row.academic_year || row.lyg || "",
-        lygm1: row.sanctioned_intake || row.lygm1 || "",
-        lygm2: row.no_of_students_admitted || row.lygm2 || "",
-      })) : [];
+    // ================= FILE MAPPERS =================
+    const mapFilesToUI = (files = [], prefix) =>
+      files && files.length > 0
+        ? files.map((f, i) => ({
+            id: f.id || `${prefix}-${i}`,
+            filename: f.filename || f.file_name || "",
+            s3Url: f.url || f.file_url || "",
+            description:
+              f.description ||
+              f.filename ||
+              f.file_name ||
+              "",
+            uploading: false,
+          }))
+        : [
+            {
+              id: `${prefix}-0`,
+              filename: "",
+              s3Url: "",
+              description: "",
+              file: null,
+              uploading: false,
+            },
+          ];
 
-      // Provide filesByField matching GenericCriteriaForm4_2 expectations (4.2.1 & 4.2.2)
-      setInitialData({
-        content: { "4.2": d.quality_processes_description || "" },
-        tableData421: tableData,
-        tableData422: [],
-        filesByField: {
-          "4.2.1": [{ id: `file-4.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "4.2.2": [{ id: `file-4.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
-      });
-    } catch (err) {
-      console.warn("Load failed:", err);
-      setRecordId(null);
-      setInitialData({
-        content: { "4.2": "" },
-        tableData421: [],
-        tableData422: [],
-        filesByField: {
-          "4.2.1": [{ id: `file-4.2.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "4.2.2": [{ id: `file-4.2.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [cycle_sub_category_id, otherStaffId]);
+    // ================= MAP API DATA =================
+    const tableData421 = d?.success_rate_total
+      ? mapTableToUI(d.success_rate_total)
+      : [];
+
+    const tableData422 = d?.success_rate_without_backlogs
+      ? mapTableToUI(d.success_rate_without_backlogs)
+      : [];
+
+    const files421 = mapFilesToUI(
+      d?.success_rate_document,
+      "file-4.2.1"
+    );
+
+    const files422 = mapFilesToUI(
+      d?.success_rate_without_backlogs_document,
+      "file-4.2.2"
+    );
+
+    // ================= SET INITIAL DATA =================
+    setInitialData({
+      content: {
+        "4.2": d?.quality_processes_description || "",
+      },
+      tableData421,
+      tableData422,
+      filesByField: {
+        "4.2.1": files421,
+        "4.2.2": files422,
+      },
+    });
+  } catch (err) {
+    console.error("Load failed:", err);
+
+    setRecordId(null);
+    setInitialData({
+      content: { "4.2": "" },
+      tableData421: [],
+      tableData422: [],
+      filesByField: {
+        "4.2.1": [
+          {
+            id: "file-4.2.1-0",
+            filename: "",
+            s3Url: "",
+            description: "",
+            file: null,
+            uploading: false,
+          },
+        ],
+        "4.2.2": [
+          {
+            id: "file-4.2.2-0",
+            filename: "",
+            s3Url: "",
+            description: "",
+            file: null,
+            uploading: false,
+          },
+        ],
+      },
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [cycle_sub_category_id, otherStaffId]);
+
 
   useEffect(() => {
     loadData();
@@ -176,11 +246,9 @@ const Criterion4_2Form = ({
       }));
 
   // ---------------- SAVE DATA----------------
-   const handleSave = async (formData) => {
-    setSaving(true);
-    try {
-
-      // Get staff ID
+const handleSave = async (formData) => {
+  setSaving(true);
+  try {
     const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
     const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
@@ -190,62 +258,44 @@ const Criterion4_2Form = ({
       userInfo.user_id ||
       userInfoo?.other_staff_id;
 
-      // Normalize incoming formData (GenericCriteriaForm4_2 sends { tableData421, tableData422, filesByField })
-      const incomingFiles = [
-        ...(formData.filesByField?.["4.2.1"] || []),
-        ...(formData.filesByField?.["4.2.2"] || []),
-      ];
+    // ---------- TABLES ----------
+    const table421 = formData.tableData421 || []; // 4.2.1
+    const table422 = formData.tableData422 || []; // 4.2.2
 
-      const incomingTable = formData.tableData421 || formData.tableData || [];
+    // ---------- FILES ----------
+    const files421 = formData.filesByField?.["4.2.1"] || [];
+    const files422 = formData.filesByField?.["4.2.2"] || [];
 
-      const payload = {
-        cycle_sub_category_id,
-        other_staff_id: staffId,
-        cri42_success_rate_document: transformFiles(incomingFiles),
-        cri42_success_rate_table: transformTableData(incomingTable),
-      };
+    const payload = {
+      cycle_sub_category_id,
+      other_staff_id: staffId,
 
-      console.log("Payload to API:", payload);
+      // ===== 4.2.1 : Success Rate =====
+      success_rate_total: transformTableData(table421),
+      success_rate_document: transformFiles(files421),
 
-      if (recordId) {
-            await newnbaCriteria4Service.putCriteria4_2_Data(recordId, payload);
-          } else {
-            await newnbaCriteria4Service.saveCriteria4_2_Data(payload);
-          }
+      // ===== 4.2.2 : Success Rate Without Backlogs =====
+      success_rate_without_backlogs: transformTableData(table422),
+      success_rate_without_backlogs_document: transformFiles(files422),
+    };
 
-      // await newnbaCriteria4Service.saveCriteria4_2_Data(payload);
+    console.log("Payload to API:", payload);
 
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnCssClass="btn-confirm"
-          confirmBtnText="OK"
-          onConfirm={() => setAlert(null)}
-        >
-          Criterion 4.2 saved successfully
-        </SweetAlert>
-      );
-
-      onSaveSuccess?.();
-      loadData();
-    } catch (err) {
-      console.error("Save failed:", err);
-      setAlert(
-        <SweetAlert
-          danger
-          title="Save Failed"
-          confirmBtnCssClass="btn-confirm"
-          confirmBtnText="OK"
-          onConfirm={() => setAlert(null)}
-        >
-          Something went wrong while saving
-        </SweetAlert>
-      );
-    } finally {
-      setSaving(false);
+    if (recordId) {
+      await newnbaCriteria4Service.putCriteria4_2_Data(recordId, payload, staffId);
+    } else {
+      await newnbaCriteria4Service.saveCriteria4_2_Data(payload, staffId);
     }
-  };
+
+    onSaveSuccess?.();
+    loadData();
+  } catch (err) {
+    console.error("Save failed:", err);
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   // ---------------- DELETE DATA----------------
   const handleDelete = async () => {

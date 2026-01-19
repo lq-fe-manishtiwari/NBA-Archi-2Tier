@@ -1,448 +1,337 @@
-// src/screens/pages/NEWNBA/Components/Criteria3/Criterion3_1Form.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm from "../GenericCriteriaForm";
-import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
+import { toast } from "react-toastify";
 import SweetAlert from "react-bootstrap-sweetalert";
-import { getAllProfileFlags } from "@/_services/adminProfileUtils";
+import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
+import { POService } from "../../../OBE/Settings/Services/po.service";
+import { PSOService } from "../../../OBE/Settings/Services/pso.service";
+import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import GenericCriteriaForm3_1 from "./GenericCriteriaForm3_1";
 
 const Criterion3_1Form = ({
   cycle_sub_category_id,
   isEditable = true,
   onSaveSuccess,
   otherStaffId = null,
-  showCardView = true,
-  onCardClick = null,
-  editMode = false,
-  teaching_learning_quality_id: propTeaching_learning_quality_id = null,
+  programId = null,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [teaching_learning_quality_id, setTeaching_learning_quality_id] = useState(null);
+  const [correlationId, setCorrelationId] = useState(null);
+  const [alert, setAlert] = useState(null);
+
   const [initialData, setInitialData] = useState({
-    content: {},
-    tableData: [],
+    tableData: {
+      "3.1.1": [],
+      "3.1.2": [],
+      "3.1.3": [],
+    },
     filesByField: {},
   });
-  const [alert, setAlert] = useState(null);
-  const [isContributor, setIsContributor] = useState(false);
 
- const config = {
-  title: "3.1 Course Outcomes and Program Outcomes Mapping",
-  totalMarks: 20,
-  fields: [
-    /* ============================================================
-       3.1.1 COURSE OUTCOMES
-    ============================================================ */
+  const [poData, setPoData] = useState([]);
+  const [psoData, setPsoData] = useState([]);
+  const [programCourseOutcomes, setProgramCourseOutcomes] = useState([]);
 
-    {
-      name: "3.1.1",
-      label:
-        "3.1.1 Course Outcomes (05)",
-      marks: 5,
-      hasTable: true,
-      hasFile: true,
-      tableConfig: {
-        title: "Table No.3.1.1: List of Course Outcomes",
-        subtitle:
-          "SAR should include Course Outcomes of one course from each semester. Each course is expected to have 4–6 outcomes.",
-        addRowLabel: "Add Course Outcome",
-        columns: [
-          {
-            field: "course_code",
-            header: "Course Code",
-            placeholder: "C202",
-            width: "w-24",
-          },
-          {
-            field: "course_name",
-            header: "Course Name",
-            placeholder: "Data Structures",
-            width: "w-48",
-          },
-          {
-            field: "year_of_study",
-            header: "Year of Study",
-            placeholder: "2020–21",
-            width: "w-28",
-          },
-          {
-            field: "co_code",
-            header: "CO Code",
-            placeholder: "C202.1",
-            width: "w-24",
-          },
-          {
-            field: "co_statement",
-            header: "Course Outcome Statement",
-            placeholder: "Apply data structures to solve real-world problems",
-            width: "w-96",
-          },
-        ],
+  /* ---------------- CONFIG ---------------- */
+
+  const config = {
+    title: "3.1 Course Outcomes and Program Outcomes Mapping",
+    totalMarks: 20,
+    fields: [
+      {
+        name: "3.1.1",
+        label: "3.1.1 Course Outcomes (05)",
+        marks: 5,
+        hasTable: true,
+        hasFile: true,
+        tableConfig: {
+          title: "Table No.3.1.1: List of Course Outcomes",
+          addRowLabel: "Add Course Outcome",
+          columns: [
+            { field: "course_code", header: "Course Code", width: "w-28" },
+            { field: "course_name", header: "Course Name", width: "w-64" },
+            { field: "year_of_study", header: "Year / Semester", width: "w-40" },
+            { field: "co_code", header: "CO Code", width: "w-28" },
+            { field: "co_statement", header: "CO Statement", width: "w-96" },
+          ],
+        },
       },
-    },
-
-    /* ============================================================
-       3.1.2 CO–PO MATRIX (SELECTED COURSES)
-    ============================================================ */
-
-    {
-      name: "3.1.2",
-      label:
-        "3.1.2 CO–PO Matrices of Courses Selected in 3.1.1 (05)",
-      marks: 5,
-      hasTable: true,
-      hasFile: true,
-      tableConfig: {
-        title: "Table No.3.1.2: CO–PO Matrices of Selected Courses",
-        subtitle:
-          "Enter mapping strength as 1 (Low), 2 (Medium), 3 (High) or '-' for no correlation.",
-        addRowLabel: "Add CO–PO Mapping",
-        columns: [
-          {
-            field: "co_code",
-            header: "CO",
-            placeholder: "C202.1",
-            width: "w-24",
-          },
-          ...Array.from({ length: 11 }, (_, i) => ({
-            field: `PO${i + 1}`,
-            header: `PO${i + 1}`,
-            width: "w-16",
-            type: "select",
-            options: [
-              { value: "-", label: "-" },
-              { value: "1", label: "Low (1)" },
-              { value: "2", label: "Medium (2)" },
-              { value: "3", label: "High (3)" },
-            ],
-          })),
-        ],
+      {
+        name: "3.1.2",
+        label: "3.1.2 CO–PO Matrices (05)",
+        marks: 5,
+        hasTable: true,
+        hasFile: true,
+        tableConfig: {
+          title: "Table No.3.1.2: CO–PO Matrix",
+          addRowLabel: "Add Mapping Row",
+          columns: [
+            { field: "co_code", header: "CO", width: "w-28" },
+            ...Array.from({ length: 12 }, (_, i) => ({
+              field: `PO${i + 1}`,
+              header: `PO${i + 1}`,
+              width: "w-16",
+              type: "select",
+              options: ["-", "1", "2", "3"].map(v => ({
+                value: v,
+                label: v,
+              })),
+            })),
+          ],
+        },
       },
-    },
-
-    /* ============================================================
-       3.1.3 COURSE–PO MATRIX (ALL YEARS)
-    ============================================================ */
-
-    {
-      name: "3.1.3",
-      label:
-        "3.1.3 Course–PO Matrix of All Five Years of Study (10)",
-      marks: 10,
-      hasTable: true,
-      hasFile: true,
-      tableConfig: {
-        title: "Table No.3.1.3: Course–PO Matrix of All Five Years of Study",
-        subtitle:
-          "Correlation levels: 1 (Low), 2 (Medium), 3 (High). Use '-' if no correlation. Data should be consistent with Table 3.1.2.",
-        addRowLabel: "Add Course–PO Mapping",
-        columns: [
-          {
-            field: "course_code",
-            header: "Course Code",
-            placeholder: "C101 / C202 / C409",
-            width: "w-28",
-          },
-          ...Array.from({ length: 11 }, (_, i) => ({
-            field: `PO${i + 1}`,
-            header: `PO${i + 1}`,
-            width: "w-16",
-            type: "select",
-            options: [
-              { value: "-", label: "-" },
-              { value: "1", label: "Low (1)" },
-              { value: "2", label: "Medium (2)" },
-              { value: "3", label: "High (3)" },
-            ],
-          })),
-        ],
+      {
+        name: "3.1.3",
+        label: "3.1.3 Course–PO Matrix (10)",
+        marks: 10,
+        hasTable: true,
+        hasFile: true,
+        tableConfig: {
+          title: "Table No.3.1.3: Course–PO Matrix",
+          addRowLabel: "Add Course Mapping",
+          columns: [
+            { field: "course_code", header: "Course Code", width: "w-32" },
+            ...Array.from({ length: 12 }, (_, i) => ({
+              field: `PO${i + 1}`,
+              header: `PO${i + 1}`,
+              width: "w-16",
+              type: "select",
+              options: ["-", "1", "2", "3"].map(v => ({
+                value: v,
+                label: v,
+              })),
+            })),
+          ],
+        },
       },
-    },
-  ],
-};
+    ],
+  };
 
+  /* ---------------- HELPERS ---------------- */
 
-  // ---------------- LOAD DATA ----------------
-  const loadData = useCallback(async () => {
-    if (!cycle_sub_category_id) {
-      setLoading(false);
-      return;
+  const getStaffId = () =>
+    otherStaffId ||
+    JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData
+      ?.other_staff_id ||
+    JSON.parse(localStorage.getItem("userInfo") || "{}")?.other_staff_id;
+
+  /* ---------- 3.1.1 Semester-wise COs ---------- */
+
+  const mapCourseOutcomesTo311 = (data = []) =>
+    data.map(co => ({
+      course_code: co.subject?.subjectCode || "",
+      course_name: co.subject?.name || "",
+      year_of_study: co.subject?.semester
+        ? `Semester ${co.subject.semester.semester_number} (${co.subject.semester.name})`
+        : "",
+      co_code: co.coCode || "",
+      co_statement: co.coStatement || "",
+    }));
+
+  /* ---------- 3.1.2 CO–PO Matrix ---------- */
+
+  const buildCoPoMatrix312 = (mapping = []) => {
+    const rows = {};
+
+    mapping.forEach(m => {
+      const coCode = m.co?.coCode;
+      if (!coCode) return;
+
+      if (!rows[coCode]) {
+        rows[coCode] = { co_code: coCode };
+        for (let i = 1; i <= 12; i++) rows[coCode][`PO${i}`] = "-";
+      }
+
+      const poCode = m.po?.poCode;
+      if (poCode) {
+        rows[coCode][poCode] = m.correlationLevel || "-";
+      }
+    });
+
+    return Object.values(rows);
+  };
+
+  /* ---------- 3.1.3 Course–PO Matrix ---------- */
+
+  const buildCoursePoMatrix313 = (mapping = []) => {
+    const courseMap = {};
+
+    mapping.forEach(m => {
+      const courseCode = m.subject?.subjectCode;
+      const poCode = m.po?.poCode;
+      if (!courseCode || !poCode) return;
+
+      if (!courseMap[courseCode]) {
+        courseMap[courseCode] = { course_code: courseCode };
+        for (let i = 1; i <= 12; i++)
+          courseMap[courseCode][`PO${i}`] = "-";
+      }
+
+      courseMap[courseCode][poCode] =
+        m.averageCorrelation?.toString() || "-";
+    });
+
+    return Object.values(courseMap);
+  };
+
+  /* ---------------- API CALLS ---------------- */
+
+  const fetchProgramCOs = useCallback(async () => {
+    if (!programId) return;
+    try {
+      const res =
+        await newnbaCriteria1Service.getCourseOutcomesByProgram(programId);
+      setProgramCourseOutcomes(res?.data || res || []);
+    } catch {
+      toast.error("Failed to fetch Course Outcomes");
     }
+  }, [programId]);
+
+  const loadUserData = useCallback(async () => {
+    if (!cycle_sub_category_id) return;
 
     try {
-      setLoading(true);
-      
-      // Check if user is contributor
-      const profileFlags = getAllProfileFlags();
-      const userIsContributor = profileFlags?.isContributor || false;
-      setIsContributor(userIsContributor);
-      
-      // Determine staff ID to use - otherStaffId has priority
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-      
-      console.log("🟠 Criterion3_1Form - Loading data:");
-      console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
-      console.log("  - otherStaffId (prop):", otherStaffId);
-      console.log("  - currentOtherStaffId (final):", currentOtherStaffId);
-      console.log("  - userIsContributor:", userIsContributor);
-      
-      // Call API with staff ID
-      const res = await newnbaCriteria3Service.getCriteria3_1_Data(cycle_sub_category_id, currentOtherStaffId);
-      
-      // Handle both array and object responses
-      const rawResponse = res?.data || res || [];
-      let d;
-      if (Array.isArray(rawResponse) && rawResponse.length > 0) {
-        // Sort by updated_at descending to get the latest
-        const sorted = rawResponse.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-        d = sorted[0];
-      } else {
-        d = rawResponse;
-      }
-      
-      console.log("🟢 Criterion3_1Form - Raw API Response:", rawResponse);
-      console.log("🟢 Criterion3_1Form - Processed Data:", d);
+      const res = await newnbaCriteria3Service.getCriteria3_1_Data(
+        cycle_sub_category_id,
+        getStaffId()
+      );
 
-      // If API returns nothing, show blank form
-      setTeaching_learning_quality_id(d.course_outcome_correlation_id || null);
+      const data = res?.data?.[0] || {};
+      setCorrelationId(data?.course_outcome_correlation_id || null);
 
-      setInitialData({
-        content: {},
+      setInitialData(prev => ({
+        ...prev,
         tableData: {
-          "3.1.1": d.course_outcomes || [],
-          "3.1.2": d.co_po_matrices || [],
-          "3.1.3": d.course_po_matrix || [],
+          "3.1.1": data?.course_outcomes || [],
+          "3.1.2": data?.co_po_matrices || [],
+          "3.1.3": data?.course_po_matrix || [],
         },
         filesByField: {
-          "3.1.1": (d.course_outcome_document || []).length > 0
-            ? (d.course_outcome_document || []).map((f, i) => ({
-                id: `file-3.1.1-${i}`,
-                filename: f.file_name || f.name || "",
-                s3Url: f.file_url || f.url || "",
-                url: f.file_url || f.url || "",
-                description: f.description || "",
-                uploading: false
-              }))
-            : [{ id: `file-3.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "3.1.2": [{ id: `file-3.1.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "3.1.3": [{ id: `file-3.1.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        }
-      });
-
-    } catch (err) {
-      console.warn("❌ Criterion3_1Form - API failed or returned 404, showing blank form", err);
-      setTeaching_learning_quality_id(null);
-      setInitialData({
-        content: {},
-        tableData: {
-          "3.1.1": [],
-          "3.1.2": [],
-          "3.1.3": [],
+          "3.1.1": data?.course_outcome_document || [],
+          "3.1.2": data?.co_po_matrices_document || [],
+          "3.1.3": data?.course_po_matrix_document || [],
         },
-        filesByField: {
-          "3.1.1": [{ id: `file-3.1.1-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "3.1.2": [{ id: `file-3.1.2-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-          "3.1.3": [{ id: `file-3.1.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        }
-      });
-    } finally {
-      setLoading(false);
+      }));
+    } catch {
+      console.warn("No previous Criterion 3.1 data");
     }
   }, [cycle_sub_category_id, otherStaffId]);
 
+  const loadReferenceData = useCallback(async () => {
+    if (!programId) return;
+
+    const [poRes, psoRes, mappingRes] = await Promise.all([
+      POService.getPObyProgramId(programId),
+      PSOService.getPSOByProgramId(programId),
+      newnbaCriteria1Service.getCoPoMappingsByProgram(programId),
+    ]);
+
+    setPoData(poRes || []);
+    setPsoData(psoRes || []);
+
+    const mappings = mappingRes?.content || [];
+
+    setInitialData(prev => ({
+      ...prev,
+      tableData: {
+        ...prev.tableData,
+        "3.1.2": buildCoPoMatrix312(mappings),
+        "3.1.3": buildCoursePoMatrix313(mappings),
+      },
+    }));
+  }, [programId]);
+
+  /* ---------------- INIT ---------------- */
+
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchProgramCOs(),
+        loadReferenceData(),
+        loadUserData(),
+      ]);
+      setLoading(false);
+    };
+    init();
+  }, [fetchProgramCOs, loadReferenceData, loadUserData]);
 
-  // ---------------- SAVE DATA ----------------
-  const handleSave = async (formData) => {
+  /* ---------- Auto-fill 3.1.1 only if empty ---------- */
+
+  useEffect(() => {
+    if (
+      !loading &&
+      initialData.tableData["3.1.1"].length === 0 &&
+      programCourseOutcomes.length > 0
+    ) {
+      setInitialData(prev => ({
+        ...prev,
+        tableData: {
+          ...prev.tableData,
+          "3.1.1": mapCourseOutcomesTo311(programCourseOutcomes),
+        },
+      }));
+    }
+  }, [loading, programCourseOutcomes]);
+
+  /* ---------------- SAVE ---------------- */
+
+  const handleSave = async formData => {
     setSaving(true);
-    console.log(formData);
     try {
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
-        (field) =>
-          (formData.filesByField[field] || []).map((file) => ({
-            ...file,
-            category: "Assessment Documents",
-          }))
-      );
-      console.log(filesWithCategory);
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-
       const payload = {
-        other_staff_id: staffId,
+        other_staff_id: getStaffId(),
         cycle_sub_category_id,
-        course_outcomes: formData.tableData["3.1.1"] || [],
-        co_po_matrices: formData.tableData["3.1.2"] || [],
-        course_po_matrix: formData.tableData["3.1.3"] || [],
-        course_outcome_document: filesWithCategory
-          .filter((f) => f.url || f.s3Url)
-          .map((f) => ({
-            file_name: f.filename,
-            file_url: f.s3Url || f.url,
-            description: f.description || "",
-          })),
+        course_outcomes: formData.tableData["3.1.1"],
+        co_po_matrices: formData.tableData["3.1.2"],
+        course_po_matrix: formData.tableData["3.1.3"],
       };
-      console.log("🟠 Criterion3_1Form - Save payload:", payload);
-      console.log("🟠 staffId to save:", staffId);
 
-      const newFiles = filesWithCategory.filter((f) => f.file);
-
-      // Call appropriate API based on whether record exists
-      if (teaching_learning_quality_id) {
-        console.log("🟠 Updating existing record with ID:", teaching_learning_quality_id);
-        await newnbaCriteria3Service.putCriteria3_1_Data(teaching_learning_quality_id, staffId, payload);
+      if (correlationId) {
+        await newnbaCriteria3Service.putCriteria3_1_Data(
+          correlationId,
+          getStaffId(),
+          payload
+        );
       } else {
-        console.log("🟠 Creating new record");
-        await newnbaCriteria3Service.saveCriteria3_1_Data(staffId, payload);
+        const res = await newnbaCriteria3Service.saveCriteria3_1_Data(
+          getStaffId(),
+          payload
+        );
+        setCorrelationId(res?.course_outcome_correlation_id);
       }
 
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          Criterion 3.1 saved successfully
-        </SweetAlert>
-      );
-
-      // Reload data to get updated ID for delete functionality
-      await loadData();
+      toast.success("Criterion 3.1 saved successfully");
       onSaveSuccess?.();
-
-    } catch (err) {
-      console.error(err);
-      setAlert(
-        <SweetAlert
-          danger
-          title="Save Failed"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          An error occurred while saving
-        </SweetAlert>
-      );
+    } catch {
+      toast.error("Save failed");
     } finally {
       setSaving(false);
     }
   };
 
-  // ---------------- DELETE DATA ----------------
-  const handleDelete = async () => {
-    if (!teaching_learning_quality_id) {
-      setAlert(
-        <SweetAlert
-          info
-          title="Nothing to Delete"
-          confirmBtnText="OK"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={() => setAlert(null)}
-        >
-          No data available to delete
-        </SweetAlert>
-      );
-      return;
-    }
+  /* ---------------- RENDER ---------------- */
 
-    setAlert(
-      <SweetAlert
-        warning
-        showCancel
-        confirmBtnText="Yes, delete it!"
-        cancelBtnText="Cancel"
-        confirmBtnCssClass="btn-confirm"
-        cancelBtnCssClass="btn-cancel"
-        title="Are you sure?"
-        onConfirm={async () => {
-          setAlert(null);
-
-          try {
-            let res;
-            if (isContributor) {
-              res = await newnbaCriteria3Service.deleteStageCriteria3_1Data(
-                teaching_learning_quality_id
-              );
-            } else {
-              res = await newnbaCriteria3Service.deleteCriteria3_1Data(
-                teaching_learning_quality_id
-              );
-            }
-
-          // Handle plain text response
-            let message = "Student Performance record deleted successfully.";
-            if (typeof res === "string") message = res;
-            else if (res?.data && typeof res.data === "string") message = res.data;
-
-            setAlert(
-              <SweetAlert
-                success
-                title="Deleted!"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                {message}
-              </SweetAlert>
-            );
-
-            await loadData();
-            setTeaching_learning_quality_id(null);
-            onSaveSuccess?.();
-
-          } catch (err) {
-            console.error(err);
-            setAlert(
-              <SweetAlert
-                danger
-                title="Delete Failed"
-                confirmBtnCssClass="btn-confirm"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
-                An error occurred while deleting
-              </SweetAlert>
-            );
-          }
-        }}
-        onCancel={() => setAlert(null)}
-      >
-        You won't be able to revert this deletion!
-      </SweetAlert>
-    );
-  };
-
-  // ---------------- UI ----------------
   if (loading) {
     return (
-      <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
+      <div className="flex justify-center items-center min-h-[50vh] text-lg">
         Loading Criterion 3.1...
       </div>
     );
   }
 
   return (
-    <div>
-      <GenericCriteriaForm
+    <div className="space-y-12 pb-12">
+      <GenericCriteriaForm3_1
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}
         initialData={initialData}
         saving={saving}
+        isCompleted={!isEditable}
         isContributorEditable={isEditable}
-        showFileCategories={true}
         onSave={handleSave}
-        onDelete={handleDelete}
       />
-
       {alert}
     </div>
   );

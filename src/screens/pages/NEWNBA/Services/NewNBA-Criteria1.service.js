@@ -7,6 +7,8 @@ import {
 } from '@/_services/api';
 
 export const newnbaCriteria1Service = {
+  getCourseOutcomesByProgram,
+  getCoPoMappingsByProgram,
 
   // ===============================
   // Criteria 1.1 APIs
@@ -347,4 +349,74 @@ function putMoMarks(id, values) {
     headers: authHeaderToPost(),
     body: JSON.stringify(values),
   }).then(handleResponse);
+}
+
+
+function getCourseOutcomesByProgram(programId) {
+  const url = `/obe/program/${programId}/course-outcomes`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+async function getCoPoMappingsByProgram(programId, subjectId = null, page = 0, size = 1000) {
+  const graphqlQuery = {
+    query: `
+      query CoPoMappingsByProgram($programId: ID!, $subjectId: ID, $page: Int, $size: Int) {
+        coPoMappingsByProgram(programId: $programId, subjectId: $subjectId, page: $page, size: $size) {
+          content {
+            coPoMappingId
+            correlationLevel
+            averageCorrelation
+            co {
+              coId
+              coCode
+              coStatement
+            }
+            po {
+              poId
+              poCode
+              poStatement
+            }
+            pso {
+              psoId
+              psoCode
+              psoStatement
+            }
+            subject {
+              subjectId
+              subjectCode
+              name
+            }
+          }
+          totalElements
+          totalPages
+        }
+      }
+    `,
+    variables: { 
+      programId: String(programId),
+      subjectId: subjectId ? String(subjectId) : null,
+      page,
+      size
+    },
+  };
+
+  try {
+    const response = await apiNBARequest("/graphql", {
+      method: "POST",
+      headers: {
+        ...authHeader(),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(graphqlQuery),
+    });
+
+    const result = await handleResponse(response);
+    return result.data.coPoMappingsByProgram;
+  } catch (error) {
+    console.error("GraphQL error:", error);
+    throw error;
+  }
 }
