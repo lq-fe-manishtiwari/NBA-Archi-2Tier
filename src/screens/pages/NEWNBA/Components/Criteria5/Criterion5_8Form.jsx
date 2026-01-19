@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
-import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import { POService } from "../../../OBE/Settings/Services/po.service";
@@ -52,74 +52,68 @@ const Criterion5_8Form = ({
 
   // Load data from API function
   const loadData = async () => {
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-    
-    console.log("🟠 Criterion5_8Form - useEffect triggered:");
-    console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
-    console.log("  - currentOtherStaffId:", currentOtherStaffId);
-    console.log("  - isEditable:", isEditable);
+  const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+  const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+  const currentOtherStaffId =
+    otherStaffId ||
+    userInfo?.rawData?.other_staff_id ||
+    userInfo.user_id ||
+    userInfoo?.other_staff_id;
 
-    if (!cycle_sub_category_id) {
-      console.log("❌ Criterion5_8Form: cycle_sub_category_id is missing, exiting");
-      setLoading(false);
-      return;
-    }
+  console.log("🟠 Criterion5_8Form - useEffect triggered:");
+  console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
+  console.log("  - currentOtherStaffId:", currentOtherStaffId);
+  console.log("  - isEditable:", isEditable);
 
-    let d = {};
-    setLoading(true);
-
-    try {
-      const res = await newnbaCriteria1Service.getCriteria1_3_Data(
-        cycle_sub_category_id,
-        currentOtherStaffId
-      );
-      const rawResponse = res?.data || res || [];
-      d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : {};
-      console.log("🟢 Loaded Criterion 1.3 data:", d);
-    } catch (err) {
-      console.error("❌ Failed to load Criterion 1.3 data:", err);
-      toast.error("Failed to load Criterion 1.3 data");
-      d = {};
-    }
-
-    setInitialData({
-      content: {
-        course_code: d.course_code || "",
-        course_name: d.course_name || "",
-      },
-      tableData: {},
-      po_pso_id: d.po_pso_id || null,
-      filesByField: {
-        "5.81": (d.course_documents || []).length > 0 
-          ? (d.course_documents || []).map((f, i) => ({
-              id: `file-5.81-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-5.81-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-        "5.8": (d.mapping_documents || []).length > 0 
-          ? (d.mapping_documents || []).map((f, i) => ({
-              id: `file-5.8-${i}`,
-              name: f.document_name || f.name || "",
-              filename: f.document_name || f.name || "",
-              url: f.document_url || f.url || "",
-              s3Url: f.document_url || f.url || "",
-              description: f.description || "",
-              uploading: false
-            }))
-          : [{ id: `file-5.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
-      }
-    });
-
-    console.log("✅ Criterion5_8Form: Data loaded and set successfully");
+  if (!cycle_sub_category_id) {
+    console.log("❌ Criterion5_8Form: cycle_sub_category_id is missing, exiting");
     setLoading(false);
-  };
+    return;
+  }
+
+  let d = {};
+  setLoading(true);
+
+  try {
+    const res = await newnbaCriteria5Service.getCriteria5_8_Data(
+      cycle_sub_category_id,
+      currentOtherStaffId
+    );
+    const rawResponse = res?.data || res || [];
+    d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : {};
+    console.log("🟢 Loaded Criterion 5.8 data:", d);
+  } catch (err) {
+    console.error("❌ Failed to load Criterion 5.8 data:", err);
+    toast.error("Failed to load Criterion 5.8 data");
+    d = {};
+  }
+
+  setInitialData({
+    content: {
+      // ✅ Editor content
+      "5.8": d.visiting_faculty_description || "",
+    },
+    tableData: {},
+    po_pso_id: d.id || null,
+    filesByField: {
+      // ✅ Visiting faculty files
+      "5.8": (d.visiting_faculty_document || []).length > 0
+        ? (d.visiting_faculty_document || []).map((f, i) => ({
+            id: `file-5.8-${i}`,
+            name: f.document_name || f.name || "",
+            filename: f.document_name || f.name || "",
+            url: f.document_url || f.url || "",
+            s3Url: f.document_url || f.url || "",
+            description: f.description || "",
+            uploading: false
+          }))
+        : [{ id: `file-5.8-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }],
+    }
+  });
+
+  console.log("✅ Criterion5_8Form: Data loaded and set successfully");
+  setLoading(false);
+};
 
   // Load contributors data for card view
   const loadContributorsData = async () => {
@@ -127,7 +121,7 @@ const Criterion5_8Form = ({
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria1_3_Data?.(cycle_sub_category_id);
+      const contributorsResponse = await newnbaCriteria5Service.getAllCriteria5_8_Data?.(cycle_sub_category_id);
       if (onStatusChange) {
         onStatusChange(contributorsResponse || []);
       }
@@ -166,7 +160,7 @@ const Criterion5_8Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria1_3_Data(initialData.po_pso_id);
+            await newnbaCriteria5Service.deleteCriteria5_8_Data(initialData.po_pso_id);
             
             setAlert(
               <SweetAlert
@@ -246,7 +240,7 @@ const Criterion5_8Form = ({
     if (!progId) return;
     
     try {
-      const response = await newnbaCriteria1Service.getCoPoMappingsByProgram(progId);
+      const response = await newnbaCriteria5Service.getCoPoMappingsByProgram(progId);
       const mappings = response?.content || [];
 
       const poMappingMap = {};
@@ -284,93 +278,78 @@ const Criterion5_8Form = ({
     }
   };
 
-  const handleSave = async (formData) => {
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
-    
-    console.log("🟠 Criterion5_8Form handleSave called");
-    setSaving(true);
+ const handleSave = async (formData) => {
+  const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+  const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
-    try {
-      // Transform filesByField → flat files with correct category
-      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(fieldName => {
-        return (formData.filesByField[fieldName] || []).map(file => {
-          let category = "Other";
-          if (fieldName === "5.8") category = "Course Information";
-          if (fieldName === "5.8") category = "PO-PSO Mapping";
-          return { ...file, category };
-        });
-      });
+  const currentOtherStaffId =
+    otherStaffId ||
+    userInfo?.rawData?.other_staff_id ||
+    userInfo.user_id ||
+    userInfoo?.other_staff_id;
 
-      const payload = {
-        cycle_sub_category_id,
-        other_staff_id: currentOtherStaffId,
-        program_id: programId,
-        po_data: pos.map(po => ({
-          po_id: po.po_id,
-          po_code: po.po_code,
-          po_statement: po.po_statement
-        })),
-        pso_data: psos.map(pso => ({
-          pso_id: pso.pso_id,
-          pso_code: pso.pso_code,
-          pso_statement: pso.pso_statement
-        })),
-        po_course_mapping: poCourseMappingData || [],
-        course_documents: filesWithCategory
-          .filter(f => f.category === "Course Information" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-        mapping_documents: filesWithCategory
-          .filter(f => f.category === "PO-PSO Mapping" && (f.url || f.s3Url))
-          .map(f => ({ 
-            document_name: f.filename, 
-            document_url: f.s3Url || f.url,
-            description: f.description || ""
-          })),
-      };
+  setSaving(true);
 
-      console.log("FINAL API CALL → payload:", payload);
-      
-      const newFiles = filesWithCategory.filter(f => f.file);
-      console.log("New files to upload:", newFiles.length);
+  try {
+    // Flatten uploaded files for 5.8
+    const visitingFacultyFiles =
+      (formData.filesByField?.["5.8"] || [])
+        .filter(f => f.url || f.s3Url)
+        .map(f => ({
+          document_name: f.filename,
+          document_url: f.s3Url || f.url,
+          description: f.description || "",
+        }));
 
-      // Use PUT for update if ID exists, otherwise POST for create
-      if (initialData?.po_pso_id) {
-        await newnbaCriteria1Service.putCriteria1_3_Data(
-          initialData.po_pso_id,
-          currentOtherStaffId,
-          payload
-        );
-      } else {
-        await newnbaCriteria1Service.saveCriteria1_3_Data(currentOtherStaffId, payload);
-      }
+    const payload = {
+      cycle_sub_category_id,
+      other_staff_id: currentOtherStaffId,
+      program_id: programId,
 
-      setAlert(
-        <SweetAlert
-          success
-          title="Saved!"
-          confirmBtnCssClass="btn-confirm"
-          onConfirm={async () => {
-            setAlert(null);
-            await loadData();
-            onSaveSuccess?.();
-          }}
-        >
-          Criterion 1.3 saved successfully!
-        </SweetAlert>
+      // ✅ editor content
+      visiting_faculty_description: formData.content?.["5.8"] || "",
+
+      // ✅ uploaded documents
+      visiting_faculty_document: visitingFacultyFiles,
+    };
+
+    console.log("FINAL API PAYLOAD (5.8):", payload);
+
+    if (initialData?.po_pso_id) {
+      await newnbaCriteria5Service.putCriteria5_8_Data(
+        initialData.po_pso_id,
+        payload,
+        currentOtherStaffId
       );
-    } catch (err) {
-      console.error("Save error:", err);
-      toast.error(err.message || "Save failed");
+    } else {
+      await newnbaCriteria5Service.saveCriteria5_8_Data(
+        payload,
+        currentOtherStaffId
+      );
     }
 
-    setSaving(false);
-  };
+    setAlert(
+      <SweetAlert
+        success
+        title="Saved!"
+        confirmBtnCssClass="btn-confirm"
+        onConfirm={async () => {
+          setAlert(null);
+          await loadData();
+          onSaveSuccess?.();
+        }}
+      >
+        Criterion 5.8 saved successfully!
+      </SweetAlert>
+    );
+  } catch (err) {
+    console.error("Save error:", err);
+    toast.error(err.message || "Save failed");
+  }
+
+  setSaving(false);
+};
+
 
   if (loading || (showCardView && cardLoading)) {
     return (

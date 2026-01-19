@@ -124,7 +124,7 @@ const Criterion5_4Form = ({
         ];
 
         // Format files from API response
-        const formattedFiles = (data.supporting_documents || []).map((doc, index) => ({
+        const formattedFiles = (data.faculty_retention_document || []).map((doc, index) => ({
           id: `file-${Date.now()}-${index}`,
           filename: doc.file_name || "",
           url: doc.file_url || "",
@@ -205,7 +205,7 @@ const Criterion5_4Form = ({
       
       console.log("filesWithCategory:", filesWithCategory);
 
-      const supporting_documents = filesWithCategory
+      const faculty_retention_document = filesWithCategory
         .filter((f) => {
           console.log("Checking file:", f, "has s3Url:", !!f.s3Url, "has filename:", !!f.filename);
           return f.s3Url && f.filename;
@@ -217,7 +217,7 @@ const Criterion5_4Form = ({
           category: f.category || "Faculty Retention Documents",
         }));
         
-      console.log("supporting_documents:", supporting_documents);
+      console.log("faculty_retention_document:", faculty_retention_document);
 
       const payload = {
         other_staff_id: other_staff_id,
@@ -226,7 +226,14 @@ const Criterion5_4Form = ({
         faculty_retained_cay: facultyRetainedCAY,
         faculty_retained_caym1: facultyRetainedCAYm1,
         total_required_faculty: totalRequiredFaculty,
-        supporting_documents: supporting_documents,
+         faculty_retention_data: [
+    {
+      faculty_retained_caym1: facultyRetainedCAYm1,
+      faculty_retained_cay: facultyRetainedCAY,
+      total_required_faculty: totalRequiredFaculty,
+    }
+  ],
+        faculty_retention_document: faculty_retention_document,
       };
 
       console.log("Sending payload to API:", payload);
@@ -234,10 +241,10 @@ const Criterion5_4Form = ({
       let result;
       if (recordId) {
         // Update existing record
-        result = await newnbaCriteria5Service.updateCriteria5_4_Data(recordId, payload);
+        result = await newnbaCriteria5Service.updateCriteria5_4_Data(recordId, payload,other_staff_id);
       } else {
         // Create new record
-        result = await newnbaCriteria5Service.saveCriteria5_4_Data(payload);
+        result = await newnbaCriteria5Service.saveCriteria5_4_Data(payload,other_staff_id);
       }
 
       const newRecordId = result.faculty_retention_id || result.id;

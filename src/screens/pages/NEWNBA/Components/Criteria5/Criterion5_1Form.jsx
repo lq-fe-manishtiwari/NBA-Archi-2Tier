@@ -231,8 +231,8 @@ const Criterion5_1Form = ({
         let filesByField = {};
 
         // Handle SFR table data
-        if (data.sfr_table && Array.isArray(data.sfr_table)) {
-          data.sfr_table.forEach(row => {
+        if (data.student_faculty_ratio_data && Array.isArray(data.student_faculty_ratio_data)) {
+          data.student_faculty_ratio_data.forEach(row => {
             const existingRow = sfrTableData.find(r => r.category === row.category);
             if (existingRow) {
               existingRow.cay = row.cay || "";
@@ -243,8 +243,8 @@ const Criterion5_1Form = ({
         }
 
         // Handle files
-        if (data.sfr_supporting_documents && Array.isArray(data.sfr_supporting_documents)) {
-          data.sfr_supporting_documents.forEach(doc => {
+        if (data.student_faculty_ratio_document && Array.isArray(data.student_faculty_ratio_document)) {
+          data.student_faculty_ratio_document.forEach(doc => {
             const fieldName = doc.field_name || "5.1";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
@@ -317,7 +317,7 @@ const Criterion5_1Form = ({
     setSaveLoading(true);
     try {
       // Transform UI data to API format
-      const sfr_table = formData.tableData?.sfrCalculation?.map(row => ({
+      const student_faculty_ratio_data = formData.tableData?.sfrCalculation?.map(row => ({
         category: row.category,
         label: row.label,
         type: row.type,
@@ -328,12 +328,12 @@ const Criterion5_1Form = ({
       })) || [];
 
       // Transform supporting documents
-      const sfr_supporting_documents = [];
+      const student_faculty_ratio_document = [];
       if (formData.filesByField) {
         Object.entries(formData.filesByField).forEach(([fieldName, files]) => {
           files.forEach(file => {
             if (file.s3Url) {
-              sfr_supporting_documents.push({
+              student_faculty_ratio_document.push({
                 field_name: fieldName,
                 file_name: file.filename || "",
                 s3_url: file.s3Url,
@@ -352,9 +352,9 @@ const Criterion5_1Form = ({
       const payload = {
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(cycle_sub_category_id),
-        description_5_1: formData.content?.["5.1"] || "",
-        sfr_table,
-        sfr_supporting_documents
+        // description_5_1: formData.content?.["5.1"] || "",
+        student_faculty_ratio_data,
+        student_faculty_ratio_document
       };
 
       console.log("🚀 Saving payload:", payload);
@@ -362,7 +362,7 @@ const Criterion5_1Form = ({
       let response;
       if (recordId) {
         // Update existing record
-        response = await newnbaCriteria5Service.updateCriteria5_1_Data(recordId, payload);
+        response = await newnbaCriteria5Service.updateCriteria5_1_Data(recordId, payload,staffId);
         console.log("✅ Update response:", response);
         setSuccessMessage("Section updated successfully!");
       } else {

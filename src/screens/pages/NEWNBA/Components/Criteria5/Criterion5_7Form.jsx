@@ -376,12 +376,12 @@ const Criterion5_7Form = ({
       let response;
       if (recordId) {
         // Update existing record
-        response = await newnbaCriteria5Service.updateCriteria5_7_Data(recordId, payload);
+        response = await newnbaCriteria5Service.updateCriteria5_7_Data(recordId, payload,staffId);
         console.log("✅ Update response:", response);
         setSuccessMessage("Section updated successfully!");
       } else {
         // Create new record
-        response = await newnbaCriteria5Service.saveCriteria5_7_Data(payload, staffId);
+        response = await newnbaCriteria5Service.saveCriteria5_7_Data(payload, staffId,staffId);
         console.log("✅ Save response:", response);
         
         // Set recordId from response for future updates
