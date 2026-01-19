@@ -117,11 +117,11 @@ function putCriteria6_1_Data(id, values, currentUserStaffId) {
 }
 
 ////////////////////////////
-// 6.2 Development Activities
+// 6.2 Faculty Rooms
 ////////////////////////////
 
 function getAllCriteria6_2_Data(cycleSubCategoryId) {
-  const url = `/admin/nba/6.2/development-activities/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -137,7 +137,7 @@ function updateCardStatus6_2(statusPayload, approverStaffId) {
     approved_by_name: statusPayload.approved_by_name,
   };
 
-  const url = `/admin/nba/6.2/development-activities/approval-status?approverStaffId=${approverStaffId}`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/approval-status?approverStaffId=${approverStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -146,7 +146,7 @@ function updateCardStatus6_2(statusPayload, approverStaffId) {
 }
 
 function saveCriteria6_2_Data(values, currentUserStaffId) {
-  const url = `/admin/nba/6.2/development-activities?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/6.2/new-faculty-rooms?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -155,7 +155,7 @@ function saveCriteria6_2_Data(values, currentUserStaffId) {
 }
 
 function getCriteria6_2_Data(cycleSubCategoryId, otherStaffId) {
-  const url = `/admin/nba/6.2/development-activities/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -163,7 +163,7 @@ function getCriteria6_2_Data(cycleSubCategoryId, otherStaffId) {
 }
 
 function getallCardDetails6_2(cycleSubCategoryId) {
-  const url = `/admin/nba/6.2/development-activities/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
@@ -171,7 +171,7 @@ function getallCardDetails6_2(cycleSubCategoryId) {
 }
 
 function deleteCriteria6_2_Data(id) {
-  const url = `/admin/nba/6.2/development-activities/${id}`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/${id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
@@ -179,7 +179,7 @@ function deleteCriteria6_2_Data(id) {
 }
 
 function putCriteria6_2_Data(id, values, currentUserStaffId) {
-  const url = `/admin/nba/6.2/development-activities/${id}?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/6.2/new-faculty-rooms/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
