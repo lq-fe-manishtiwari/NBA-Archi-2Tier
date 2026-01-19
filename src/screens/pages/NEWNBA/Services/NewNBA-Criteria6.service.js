@@ -26,6 +26,15 @@ export const newnbaCriteria6Service = {
   updateCardStatus6_2,
   getallCardDetails6_2,
 
+  // 6.3 – Laboratories Maintenance
+saveCriteria6_3_Data,
+getCriteria6_3_Data,
+deleteCriteria6_3_Data,
+putCriteria6_3_Data,
+getAllCriteria6_3_Data,
+updateCardStatus6_3,
+getallCardDetails6_3,
+
   // 6.4 – Material Museum
   saveCriteria6_4_Data,
   getCriteria6_4_Data,
@@ -186,6 +195,79 @@ function putCriteria6_2_Data(id, values, currentUserStaffId) {
     body: JSON.stringify(values),
   }).then(handleResponse);
 }
+
+
+////////////////////////////
+// 6.3 Laboratories Maintenance
+////////////////////////////
+
+function saveCriteria6_3_Data(values, currentUserStaffId) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'POST',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+function putCriteria6_3_Data(id, values, currentUserStaffId) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/${id}?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+function deleteCriteria6_3_Data(id) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/${id}`;
+  return apiNBARequest(url, {
+    method: 'DELETE',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function getCriteria6_3_Data(cycleSubCategoryId, otherStaffId) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function getAllCriteria6_3_Data(cycleSubCategoryId) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function getallCardDetails6_3(cycleSubCategoryId) {
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function updateCardStatus6_3(statusPayload, approverStaffId) {
+  const payload = {
+    id: statusPayload.id,
+    approval_status: statusPayload.approval_status,
+    rejection_reason: statusPayload.rejection_reason || null,
+    approved_by: statusPayload.approved_by,
+    approved_by_name: statusPayload.approved_by_name,
+  };
+
+  const url = `/admin/nba/6.3/new-laboratories-maintenance/approval-status?approverStaffId=${approverStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(payload),
+  }).then(handleResponse);
+}
+
 
 ///////////////////////////
 // 6.4 Material Museum
