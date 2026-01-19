@@ -303,9 +303,66 @@ const Criterion3_2Form = ({
     }
   };
 
-  // Delete logic remains unchanged...
   const handleDelete = async () => {
-    // ... (your existing delete logic)
+    if (!attainmentCoId) {
+      setAlert(
+        <SweetAlert
+          info
+          title="Nothing to Delete"
+          confirmBtnText="OK"
+          onConfirm={() => setAlert(null)}
+        >
+          No saved record found.
+        </SweetAlert>
+      );
+      return;
+    }
+
+    setAlert(
+      <SweetAlert
+        warning
+        showCancel
+        confirmBtnText="Yes, delete it!"
+        cancelBtnText="Cancel"
+        title="Are you sure?"
+        onConfirm={async () => {
+          setAlert(null);
+          try {
+            const res = await newnbaCriteria3Service.deleteCriteria3_2_Data(attainmentCoId);
+
+            setAlert(
+              <SweetAlert
+                success
+                title="Deleted!"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                {res?.message || "Record deleted successfully"}
+              </SweetAlert>
+            );
+
+            setAttainmentCoId(null);
+            await loadData();
+            onSaveSuccess?.();
+          } catch (err) {
+            console.error("[Criterion 3.2] Delete failed:", err);
+            setAlert(
+              <SweetAlert
+                danger
+                title="Delete Failed"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                Could not delete the record. Please try again.
+              </SweetAlert>
+            );
+          }
+        }}
+        onCancel={() => setAlert(null)}
+      >
+        This action cannot be undone.
+      </SweetAlert>
+    );
   };
 
   if (loading) {
