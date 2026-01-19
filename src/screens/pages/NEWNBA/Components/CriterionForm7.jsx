@@ -111,6 +111,7 @@ const CriterionForm = ({
         {
           name: "7.5",
           hasTable: true,
+          hasFileUpload: true,
           tableConfig: {
             title:
               "Table 7.5 – Improvement in the Quality of Students Admitted (3 Years)",
@@ -249,12 +250,12 @@ const CriterionForm = ({
       other_staff_id: staffId,
       cycle_sub_category_id: nba_criteria_sub_level2_id,
       continuous_improvement_description: data.content?.["7.6"] || "",
-      continuous_improvement_document: mapFiles(data),
+      po_evaluation_document: mapFiles(data),
     }),
     mapResponse: (d) => ({
       content: { "7.6": d.continuous_improvement_description || "" },
       tableData: [],
-      filesByField: fileMap(d.continuous_improvement_document, "7.6"),
+      filesByField: fileMap(d.po_evaluation_document, "7.6"),
     }),
   },
 };
@@ -285,8 +286,54 @@ const CriterionForm = ({
           setRecordId(item.id);
           setInitialData(apiConfig[section].mapResponse(item));
           if (item.approval_status) setApprovalStatus(item);
+        } else {
+          // No data found - initialize with default file upload sections
+          const defaultFilesByField = {};
+          sectionConfig[section].fields.forEach((field) => {
+            if (field.hasFileUpload) {
+              defaultFilesByField[field.name] = [
+                {
+                  id: `file-${field.name}-0`,
+                  description: "",
+                  file: null,
+                  filename: "",
+                  s3Url: "",
+                  uploading: false,
+                },
+              ];
+            }
+          });
+          
+          setInitialData({
+            content: {},
+            tableData: [],
+            filesByField: defaultFilesByField,
+          });
         }
       } catch {
+        // Error loading - still initialize with default file upload sections
+        const defaultFilesByField = {};
+        sectionConfig[section].fields.forEach((field) => {
+          if (field.hasFileUpload) {
+            defaultFilesByField[field.name] = [
+              {
+                id: `file-${field.name}-0`,
+                description: "",
+                file: null,
+                filename: "",
+                s3Url: "",
+                uploading: false,
+              },
+            ];
+          }
+        });
+        
+        setInitialData({
+          content: {},
+          tableData: [],
+          filesByField: defaultFilesByField,
+        });
+        
         toast.error("Failed to load saved data");
       } finally {
         setLoading(false);
@@ -337,7 +384,30 @@ const CriterionForm = ({
 
     await apiConfig[section].delete(recordId);
     setRecordId(null);
-    setInitialData({ content: {}, tableData: [], filesByField: {} });
+    
+    // Reset to default empty state with file upload sections
+    const defaultFilesByField = {};
+    sectionConfig[section].fields.forEach((field) => {
+      if (field.hasFileUpload) {
+        defaultFilesByField[field.name] = [
+          {
+            id: `file-${field.name}-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            uploading: false,
+          },
+        ];
+      }
+    });
+    
+    setInitialData({ 
+      content: {}, 
+      tableData: [], 
+      filesByField: defaultFilesByField 
+    });
+    
     toast.success("Deleted successfully");
   };
 
