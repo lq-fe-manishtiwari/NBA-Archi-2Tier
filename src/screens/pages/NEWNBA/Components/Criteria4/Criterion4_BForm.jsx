@@ -396,7 +396,7 @@ const handleSave = async (formData) => {
               studentsPerformanceId
             );
 
-            let message = "Criteria 4 A deleted successfully.";
+            let message = "Criteria 4 B deleted successfully.";
             if (typeof res === "string") message = res;
             else if (res?.data) message = res.data;
 
@@ -442,7 +442,7 @@ const handleSave = async (formData) => {
   if (loading || (showCardView && cardLoading)) {
     return (
       <div className="flex justify-center py-20 text-xl font-medium text-indigo-600">
-        Loading Criteria 4 A...
+        Loading Criteria 4 B...
       </div>
     );
   }

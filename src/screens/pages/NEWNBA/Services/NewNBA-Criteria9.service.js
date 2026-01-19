@@ -100,6 +100,7 @@ import {
    * PUT – Update Governance Transparency Approval Status
    */
   function updateCriteria9_1Status(statusPayload, approverStaffId) {
+    console.log(statusPayload);
     const payload = {
       id: statusPayload.id,
       approval_status: statusPayload.approval_status,
@@ -309,6 +310,7 @@ import {
   }
   
   function updateCardStatus9(section, statusPayload, approverId) {
+    console.log("statusPayload",statusPayload)
     const endpoint = getApiEndpoint(section);
     const url = `/admin/nba/${section}/${endpoint}/approval-status?approverId=${approverId}`;
     

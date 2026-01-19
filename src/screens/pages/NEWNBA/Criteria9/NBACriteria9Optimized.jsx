@@ -90,9 +90,9 @@ const NBACriteria9Optimized = () => {
   // Get the ID field name based on section
   const getSectionIdField = (sectionCode) => {
     const idFieldMap = {
-      '9.1': 'governance_transparency_id',
-      '9.2': 'mentoring_system_id',
-      '9.3': 'library_internet_id',
+      '9.1': 'id',
+      '9.2': 'id',
+      '9.3': 'id',
     };
     return idFieldMap[sectionCode] || 'id';
   };
@@ -492,9 +492,9 @@ const NBACriteria9Optimized = () => {
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
           console.log("📊 DEBUG: Coordinator record extracted:", coordinatorRecord, sectionCode);
           const fallbackIdFields = {
-            '9.1': "governance_transparency_id",
-            '9.2': "mentoring_system_id",
-            '9.3': "library_internet_id"
+            '9.1': "id",
+            '9.2': "id",
+            '9.3': "id"
           };
           // If coordinator has data, add it to the cards array
           if (coordinatorRecord && coordinatorRecord[idField] || fallbackIdFields[sectionCode]) {
@@ -572,6 +572,7 @@ const NBACriteria9Optimized = () => {
       const indicator = keyIndicators.find(ind => ind.subLevel2Id === subLevel2Id);
       const sectionName = indicator?.rawName || "";
       const cardConfig = getCardConfig(sectionName);
+      console.log("cardConfig,",cardConfig);
 
       if (cardConfig) {
         await fetchCardDetails(subLevel2Id, sectionName);

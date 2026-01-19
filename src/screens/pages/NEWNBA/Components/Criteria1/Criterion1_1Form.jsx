@@ -99,7 +99,7 @@ const groupMappingByPEO = (rawMappingData) => {
   
 
   const config = {
-    title: "1.1. Vision, Mission and Program Educational Objectives (PEOs)",
+    title: "1.1. State the Vision and Mission",
     totalMarks: 40,
     fields: [
       {
