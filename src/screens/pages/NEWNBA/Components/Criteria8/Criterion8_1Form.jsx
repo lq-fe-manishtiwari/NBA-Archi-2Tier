@@ -56,7 +56,7 @@ const Criterion8_1Form = ({
     fields: [
       {
         name: "8.1.1",
-        label: "8.1.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.1.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,

@@ -51,12 +51,12 @@ const Criterion8_2Form = ({
   };
 
   const sectionConfig = {
-    title: "8.2. Mentoring System to Help at Individual Levels",
+    title: "8.2. Feedback Analysis and Reward / Corrective Measures Tekan, If any",
     totalMarks: 5,
     fields: [
       {
         name: "8.2.1",
-        label: "8.2.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.2.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,
