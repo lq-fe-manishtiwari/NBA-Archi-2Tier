@@ -558,15 +558,16 @@ function getAllCriteria4_4_Data(cycleSubCategoryId) {
   }).then(handleResponse);
 }
 
-function updateCardStatus4_4(statusPayload, currentUserStaffId) {
-  // Ensure payload has correct format for Criteria 1.1
+function updateCardStatus4_4(statusPayload, approverStaffId) {
   const payload = {
-    id: statusPayload.cri44_second_year_students_id || statusPayload.id,
+    id: statusPayload.id,
     approval_status: statusPayload.approval_status,
-    rejection_reason: statusPayload.rejection_reason || null
+    rejection_reason: statusPayload.rejection_reason || null,
+    approved_by: statusPayload.approved_by,
+    approved_by_name: statusPayload.approved_by_name,
   };
-  
-  const url = `/admin/nba/4.4/second-year-students/approval-status?currentUserStaffId=${currentUserStaffId}`;
+
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year/approval-status?approverStaffId=${approverStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -575,8 +576,9 @@ function updateCardStatus4_4(statusPayload, currentUserStaffId) {
 }
 
 
-function saveCriteria4_4_Data(values) {
-  const url = `/admin/nba/4.4/second-year-students`;
+
+function saveCriteria4_4_Data(values, currentUserStaffId) {
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
     headers: authHeaderToPost(),
@@ -584,42 +586,48 @@ function saveCriteria4_4_Data(values) {
   }).then(handleResponse);
 }
 
+
+
 function getCriteria4_4_Data(cycleSubCategoryId, otherStaffId) {
-   const url = `/admin/nba/4.4/second-year-students/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
+
 function getallCardDetails4_4(cycleSubCategoryId) {
-  const url = `/admin/nba/4.4/second-year-students/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year/cycle-subcategory/${cycleSubCategoryId}/contributors`;
   return apiNBARequest(url, {
     method: 'GET',
     headers: authHeader(),
   }).then(handleResponse);
 }
+
 /**
  * Delete Criteria 1.1 data
  *
  * @param {string | number} Id
  */
-function deleteCriteria4_4Data(Id) {
-  const url = `/admin/nba/4.4/second-year-students/${Id}`;
+function deleteCriteria4_4Data(id) {
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year/${id}`;
   return apiNBARequest(url, {
     method: 'DELETE',
     headers: authHeader(),
   }).then(handleResponse);
 }
 
-function putCriteria4_4_Data(id,values) {
-  const url = `/admin/nba/4.4/second-year-students/${id}`;
+
+function putCriteria4_4_Data(id, values, currentUserStaffId) {
+  const url = `/admin/nba/4.4/new-academic-performance-fourth-year/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
     body: JSON.stringify(values),
   }).then(handleResponse);
 }
+
 
 //// 45  ///////////////////
 

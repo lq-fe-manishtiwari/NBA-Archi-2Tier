@@ -16,7 +16,7 @@ const Criterion4_4Form = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [secondYearStudentsId, setSecondYearStudentsId] = useState(null);
+  const [academicPerformanceId, setAcademicPerformanceId] = useState(null);
   const [isContributor, setIsContributor] = useState(false);
 
   const [initialData, setInitialData] = useState({
@@ -27,12 +27,11 @@ const Criterion4_4Form = ({
 
   const [alert, setAlert] = useState(null);
   const [cardData, setCardData] = useState([]);
-  const [cardLoading, setCardLoading] = useState(false);[]
+  const [cardLoading, setCardLoading] = useState(false);
 
   // ---------------- CONFIG ----------------
   const config = {
-    title:
-      "4.4. Academic Performance in Fourth Year ",
+    title: "4.4. Academic Performance in Fourth Year",
     totalMarks: 10,
     fields: [
       {
@@ -40,22 +39,22 @@ const Criterion4_4Form = ({
         label: "4.4 Academic Performance in Fourth Year",
         marks: 10,
         hasTable: true,
-          tableConfig: {
-            title: "Teaching-Learning Activities",
-            columns: [
-              { field: "item", header: "Academic Performance ", placeholder: "" },
-              { field: "caym1", header: "CAYm1", placeholder: "" },
-              { field: "caym2", header: "CAYm2", placeholder: "" },
-              { field: "caym3", header: "CAYm3", placeholder: "" },
-            ],
-            predefinedRows: [
+        tableConfig: {
+          title: "Academic Performance",
+          columns: [
+            { field: "item", header: "Academic Performance", placeholder: "" },
+            { field: "caym1", header: "CAYm1", placeholder: "" },
+            { field: "caym2", header: "CAYm2", placeholder: "" },
+            { field: "caym3", header: "CAYm3", placeholder: "" },
+          ],
+          predefinedRows: [
             { item: "(Mean of 4th year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 4th year/10) (X)" },
             { item: "Y= Total no. of successful students" },
-            { item: "Z = Total no. of students appeared in the examination " },
+            { item: "Z = Total no. of students appeared in the examination" },
             { item: "API = X* (Y/Z)" },
             { item: "Average API = ( API_1 + API_2 + API_3)/3" },
           ],
-          },
+        },
       },
     ],
   };
@@ -76,14 +75,14 @@ const Criterion4_4Form = ({
   };
 
   // Load data from API
-    useEffect(() => {
-      loadData();
-      if (showCardView) {
-        loadContributorsData();
-      }
-    }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
+  useEffect(() => {
+    loadData();
+    if (showCardView) {
+      loadContributorsData();
+    }
+  }, [cycle_sub_category_id, programId, showCardView, otherStaffId]);
 
-  // ---------------- LOAD DATA (Same as 2.1) ----------------
+  // ---------------- LOAD DATA ----------------
   const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) return setLoading(false);
 
@@ -97,6 +96,7 @@ const Criterion4_4Form = ({
       
       const currentOtherStaffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
+      // Get data using staff ID and cycle subcategory
       const res = await newnbaCriteria4Service.getCriteria4_4_Data(cycle_sub_category_id, currentOtherStaffId);
       const rawResponse = res?.data || res || [];
       const d = Array.isArray(rawResponse) && rawResponse.length > 0 ? rawResponse[0] : rawResponse;
@@ -104,12 +104,12 @@ const Criterion4_4Form = ({
       console.log("🟢 Criterion4_4Form - Raw API Response:", rawResponse);
       console.log("🟢 Criterion4_4Form - Processed Data:", d);
 
-      setSecondYearStudentsId(d.cri44_second_year_students_id || null);
+      setAcademicPerformanceId(d.id || null);
 
       // Transform API table data back to form format
       let tableData = [];
-      if (d.cri44_second_year_students_table && Array.isArray(d.cri44_second_year_students_table)) {
-        const apiTable = d.cri44_second_year_students_table;
+      if (d.academic_performance_data && Array.isArray(d.academic_performance_data)) {
+        const apiTable = d.academic_performance_data;
         
         // Create table rows from API data
         const rowTypes = ["Xrow", "Yrow", "Zrow", "api", "averageApi"];
@@ -125,7 +125,7 @@ const Criterion4_4Form = ({
       } else {
         // Default empty table
         tableData = [
-          { item: "X= (Mean of 1st year grade point average of all successful students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 1st year/10)", caym1: "", caym2: "", caym3: "" },
+          { item: "(Mean of 4th year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 4th year/10) (X)", caym1: "", caym2: "", caym3: "" },
           { item: "Y= Total no. of successful students", caym1: "", caym2: "", caym3: "" },
           { item: "Z = Total no. of students appeared in the examination", caym1: "", caym2: "", caym3: "" },
           { item: "API = X* (Y/Z)", caym1: "", caym2: "", caym3: "" },
@@ -137,8 +137,8 @@ const Criterion4_4Form = ({
         content: { "4.4": "" },
         tableData: tableData,
         filesByField: {
-          "4.4": (d.cri44_second_year_students_document || []).length > 0
-            ? (d.cri44_second_year_students_document || []).map((f, i) => ({
+          "4.4": (d.academic_performance_document || []).length > 0
+            ? (d.academic_performance_document || []).map((f, i) => ({
                 id: `file-4.4-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
@@ -151,7 +151,7 @@ const Criterion4_4Form = ({
     } catch (err) {
       console.warn("Load failed:", err);
 
-      setSecondYearStudentsId(null);
+      setAcademicPerformanceId(null);
       setInitialData({
         content: { "4.4": "" },
         tableData: [],
@@ -171,7 +171,7 @@ const Criterion4_4Form = ({
   // ---------------- HELPER FUNCTION FOR ROW LABELS ----------------
   const getRowLabel = (rowType) => {
     const labels = {
-      "Xrow": "X= (Mean of 1st year grade point average of all successful students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 1st year/10)",
+      "Xrow": "(Mean of 4th year Grade Point Average of all successful Students on a 10-point scale) or (Mean of the percentage of marks of all successful students in 4th year/10) (X)",
       "Yrow": "Y= Total no. of successful students",
       "Zrow": "Z = Total no. of students appeared in the examination",
       "api": "API = X* (Y/Z)",
@@ -181,107 +181,106 @@ const Criterion4_4Form = ({
   };
 
   // ---------------- TRANSFORM TABLE INTO REQUIRED PAYLOAD ----------------
-const transformAcademicPerformance = (table) => {
-  const rowKeys = ["Xrow", "Yrow", "Zrow", "api", "averageApi"];
-  
-  return table.map((row, i) => {
-    const key = rowKeys[i];
-    if (!key) return null;
+  const transformAcademicPerformance = (table) => {
+    const rowKeys = ["Xrow", "Yrow", "Zrow", "api", "averageApi"];
+    
+    return table.map((row, i) => {
+      const key = rowKeys[i];
+      if (!key) return null;
 
-    return {
-      row_type: key,
-      caym1: row.caym1 || "",
-      caym2: row.caym2 || "",
-      caym3: row.caym3 || ""
-    };
-  }).filter(Boolean);
-};
-
-// ---------------- TRANSFORM FILES INTO REQUIRED PAYLOAD ----------------
-
+      return {
+        row_type: key,
+        caym1: row.caym1 || "",
+        caym2: row.caym2 || "",
+        caym3: row.caym3 || ""
+      };
+    }).filter(Boolean);
+  };
 
   // ---------------- SAVE DATA ----------------
-const handleSave = async (formData) => {
-  setSaving(true);
+  const handleSave = async (formData) => {
+    setSaving(true);
 
-  try {
-
-    const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
+    try {
+      const filesWithCategory = Object.keys(formData.filesByField || {}).flatMap(
         (field) =>
           (formData.filesByField[field] || []).map((file) => ({
             ...file,
-            category: "Students’ Performance",
+            category: "Academic Performance",
           }))
       );
-      console.log(filesWithCategory);
       
-const cri44_second_year_students_document = filesWithCategory
-      .filter((f) => {
-        const hasUrl = f.s3Url && f.s3Url.trim() !== "";
-        console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
-        return hasUrl;
-      })
-      .map((f) => ({
-        file_name: f.filename,
-        file_url: f.s3Url,
-        description: f.description || ""
-      }));
-     
+      console.log("Files with category:", filesWithCategory);
       
-    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
+      const academic_performance_document = filesWithCategory
+        .filter((f) => {
+          const hasUrl = f.s3Url && f.s3Url.trim() !== "";
+          console.log(`File ${f.filename}: hasUrl=${hasUrl}, s3Url=${f.s3Url}`);
+          return hasUrl;
+        })
+        .map((f) => ({
+          file_name: f.filename,
+          file_url: f.s3Url,
+          description: f.description || ""
+        }));
+      
+      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const staffId = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfoo?.other_staff_id;
 
-    const cri44_second_year_students_table = transformAcademicPerformance(formData.tableData);
+      const academic_performance_data = transformAcademicPerformance(formData.tableData);
 
-    const payload = {
-      other_staff_id: staffId,
-      cycle_sub_category_id : cycle_sub_category_id,
-      cri44_second_year_students_table,
-      cri44_second_year_students_document
-    };
+      const payload = {
+        other_staff_id: staffId,
+        cycle_sub_category_id: cycle_sub_category_id,
+        academic_performance_data,
+        academic_performance_document
+      };
 
-    if (secondYearStudentsId) {
-      await newnbaCriteria4Service.putCriteria4_4_Data(secondYearStudentsId, payload);
-    } else {
-      await newnbaCriteria4Service.saveCriteria4_4_Data(payload);
+      console.log("Saving payload:", payload);
+
+      if (academicPerformanceId) {
+        // UPDATE existing record
+        await newnbaCriteria4Service.putCriteria4_4_Data(academicPerformanceId, payload);
+      } else {
+        // CREATE new record
+        await newnbaCriteria4Service.saveCriteria4_4_Data(payload);
+      }
+
+      setAlert(
+        <SweetAlert
+          success
+          title="Saved!"
+          confirmBtnCssClass="btn-confirm"
+          onConfirm={() => setAlert(null)}
+        >
+          Criterion 4.4 saved successfully!
+        </SweetAlert>
+      );
+
+      onSaveSuccess?.();
+      loadData();
+    } catch (err) {
+      console.error("Save failed:", err);
+
+      setAlert(
+        <SweetAlert
+          danger
+          title="Error"
+          confirmBtnCssClass="btn-confirm"
+          onConfirm={() => setAlert(null)}
+        >
+          Failed to save Criterion 4.4. Error: {err.message}
+        </SweetAlert>
+      );
+    } finally {
+      setSaving(false);
     }
+  };
 
-    setAlert(
-      <SweetAlert
-        success
-        title="Saved!"
-        confirmBtnCssClass="btn-confirm"
-        onConfirm={() => setAlert(null)}
-      >
-        Criterion 4.4 saved successfully!
-      </SweetAlert>
-    );
-
-    onSaveSuccess?.();
-    loadData();
-  } catch (err) {
-    console.error("Save failed:", err);
-
-    setAlert(
-      <SweetAlert
-        danger
-        title="Error"
-        confirmBtnCssClass="btn-confirm"
-        onConfirm={() => setAlert(null)}
-      >
-        Failed to save Criterion 4.4.
-      </SweetAlert>
-    );
-  } finally {
-    setSaving(false);
-  }
-};
-
-
-  // ---------------- DELETE DATA----------------
+  // ---------------- DELETE DATA ----------------
   const handleDelete = async () => {
-    if (!secondYearStudentsId) {
+    if (!academicPerformanceId) {
       setAlert(
         <SweetAlert
           info
@@ -309,9 +308,7 @@ const cri44_second_year_students_document = filesWithCategory
           setAlert(null);
 
           try {
-            const res = await newnbaCriteria4Service.deleteCriteria4_4Data(
-              secondYearStudentsId
-            );
+            const res = await newnbaCriteria4Service.deleteCriteria4_4Data(academicPerformanceId);
 
             let message = "Criterion 4.4 deleted successfully.";
             if (typeof res === "string") message = res;
@@ -329,7 +326,7 @@ const cri44_second_year_students_document = filesWithCategory
               </SweetAlert>
             );
 
-            setSecondYearStudentsId(null);
+            setAcademicPerformanceId(null);
             loadData();
             onSaveSuccess?.();
           } catch (err) {
@@ -350,7 +347,7 @@ const cri44_second_year_students_document = filesWithCategory
         }}
         onCancel={() => setAlert(null)}
       >
-        You won’t be able to revert this!
+        You won't be able to revert this!
       </SweetAlert>
     );
   };
@@ -364,27 +361,41 @@ const cri44_second_year_students_document = filesWithCategory
     );
   }
 
-   console.log("🎯 Criterion1_1Form rendering with initialData:", initialData);
+  console.log("🎯 Criterion4_4Form rendering with initialData:", initialData);
+
+  // Note: GenericCardWorkflow component को import करना न भूलें
+  // import GenericCardWorkflow from "../GenericCardWorkflow"; (यदि आवश्यक हो)
 
   // Show card view for coordinators
   if (showCardView) {
     return (
       <>
-        <GenericCardWorkflow
-          cycleSubCategoryId={cycle_sub_category_id}
-          cardData={cardData}
-          onCardClick={onCardClick}
-          onStatusChange={loadContributorsData}
-          apiService={newnbaCriteria4Service}
-          cardConfig={{
-            title: "Criterion 4.1",
-            statusField: "approval_status",
-            userField: "other_staff_id",
-            nameFields: ["firstname", "lastname"],
-            idField: "enrolment_ratio_id",
-            isCoordinatorField: "is_coordinator_entry"
-          }}
-        />
+        {/* GenericCardWorkflow component यहां उपयोग करें */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-lg font-bold text-blue-700 mb-4">Academic Performance Fourth Year - Contributors</h3>
+          {cardData.length > 0 ? (
+            <div className="space-y-3">
+              {cardData.map((item, index) => (
+                <div key={index} className="border p-3 rounded hover:bg-gray-50 cursor-pointer">
+                  <div className="flex justify-between">
+                    <span className="font-medium">
+                      {item.firstname} {item.lastname}
+                    </span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.approval_status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                      item.approval_status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {item.approval_status || 'PENDING'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No contributors found</p>
+          )}
+        </div>
         {alert}
       </>
     );
