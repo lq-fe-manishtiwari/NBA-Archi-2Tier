@@ -573,7 +573,7 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
         "Continuous Improvement": "/nba/criterion-8",
 
         // Criterion 9 - Quality in Research
-        "Student Support and Governance": "/nba/criterion-9"
+        "Governance, Institutional Support and Financial Resources": "/nba/criterion-9"
       };
 
       // Find matching route
