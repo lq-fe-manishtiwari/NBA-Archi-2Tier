@@ -57,6 +57,8 @@ const NBACriteria4Optimized = () => {
       '4.5': 10,
       '4.6': 30,
       '4.7': 25,
+      '4.8': 20,
+      '4.9': 20,
     };
     return marks[sectionCode] || 0;
   };
@@ -393,6 +395,10 @@ const NBACriteria4Optimized = () => {
         cardDetails = await newnbaCriteria4Service.getallCardDetails4_6(cycleSubCategoryId);
       } else if (sectionCode === '4.7') {
         cardDetails = await newnbaCriteria4Service.getallCardDetails4_7(cycleSubCategoryId);
+      } else if (sectionCode === '4.8') {
+        cardDetails = await newnbaCriteria4Service.getallCardDetails4_8(cycleSubCategoryId);
+      } else if (sectionCode === '4.9') {
+        cardDetails = await newnbaCriteria4Service.getallCardDetails4_9(cycleSubCategoryId);
       }
       else {
         cardDetails = [];
@@ -433,10 +439,17 @@ const NBACriteria4Optimized = () => {
             coordinatorData = await newnbaCriteria4Service.getCriteria4_6_Data(cycleSubCategoryId, currentStaffId);
           } else if (sectionCode === '4.7') {
             coordinatorData = await newnbaCriteria4Service.getCriteria4_7_Data(cycleSubCategoryId, currentStaffId);
+          } else if (sectionCode === '4.8') {
+            coordinatorData = await newnbaCriteria4Service.getCriteria4_8_Data(cycleSubCategoryId, currentStaffId);
+          } else if (sectionCode === '4.9') {
+            coordinatorData = await newnbaCriteria4Service.getCriteria4_9_Data(cycleSubCategoryId, currentStaffId);
           }
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
 
-          if (coordinatorRecord && coordinatorRecord.teaching_learning_quality_id) {
+          // Check for ID (generic or specific)
+          const recordId = coordinatorRecord?.teaching_learning_quality_id || coordinatorRecord?.id || coordinatorRecord?.professional_activities_id;
+
+          if (coordinatorRecord && recordId) {
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
 
             if (!existingCard) {
@@ -478,7 +491,7 @@ const NBACriteria4Optimized = () => {
         cycleSubCategoryId: subLevel2Id,
         otherStaffId: userStaffId,
         editMode: true,
-        teachingLearningQualityId: cardItem?.teaching_learning_quality_id || null,
+        teachingLearningQualityId: cardItem?.teaching_learning_quality_id || cardItem?.id || null,
         cardData: cardItem
       });
     } catch (error) {
@@ -489,10 +502,13 @@ const NBACriteria4Optimized = () => {
   const handleStatusChange = async (cardItem, newStatus) => {
     const subLevel2Id = selectedCard?.cycleSubCategoryId || expandedSectionId;
     if (subLevel2Id) {
+      // Determine the ID field based on what's available in cardItem
+      const idField = Object.keys(cardItem).find(key => key.endsWith('_id') || key === 'id') || 'id';
+      
       await fetchCardDetails(subLevel2Id);
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.teaching_learning_quality_id]: newStatus
+        [cardItem[idField]]: newStatus
       }));
     }
   };
@@ -940,6 +956,8 @@ const NBACriteria4Optimized = () => {
                                                         : actualSectionCode === '4.5' ? newnbaCriteria4Service.updateCardStatus4_5
                                                           : actualSectionCode === '4.6' ? newnbaCriteria4Service.updateCardStatus4_6
                                                             : actualSectionCode === '4.7' ? newnbaCriteria4Service.updateCardStatus4_7
+                                                            : actualSectionCode === '4.8' ? newnbaCriteria4Service.updateCardStatus4_8
+                                                            : actualSectionCode === '4.9' ? newnbaCriteria4Service.updateCardStatus4_9
                                                               : null,
                                           getCardData: () => fetchCardDetails(subLevel2Id, actualSectionCode)
                                         }}
@@ -956,6 +974,8 @@ const NBACriteria4Optimized = () => {
                                                     actualSectionCode === '4.5' ? "cri45_third_year_students_id" :
                                                       actualSectionCode === '4.6' ? "cri46_higher_studies_id" :
                                                         actualSectionCode === '4.7' ? "cri47_professional_activities_id" :
+                                                        actualSectionCode === '4.8' ? "id" :
+                                                        actualSectionCode === '4.9' ? "id" :
                                                           actualSectionCode === '4A' ? "students_performance_id" :
                                                             actualSectionCode === '4B' ? "bstudents_performance_id" :
                                                               actualSectionCode === '4C' ? "cstudents_performance_id" :
@@ -996,6 +1016,8 @@ const NBACriteria4Optimized = () => {
                                                         : actualSectionCode === '4.5' ? newnbaCriteria4Service.updateCardStatus4_5
                                                           : actualSectionCode === '4.6' ? newnbaCriteria4Service.updateCardStatus4_6
                                                             : actualSectionCode === '4.7' ? newnbaCriteria4Service.updateCardStatus4_7
+                                                            : actualSectionCode === '4.8' ? newnbaCriteria4Service.updateCardStatus4_8
+                                                            : actualSectionCode === '4.9' ? newnbaCriteria4Service.updateCardStatus4_9
                                                               : null,
                                           getCardData: () => fetchCardDetails(subLevel2Id, actualSectionCode)
                                         }}
@@ -1012,6 +1034,8 @@ const NBACriteria4Optimized = () => {
                                                     actualSectionCode === '4.5' ? "cri45_third_year_students_id" :
                                                       actualSectionCode === '4.6' ? "cri46_higher_studies_id" :
                                                         actualSectionCode === '4.7' ? "cri47_professional_activities_id" :
+                                                        actualSectionCode === '4.8' ? "id" :
+                                                        actualSectionCode === '4.9' ? "id" :
                                                           actualSectionCode === '4A' ? "students_performance_id" :
                                                             actualSectionCode === '4B' ? "bstudents_performance_id" :
                                                               actualSectionCode === '4C' ? "cstudents_performance_id" :
@@ -1190,4 +1214,4 @@ const NBACriteria4Optimized = () => {
   );
 };
 
-export default NBACriteria4Optimized;
+export default NBACriteria4Optimized; 
