@@ -558,13 +558,13 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
         "Faculty Information": "/nba/criterion-5",
 
         // Criterion 6 - Governance, Leadership and Management
-        "Faculty Contributions": "/nba/criterion-6",
-        "Governance, Leadership and Management": "/nba/criterion-6",
-        "Governance Leadership and Management": "/nba/criterion-6",
-        "Faculty Details": "/nba/criterion-6",
-        "Faculty Data": "/nba/criterion-6",
-        "Leadership and Management": "/nba/criterion-6",
-        "Governance and Leadership": "/nba/criterion-6",
+        "Facilities": "/nba/criterion-6",
+        // "Governance, Leadership and Management": "/nba/criterion-6",
+        // "Governance Leadership and Management": "/nba/criterion-6",
+        // "Faculty Details": "/nba/criterion-6",
+        // "Faculty Data": "/nba/criterion-6",
+        // "Leadership and Management": "/nba/criterion-6",
+        // "Governance and Leadership": "/nba/criterion-6",
 
         // Criterion 7 - Facilities and Technical Support
         "Facilities and Technical Support": "/nba/criterion-7",
@@ -592,9 +592,9 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
           criteriaRoute = "/nba/criterion-4";
         } else if (categoryLower.includes("student support") && !categoryLower.includes("governance")) {
           criteriaRoute = "/nba/criterion-5";
-        } else if (categoryLower.includes("faculty") || categoryLower.includes("contributions") || categoryLower.includes("leadership") || categoryLower.includes("management")) {
+        } else if (categoryLower.includes("Facilities") || categoryLower.includes("contributions") || categoryLower.includes("leadership") || categoryLower.includes("management")) {
           criteriaRoute = "/nba/criterion-6";
-        } else if (categoryLower.includes("facilities") || categoryLower.includes("technical support")) {
+        } else if (categoryLower.includes("Continuous") || categoryLower.includes("technical support")) {
           criteriaRoute = "/nba/criterion-7";
         } else if (categoryLower.includes("Student Support Systems")) {
           criteriaRoute = "/nba/criterion-8";

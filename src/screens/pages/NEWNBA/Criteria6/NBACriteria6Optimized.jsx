@@ -78,7 +78,7 @@ const NBACriteria6Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: isSection62 ? "development_activities_id" : "professional_development_id",
+      idField: isSection62 ? "id" : "id",
       isCoordinatorField: "is_coordinator_entry"
     };
   };
@@ -404,7 +404,7 @@ const NBACriteria6Optimized = () => {
       const isSection62 = sectionName && sectionName.includes("6.2");
       const cardService = isSection62 ? newnbaCriteria6Service.getallCardDetails6_2 : newnbaCriteria6Service.getallCardDetails6_1;
       const dataService = isSection62 ? newnbaCriteria6Service.getCriteria6_2_Data : newnbaCriteria6Service.getCriteria6_1_Data;
-      const idField = isSection62 ? "development_activities_id" : "professional_development_id";
+      const idField = isSection62 ? "id" : "id";
 
       // Fetch contributor cards
       console.log("📡 CRITERIA 6 DEBUG: Fetching contributor cards...");
