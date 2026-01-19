@@ -1,6 +1,5 @@
 // src/screens/pages/NEWNBA/Components/Criteria4/GenericCriteriaForm4_8.jsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Editor } from "react-editor";
 import Modal from "react-modal";
@@ -8,55 +7,56 @@ import MergePdfModal from "../MergePdfModal";
 import { toast } from "react-toastify";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 import {
-  GripVertical, Trash2, Plus, FileText, Save, CheckCircle,
-  Upload, X, Edit, Percent, Users, Briefcase, GraduationCap, Rocket
+  GripVertical,
+  Trash2,
+  Plus,
+  FileText,
+  Save,
+  CheckCircle,
+  Upload,
+  X,
+  Edit,
+  Percent,
+  Users,
+  Briefcase,
+  GraduationCap,
+  Rocket,
 } from "lucide-react";
 
 Modal.setAppElement("#root");
 
-// Generic Table for 4.8
-const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
-  const safeData =
-    data.length > 0
-      ? data
-      : tableConfig?.predefinedRows
-      ? tableConfig.predefinedRows.map((r, i) => ({
-          id: `row-${Date.now()}-${i}`,
-          ...r,
-        }))
-      : [];
+// ── Summary Table (4.8.1) ───────────────────────────────────────────────────────
+const PlacementSummaryTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
+  const safeData = data.length > 0 ? data : tableConfig?.predefinedRows
+    ? tableConfig.predefinedRows.map((r, i) => ({
+        id: `row-${Date.now()}-${i}`,
+        ...r,
+      }))
+    : [];
 
   const handleChange = (i, field, val) => {
     const updated = [...safeData];
     updated[i][field] = val;
 
-    // Calculate automatically for rows 4, 5, 6
-    // Row indices: 0: N, 1: X, 2: Y, 3: Z, 4: X+Y+Z, 5: PI, 6: Average
-
-    // For each year column
-    ["lyg", "lygm1", "lygm2"].forEach(col => {
+    // Auto-calculate rows 4,5,6 for each year
+    ["lyg", "lygm1", "lygm2"].forEach((col) => {
       const N = parseFloat(updated[0][col]) || 0;
       const X = parseFloat(updated[1][col]) || 0;
       const Y = parseFloat(updated[2][col]) || 0;
       const Z = parseFloat(updated[3][col]) || 0;
 
-      // Row 4: X + Y + Z
       const totalXYZ = X + Y + Z;
       updated[4][col] = totalXYZ.toString();
 
-      // Row 5: Placement Index (PI) = (X + Y + Z) / N
       const PI = N > 0 ? ((totalXYZ / N) * 100).toFixed(2) : "0.00";
       updated[5][col] = PI;
     });
 
-    // Row 6: Average of the three PIs
-    const avgPI = (
-      (parseFloat(updated[5].lyg) || 0) +
-      (parseFloat(updated[5].lygm1) || 0) +
-      (parseFloat(updated[5].lygm2) || 0)
-    ) / 3;
-    
-    // Store average in a special field for display
+    // Average PI (row 6)
+    const avgPI =
+      ((parseFloat(updated[5].lyg) || 0) +
+       (parseFloat(updated[5].lygm1) || 0) +
+       (parseFloat(updated[5].lygm2) || 0)) / 3;
     updated[6].averageValue = avgPI.toFixed(2);
 
     onChange(updated);
@@ -87,37 +87,34 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
               {columns.map((c) => (
                 <th key={c.field} className="p-4 text-left font-medium">
                   {c.header}
-                  {c.field === 'lyg' && <div className="text-xs font-normal">(Last Year Graduated)</div>}
-                  {c.field === 'lygm1' && <div className="text-xs font-normal">(LYG - 1)</div>}
-                  {c.field === 'lygm2' && <div className="text-xs font-normal">(LYG - 2)</div>}
+                  {c.field === "lyg" && <div className="text-xs font-normal">(Last Year Graduated)</div>}
+                  {c.field === "lygm1" && <div className="text-xs font-normal">(LYG - 1)</div>}
+                  {c.field === "lygm2" && <div className="text-xs font-normal">(LYG - 2)</div>}
                 </th>
               ))}
               {!disabled && <th className="w-20"></th>}
             </tr>
           </thead>
-
           <Droppable droppableId="table-rows">
             {(provided) => (
               <tbody {...provided.droppableProps} ref={provided.innerRef}>
-                {safeData.map((row, i) => (
-                  <Draggable
-                    key={row.id}
-                    draggableId={row.id.toString()}
-                    index={i}
-                    isDragDisabled={disabled}
-                  >
-                    {(provided, snapshot) => {
-                      // Determine row styling
-                      let rowClass = "border-b hover:bg-gray-50";
-                      let isCalculatedRow = i >= 4; // Rows 4,5,6 are calculated
-                      
-                      if (i === 6) {
-                        rowClass = "bg-gradient-to-r from-green-50 to-blue-50 border-t-2 border-green-300";
-                      } else if (isCalculatedRow) {
-                        rowClass = "bg-gray-50 border-b";
-                      }
+                {safeData.map((row, i) => {
+                  const isCalculatedRow = i >= 4;
+                  const rowClass =
+                    i === 6
+                      ? "bg-gradient-to-r from-green-50 to-blue-50 border-t-2 border-green-300"
+                      : isCalculatedRow
+                      ? "bg-gray-50 border-b"
+                      : "border-b hover:bg-gray-50";
 
-                      return (
+                  return (
+                    <Draggable
+                      key={row.id}
+                      draggableId={row.id.toString()}
+                      index={i}
+                      isDragDisabled={disabled}
+                    >
+                      {(provided, snapshot) => (
                         <tr
                           ref={provided.innerRef}
                           {...provided.draggableProps}
@@ -128,8 +125,6 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
                               <GripVertical className="w-6 h-6 text-gray-500" />
                             </div>
                           </td>
-
-                          {/* Item Column with icons */}
                           <td className="p-3 font-medium text-gray-800 flex items-center gap-2">
                             {i === 0 && <Users className="w-4 h-4 text-blue-600" />}
                             {i === 1 && <Briefcase className="w-4 h-4 text-green-600" />}
@@ -139,8 +134,6 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
                             {i === 6 && <span className="font-bold">Average</span>}
                             {row.item}
                           </td>
-
-                          {/* For the average row (index 6), show merged cell */}
                           {i === 6 ? (
                             <td colSpan={3} className="p-5 text-center bg-gradient-to-r from-green-100 to-blue-100">
                               <div className="text-2xl font-bold text-green-800">
@@ -151,17 +144,14 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
                               </div>
                             </td>
                           ) : (
-                            // Normal data cells for other rows
                             columns.slice(1).map((col) => (
                               <td key={col.field} className="p-3">
-                                {i >= 4 ? (
-                                  // Calculated rows (4,5) are read-only
+                                {isCalculatedRow ? (
                                   <div className="text-center font-semibold">
                                     {row[col.field] || "0"}
                                     {i === 5 && "%"}
                                   </div>
                                 ) : (
-                                  // Input rows (0-3)
                                   <input
                                     type="number"
                                     min="0"
@@ -177,10 +167,10 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
                             ))
                           )}
                         </tr>
-                      );
-                    }}
-                  </Draggable>
-                ))}
+                      )}
+                    </Draggable>
+                  );
+                })}
                 {provided.placeholder}
               </tbody>
             )}
@@ -188,13 +178,11 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
         </table>
       </DragDropContext>
 
-      {/* Marks Calculation */}
       {safeData[6]?.averageValue && (
         <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-300 rounded-xl">
           <h4 className="text-xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
             <Percent className="w-6 h-6" /> Marks Calculation
           </h4>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-4 rounded-lg border">
               <h5 className="font-bold text-gray-700 mb-2">Formula:</h5>
@@ -204,7 +192,6 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
                 <div>• Assessment Points = 40 × Average PI</div>
               </div>
             </div>
-            
             <div className="bg-white p-4 rounded-lg border">
               <h5 className="font-bold text-gray-700 mb-2">Current Calculation:</h5>
               <div className="space-y-2">
@@ -227,7 +214,122 @@ const PlacementTable = ({ columns, data = [], onChange, disabled, tableConfig })
   );
 };
 
-// Main Component
+// ── Student List Table (4.8.2) ──────────────────────────────────────────────────
+const StudentListTable = ({ columns, data = [], onChange, disabled, tableConfig }) => {
+  const safeData = [...data];
+
+  const handleChange = (index, field, value) => {
+    const newData = [...safeData];
+    newData[index] = { ...newData[index], [field]: value };
+    onChange(newData);
+  };
+
+  const addRow = () => {
+    const newRow = { id: `row-${Date.now()}-${Math.random()}`, sl_no: safeData.length + 1 };
+    columns.forEach((col) => {
+      if (col.field !== "sl_no") newRow[col.field] = "";
+    });
+    onChange([...safeData, newRow]);
+  };
+
+  const removeRow = (index) => {
+    const newData = safeData.filter((_, i) => i !== index);
+    newData.forEach((row, i) => (row.sl_no = i + 1));
+    onChange(newData);
+  };
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(safeData);
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
+    items.forEach((row, i) => (row.sl_no = i + 1));
+    onChange(items);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <h4 className="text-lg font-bold text-blue-700 mb-2">{tableConfig.title}</h4>
+      </div>
+
+      <DragDropContext onDragEnd={onDragEnd}>
+        <table className="w-full table-auto bg-white rounded-xl shadow-lg overflow-hidden border border-gray-300">
+          <thead>
+            <tr className="bg-[#2163c1] text-white">
+              <th className="p-4 w-12"></th>
+              {columns.map((col) => (
+                <th key={col.field} className="p-4 text-left font-medium">
+                  {col.header}
+                </th>
+              ))}
+              {!disabled && <th className="w-24">Actions</th>}
+            </tr>
+          </thead>
+          <Droppable droppableId="student-list-rows">
+            {(provided) => (
+              <tbody {...provided.droppableProps} ref={provided.innerRef}>
+                {safeData.map((row, i) => (
+                  <Draggable key={row.id} draggableId={row.id} index={i} isDragDisabled={disabled}>
+                    {(provided, snapshot) => (
+                      <tr
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={`border-b hover:bg-gray-50 ${snapshot.isDragging ? "shadow-2xl" : ""}`}
+                      >
+                        <td className="p-3">
+                          <div {...provided.dragHandleProps} className="cursor-grab">
+                            <GripVertical className="w-6 h-6 text-gray-500" />
+                          </div>
+                        </td>
+                        {columns.map((col) => (
+                          <td key={col.field} className="p-3">
+                            <input
+                              type="text"
+                              value={row[col.field] || ""}
+                              onChange={(e) => handleChange(i, col.field, e.target.value)}
+                              disabled={disabled || col.field === "sl_no"}
+                              readOnly={col.field === "sl_no"}
+                              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder={col.placeholder || ""}
+                            />
+                          </td>
+                        ))}
+                        {!disabled && (
+                          <td className="p-3 text-center">
+                            <button
+                              onClick={() => removeRow(i)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Remove row"
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </tbody>
+            )}
+          </Droppable>
+        </table>
+      </DragDropContext>
+
+      {!disabled && (
+        <button
+          onClick={addRow}
+          className="mt-4 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          <Plus size={20} /> Add Student Row
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────────────────
 const GenericCriteriaForm4_8 = ({
   title = "NBA Section",
   marks = 40,
@@ -240,20 +342,14 @@ const GenericCriteriaForm4_8 = ({
   saving = false,
 }) => {
   const [isEditMode, setIsEditMode] = useState(!isCompleted);
-
   const safeContent = initialData?.content || {};
-  const safeTableData = initialData?.tableData || [];
-
+  const safeTableData = initialData?.tableData || {};
   const [filesByField, setFilesByField] = useState(() => {
-    if (initialData?.filesByField) {
-      console.log("Initializing filesByField from initialData:", initialData.filesByField);
-      return initialData.filesByField;
-    }
-
+    if (initialData?.filesByField) return initialData.filesByField;
     const init = {};
     fields.forEach((field) => {
       init[field.name] = [
-        { id: `file-${Date.now()}-${field.name}-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }
+        { id: `file-${Date.now()}-${field.name}-0`, description: "", file: null, filename: "", s3Url: "", uploading: false },
       ];
     });
     return init;
@@ -261,27 +357,19 @@ const GenericCriteriaForm4_8 = ({
 
   const [formValues, setFormValues] = useState(safeContent);
   const [tableData, setTableData] = useState(safeTableData);
+
   const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
   const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
 
-  // Update state when initialData changes
-  React.useEffect(() => {
-    if (initialData?.content) {
-      setFormValues(initialData.content);
-    }
-    if (initialData?.tableData) {
-      setTableData(initialData.tableData);
-    }
+  useEffect(() => {
+    if (initialData?.content) setFormValues(initialData.content);
+    if (initialData?.tableData) setTableData(initialData.tableData);
     if (initialData?.filesByField) {
-      setFilesByField(prev => {
-        const hasUploadedFiles = Object.values(prev).some(fieldFiles => 
-          fieldFiles.some(file => file.s3Url || file.filename)
+      setFilesByField((prev) => {
+        const hasUploaded = Object.values(prev).some((files) =>
+          files.some((f) => f.s3Url || f.filename)
         );
-        if (hasUploadedFiles) {
-          console.log("Keeping existing filesByField with uploaded files");
-          return prev;
-        }
-        return initialData.filesByField;
+        return hasUploaded ? prev : initialData.filesByField;
       });
     }
   }, [initialData]);
@@ -304,54 +392,42 @@ const GenericCriteriaForm4_8 = ({
   };
 
   const handleFileChange = async (fieldName, index, newFile) => {
-    console.log("handleFileChange() CALLED with:", { fieldName, index, newFile });
-
     if (!newFile || !(newFile instanceof File)) {
-      console.error("❌ Invalid file passed:", newFile);
       toast.error("Invalid file");
       return;
     }
 
     const currentRow = filesByField[fieldName][index];
-
-    // Optimistic UI update
-    setFilesByField(prev => ({
+    setFilesByField((prev) => ({
       ...prev,
       [fieldName]: prev[fieldName].map((f, i) =>
         i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
-      )
+      ),
     }));
 
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      
-      if (currentRow.description?.trim()) {
-        formData.append("description", currentRow.description.trim());
-      }
+      if (currentRow.description?.trim()) formData.append("description", currentRow.description.trim());
 
       const resData = await nbaDashboardService.uploadFile(formData);
-      const s3Url = resData || resData?.url || "";
+      const s3Url = resData?.url || resData || "";
 
-      setFilesByField(prev => ({
+      setFilesByField((prev) => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
-          i === index
-            ? { ...f, s3Url: s3Url, filename: newFile.name, uploading: false }
-            : f
-        )
+          i === index ? { ...f, s3Url, filename: newFile.name, uploading: false } : f
+        ),
       }));
-
       toast.success("Uploaded successfully!");
     } catch (err) {
-      console.error("❌ ERROR uploading file:", err);
+      console.error("Upload failed:", err);
       toast.error("Upload failed");
-
-      setFilesByField(prev => ({
+      setFilesByField((prev) => ({
         ...prev,
         [fieldName]: prev[fieldName].map((f, i) =>
           i === index ? { ...f, uploading: false, file: null, filename: "", s3Url: "" } : f
-        )
+        ),
       }));
     }
   };
@@ -364,13 +440,11 @@ const GenericCriteriaForm4_8 = ({
   };
 
   const handleSave = () => {
-    console.log("GenericCriteriaForm4_8 handleSave - filesByField:", filesByField);
     const saveData = {
       content: formValues,
       tableData,
       filesByField,
     };
-    console.log("GenericCriteriaForm4_8 handleSave - complete data:", saveData);
     onSave(saveData);
     setIsEditMode(false);
   };
@@ -407,13 +481,23 @@ const GenericCriteriaForm4_8 = ({
             </h3>
 
             {field.hasTable ? (
-              <PlacementTable
-                columns={field.tableConfig.columns}
-                data={tableData}
-                onChange={setTableData}
-                disabled={!isEditMode}
-                tableConfig={field.tableConfig}
-              />
+              field.name === "4.8.1" ? (
+                <PlacementSummaryTable
+                  columns={field.tableConfig.columns}
+                  data={tableData[field.name] || []}
+                  onChange={(newData) => setTableData((prev) => ({ ...prev, [field.name]: newData }))}
+                  disabled={!isEditMode}
+                  tableConfig={field.tableConfig}
+                />
+              ) : (
+                <StudentListTable
+                  columns={field.tableConfig.columns}
+                  data={tableData[field.name] || []}
+                  onChange={(newData) => setTableData((prev) => ({ ...prev, [field.name]: newData }))}
+                  disabled={!isEditMode}
+                  tableConfig={field.tableConfig}
+                />
+              )
             ) : (
               <div className="border-2 border-gray-300 rounded-b-lg bg-white">
                 <Editor
@@ -455,9 +539,7 @@ const GenericCriteriaForm4_8 = ({
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
                         {(filesByField[field.name] || []).map((file, index) => {
-                          if (!file.id) {
-                            file.id = `file-${Date.now()}-${field.name}-${Math.random()}`;
-                          }
+                          if (!file.id) file.id = `file-${Date.now()}-${field.name}-${Math.random()}`;
                           return (
                             <Draggable key={file.id} draggableId={file.id.toString()} index={index}>
                               {(provided, snapshot) => (
@@ -478,7 +560,6 @@ const GenericCriteriaForm4_8 = ({
                                     placeholder="Description"
                                     className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   />
-
                                   <div className="w-64">
                                     {file.uploading ? (
                                       <span className="text-gray-500 italic">Uploading...</span>
@@ -498,7 +579,6 @@ const GenericCriteriaForm4_8 = ({
                                       />
                                     )}
                                   </div>
-
                                   <div className="flex gap-2">
                                     <button
                                       onClick={() => addFileRow(field.name)}
@@ -514,12 +594,12 @@ const GenericCriteriaForm4_8 = ({
                                           ? "opacity-50 cursor-not-allowed hover:bg-transparent"
                                           : "hover:bg-red-50"
                                       }`}
+                                      disabled={(filesByField[field.name]?.length || 0) <= 1}
                                       title={
                                         (filesByField[field.name]?.length || 0) <= 1
                                           ? "Cannot delete the only document"
                                           : "Remove document"
                                       }
-                                      disabled={(filesByField[field.name]?.length || 0) <= 1}
                                     >
                                       <Trash2 className="w-5 h-5" />
                                     </button>
@@ -548,11 +628,11 @@ const GenericCriteriaForm4_8 = ({
                   ? "bg-[#2163c1] cursor-pointer opacity-60"
                   : "bg-[#2163c1] hover:bg-[#1d57a8] text-white shadow-lg hover:shadow-xl"
               }`}
+              disabled={saving || !isContributorEditable}
               title={saving ? "Saving..." : !isContributorEditable ? "Not allowed to save" : "Save"}
             >
               <Save className="w-6 h-6" />
             </button>
-
             <button
               onClick={() => setIsEditMode(false)}
               disabled={saving}
@@ -561,7 +641,6 @@ const GenericCriteriaForm4_8 = ({
             >
               <X className="w-6 h-6" />
             </button>
-
             <button
               onClick={onDelete}
               className="inline-flex items-center justify-center w-12 h-12 bg-red-500 text-white rounded-lg hover:bg-red-600 transition shadow-lg"
@@ -573,7 +652,7 @@ const GenericCriteriaForm4_8 = ({
         )}
       </div>
 
-      {/* Preview & Merge Modals */}
+      {/* Preview Modal */}
       <Modal
         isOpen={previewModal.isOpen}
         onRequestClose={() => setPreviewModal({ isOpen: false, file: null })}
@@ -597,6 +676,7 @@ const GenericCriteriaForm4_8 = ({
         )}
       </Modal>
 
+      {/* Merge PDF Modal */}
       <MergePdfModal
         isOpen={mergeModal.isOpen}
         pdfFiles={filesByField[mergeModal.fieldName] || []}

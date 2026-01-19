@@ -901,7 +901,7 @@ function updateCardStatus4_8(statusPayload, approverStaffId) {
 /**
  * Save (Create) Criteria 4.8 data
  */
-function saveCriteria4_8_Data(values, currentUserStaffId) {
+function saveCriteria4_8_Data(values,currentUserStaffId) {
   const url = `/admin/nba/4.8/new-placement-higher-studies?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
@@ -946,7 +946,7 @@ function deleteCriteria4_8_Data(id) {
 /**
  * Update Criteria 4.8 data
  */
-function putCriteria4_8_Data(id, values, currentUserStaffId) {
+function putCriteria4_8_Data(id, values,currentUserStaffId) {
   const url = `/admin/nba/4.8/new-placement-higher-studies/${id}?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',

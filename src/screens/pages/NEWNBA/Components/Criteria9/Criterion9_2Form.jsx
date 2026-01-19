@@ -1,6 +1,8 @@
+
+
 /** @format */
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm from "../GenericCriteriaForm";
+import GenericCriteriaForm9_2 from "./GenericCriteriaForm9_2";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import StatusBadge from "../StatusBadge";
@@ -19,7 +21,7 @@ const Criterion9_2Form = ({
   onSaveSuccess,
   otherStaffId = null, // For coordinator viewing specific contributor's data
   editMode = false,
-  mentoringSystemId: propMentoringSystemId = null,
+  propMentoringSystemId: propMentoringSystemId = null,
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,16 +42,8 @@ const Criterion9_2Form = ({
   }, []);
 
   const config = {
-    title: "9.2. Mentoring System (05)",
-    totalMarks: 5,
-    fields: [
-      {
-        name: "mentoring_system_details",
-        label: "Type of mentoring: Professional guidance/career advancement/course work specific/laboratory specific/all-round development. Number of faculty mentors: Number of students per mentor: Frequency of meeting",
-        marks: 5,
-        type: "textarea"
-      }
-    ]
+    title: "9.2 Budget Allocation, Utilization, and Public Accounting at Institute level (30)",
+    totalMarks: 30,
   };
 
   const loadData = useCallback(async () => {
@@ -67,18 +61,13 @@ const Criterion9_2Form = ({
       
       if (!staffIdToUse) {
         setInitialData({ 
-          content: { mentoring_system_details: "" }, 
-          tableData: [], 
+          tableData: {
+            income_table: [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
+            budget_expenditure_table: BUDGET_ITEMS.map(emptyBudgetRow),
+          }, 
           filesByField: {
-            "mentoring_system_details": [{ 
-              id: `file-mentoring-0`, 
-              description: "", 
-              file: null, 
-              filename: "", 
-              s3Url: "", 
-              url: "",
-              uploading: false 
-            }]
+            table9_2_a_files: [createEmptyFileRow()],
+            table9_2_b_files: [createEmptyFileRow()],
           }
         });
         setLoading(false);
@@ -118,37 +107,32 @@ const Criterion9_2Form = ({
           });
         }
 
-        const filesArray = Array.isArray(dataItem.mentoring_supporting_documents) 
+        const filesA = Array.isArray(dataItem.mentoring_supporting_documents) 
           ? dataItem.mentoring_supporting_documents 
           : [];
 
-        const filesByField = {
-          "mentoring_system_details": filesArray.length > 0
-            ? filesArray.map((f, i) => ({
-                id: f.id || `file-mentoring-${i}`,
-                filename: f.filename || f.name || "",
-                s3Url: f.url || f.filePath || "",
-                url: f.url || f.filePath || f.s3Url || "",
-                description: f.description || "",
-                uploading: false
-              }))
-            : [{ 
-                id: `file-mentoring-0`, 
-                description: "", 
-                file: null, 
-                filename: "", 
-                s3Url: "", 
-                url: "",
-                uploading: false 
-              }]
-        };
+        const filesB = Array.isArray(dataItem.supporting_documents_b) 
+          ? dataItem.supporting_documents_b 
+          : [];
+
+        const mapFiles = (files) => files.length > 0 ? files.map((f, i) => ({
+          id: f.id || `file-${Date.now()}-${i}`,
+          filename: f.filename || f.name || "",
+          s3Url: f.url || f.filePath || "",
+          url: f.url || f.filePath || f.s3Url || "",
+          description: f.description || "",
+          uploading: false
+        })) : [createEmptyFileRow()];
 
         setInitialData({
-          content: { 
-            mentoring_system_details: dataItem.mentoring_system_details || "" 
+          tableData: {
+            income_table: dataItem.income_table || [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
+            budget_expenditure_table: dataItem.budget_expenditure_table || BUDGET_ITEMS.map(emptyBudgetRow),
           },
-          tableData: [],
-          filesByField: filesByField
+          filesByField: {
+            table9_2_a_files: mapFiles(filesA),
+            table9_2_b_files: mapFiles(filesB),
+          }
         });
 
       } else {
@@ -157,18 +141,13 @@ const Criterion9_2Form = ({
         setContributorName("");
         
         setInitialData({ 
-          content: { mentoring_system_details: "" }, 
-          tableData: [], 
+          tableData: {
+            income_table: [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
+            budget_expenditure_table: BUDGET_ITEMS.map(emptyBudgetRow),
+          }, 
           filesByField: {
-            "mentoring_system_details": [{ 
-              id: `file-mentoring-0`, 
-              description: "", 
-              file: null, 
-              filename: "", 
-              s3Url: "", 
-              url: "",
-              uploading: false 
-            }]
+            table9_2_a_files: [createEmptyFileRow()],
+            table9_2_b_files: [createEmptyFileRow()],
           }
         });
       }
@@ -191,18 +170,13 @@ const Criterion9_2Form = ({
       }
       
       setInitialData({ 
-        content: { mentoring_system_details: "" }, 
-        tableData: [], 
+        tableData: {
+          income_table: [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
+          budget_expenditure_table: BUDGET_ITEMS.map(emptyBudgetRow),
+        }, 
         filesByField: {
-          "mentoring_system_details": [{ 
-            id: `file-mentoring-0`, 
-            description: "", 
-            file: null, 
-            filename: "", 
-            s3Url: "", 
-            url: "",
-            uploading: false 
-          }]
+          table9_2_a_files: [createEmptyFileRow()],
+          table9_2_b_files: [createEmptyFileRow()],
         }
       });
       setMentoringSystemId(null);
@@ -229,8 +203,22 @@ const Criterion9_2Form = ({
       const payload = {
         other_staff_id: otherStaffId || nba_contributor_allocation_id || currentUserStaffId,
         cycle_sub_category_id: nba_criteria_sub_level2_id,
-        mentoring_system_details: formData.content.mentoring_system_details || "",
-        mentoring_supporting_documents: formData.filesByField.mentoring_system_details || []
+        income_table: formData.tableData.income_table.map(r => {
+          const { id, ...rest } = r;
+          return rest;
+        }),
+        budget_expenditure_table: formData.tableData.budget_expenditure_table,
+        mentoring_supporting_documents: formData.filesByField.table9_2_a_files.map(f => ({
+          id: f.id,
+          filename: f.filename,
+          url: f.s3Url,
+          description: f.description
+        })).concat(formData.filesByField.table9_2_b_files.map(f => ({
+          id: f.id,
+          filename: f.filename,
+          url: f.s3Url,
+          description: f.description
+        }))),
       };
       
       let response;
@@ -299,7 +287,7 @@ const Criterion9_2Form = ({
         </div>
       )}
       
-      <GenericCriteriaForm
+      <GenericCriteriaForm9_2
         config={config}
         initialData={initialData}
         onSave={handleSave}
@@ -307,7 +295,6 @@ const Criterion9_2Form = ({
         loading={loading}
         saving={saving}
         isEditable={isContributorEditable && !completed}
-        showDeleteButton={!!mentoringSystemId && isContributorEditable}
       />
     </div>
   );
