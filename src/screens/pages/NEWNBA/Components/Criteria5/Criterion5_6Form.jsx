@@ -160,8 +160,8 @@ const Criterion5_6Form = ({
         let rfValue = 10;
 
         // Handle faculty table data
-        if (data.faculty_table && Array.isArray(data.faculty_table)) {
-          facultyTableData = data.faculty_table.map((row, index) => ({
+        if (data.faculty_development_data && Array.isArray(data.faculty_development_data)) {
+          facultyTableData = data.faculty_development_data.map((row, index) => ({
             id: row.id || `faculty_${index + 1}`,
             name: row.name || "",
             CAYm1: row.CAYm1 || "",
@@ -177,8 +177,8 @@ const Criterion5_6Form = ({
         }
 
         // Handle files
-        if (data.supporting_documents && Array.isArray(data.supporting_documents)) {
-          data.supporting_documents.forEach(doc => {
+        if (data.faculty_development_document && Array.isArray(data.faculty_development_document)) {
+          data.faculty_development_document.forEach(doc => {
             const fieldName = doc.field_name || "5.6";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
@@ -254,7 +254,7 @@ const Criterion5_6Form = ({
     setSaveLoading(true);
     try {
       // Transform UI data to API format
-      const faculty_table = formData.tableData?.facultyDevelopment?.map(row => ({
+      const faculty_development_data = formData.tableData?.facultyDevelopment?.map(row => ({
         name: row.name || "",
         CAYm1: row.CAYm1 || "",
         CAYm2: row.CAYm2 || "",
@@ -263,12 +263,12 @@ const Criterion5_6Form = ({
       })) || [];
 
       // Transform supporting documents
-      const supporting_documents = [];
+      const faculty_development_document = [];
       if (formData.filesByField) {
         Object.entries(formData.filesByField).forEach(([fieldName, files]) => {
           files.forEach(file => {
             if (file.s3Url) {
-              supporting_documents.push({
+              faculty_development_document.push({
                 field_name: fieldName,
                 file_name: file.filename || "",
                 s3_url: file.s3Url,
@@ -288,9 +288,9 @@ const Criterion5_6Form = ({
         other_staff_id: parseInt(staffId),
         cycle_sub_category_id: parseInt(cycle_sub_category_id),
         description_5_6: formData.content?.["5.6"] || "",
-        faculty_table,
+        faculty_development_data,
         rf_value: formData.rfValue || 10,
-        supporting_documents
+        faculty_development_document
       };
 
       console.log("🚀 Saving Criterion 5.6 payload:", payload);
@@ -298,7 +298,7 @@ const Criterion5_6Form = ({
       let response;
       if (recordId) {
         // Update existing record
-        response = await newnbaCriteria5Service.updateCriteria5_6_Data(recordId, payload);
+        response = await newnbaCriteria5Service.updateCriteria5_6_Data(recordId, payload,staffId);
         console.log("✅ Update response:", response);
         setSuccessMessage("Section updated successfully!");
       } else {

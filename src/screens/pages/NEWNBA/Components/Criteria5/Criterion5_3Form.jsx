@@ -1,6 +1,6 @@
 // Criterion5_3Form.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import GenericCriteriaForm5_2 from "./GenericCriteriaForm5_2";
+import GenericCriteriaForm5_3 from "./GenericCriteriaForm5_3";
 import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
 import { toast } from "react-toastify";
 import SweetAlert from "react-bootstrap-sweetalert";
@@ -139,7 +139,7 @@ Note:
       console.log("  - cycle_sub_category_id:", cycle_sub_category_id);
       console.log("  - staffId:", staffIdToUse);
 
-      const response = await newnbaCriteria5Service.getCriteria5_2_Data(cycle_sub_category_id, staffIdToUse);
+      const response = await newnbaCriteria5Service.getCriteria5_3_Data(cycle_sub_category_id, staffIdToUse);
       console.log("📊 Criterion5_3Form - Raw API Response:", response);
 
       // Handle both array and single object responses
@@ -176,7 +176,7 @@ Note:
         }
 
         // Format table data from API response
-        const formattedTableData = (data.fqi_table || []).map((item, index) => ({
+        const formattedTableData = (data.faculty_qualification_data || []).map((item, index) => ({
           id: `row-${index}`,
           year: item.year || "",
           X: item.x_phd?.toString() || "",
@@ -187,8 +187,8 @@ Note:
 
         // Handle files
         let filesByField = {};
-        if (data.fqi_supporting_documents && Array.isArray(data.fqi_supporting_documents)) {
-          data.fqi_supporting_documents.forEach(doc => {
+        if (data.fqi_faculty_qualification_document && Array.isArray(data.fqi_faculty_qualification_document)) {
+          data.fqi_faculty_qualification_document.forEach(doc => {
             const fieldName = doc.field_name || "5.3";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
@@ -287,7 +287,7 @@ Note:
 
       console.log("filesWithCategory:", filesWithCategory);
 
-      const supporting_documents = filesWithCategory
+      const faculty_qualification_document = filesWithCategory
         .filter((f) => {
           console.log("Checking file:", f, "has s3Url:", !!f.s3Url, "has url:", !!f.url, "has filename:", !!f.filename);
           return (f.s3Url || f.url) && f.filename;
@@ -300,7 +300,7 @@ Note:
           category: f.category || "Faculty Qualification Documents",
         }));
 
-      console.log("supporting_documents:", supporting_documents);
+      console.log("faculty_qualification_document:", faculty_qualification_document);
 
 
       // Use appropriate staff ID based on context
@@ -322,9 +322,9 @@ Note:
       const payload = {
         other_staff_id: parseInt(staffIdToSave),
         cycle_sub_category_id: parseInt(cycle_sub_category_id),
-        fqi_description: formData.content["5.3"] || "",
-        fqi_table: formattedTableData,
-        supporting_documents: supporting_documents,
+        // fqi_description: formData.content["5.3"] || "",
+        faculty_qualification_data: formattedTableData,
+        faculty_qualification_document: faculty_qualification_document,
       };
 
       console.log("🚀 Saving payload:", payload);
@@ -332,12 +332,12 @@ Note:
       let response;
       if (recordId) {
         // Update existing record
-        response = await newnbaCriteria5Service.updateCriteria5_2_Data(recordId, payload);
+        response = await newnbaCriteria5Service.updateCriteria5_3_Data(recordId, payload,staffIdToSave);
         console.log("✅ Update response:", response);
         setSuccessMessage("Section updated successfully!");
       } else {
         // Create new record
-        response = await newnbaCriteria5Service.saveCriteria5_2_Data(payload);
+        response = await newnbaCriteria5Service.saveCriteria5_3_Data(payload,staffIdToSave);
         console.log("✅ Save response:", response);
 
         // Set recordId from response
@@ -400,7 +400,7 @@ Note:
 
 const confirmDelete = async () => {
   try {
-    await newnbaCriteria5Service.deleteCriteria5_2Data(recordId);
+    await newnbaCriteria5Service.deleteCriteria5_3Data(recordId);
 
     toast.success('✅ Section data deleted successfully!');
 
@@ -512,7 +512,7 @@ const confirmDelete = async () => {
         </div>
       )}
 
-      <GenericCriteriaForm5_2
+      <GenericCriteriaForm5_3
         title={config.title}
         marks={config.totalMarks}
         fields={config.fields}

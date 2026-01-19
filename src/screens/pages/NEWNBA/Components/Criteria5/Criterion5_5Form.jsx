@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import GenericCriteriaForm1_2 from "../GenericCriteriaForm1_2";
-import { newnbaCriteria1Service } from "../../Services/NewNBA-Criteria1.service";
+import { newnbaCriteria5Service } from "../../Services/NewNBA-Criteria5.service";
 import { toast } from "react-toastify";
 import SweetAlert from 'react-bootstrap-sweetalert';
 import { POService } from "../../../OBE/Settings/Services/po.service";
@@ -71,7 +71,7 @@ const Criterion5_5Form = ({
     setLoading(true);
 
     try {
-      const res = await newnbaCriteria1Service.getCriteria1_3_Data(
+      const res = await newnbaCriteria5Service.getCriteria5_5_Data(
         cycle_sub_category_id,
         currentOtherStaffId
       );
@@ -127,7 +127,7 @@ const Criterion5_5Form = ({
     
     setCardLoading(true);
     try {
-      const contributorsResponse = await newnbaCriteria1Service.getAllCriteria1_3_Data?.(cycle_sub_category_id);
+      const contributorsResponse = await newnbaCriteria5Service.getAllCriteria5_5_Data?.(cycle_sub_category_id);
       if (onStatusChange) {
         onStatusChange(contributorsResponse || []);
       }
@@ -166,7 +166,7 @@ const Criterion5_5Form = ({
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria1Service.deleteCriteria1_3_Data(initialData.po_pso_id);
+            await newnbaCriteria5Service.deleteCriteria5_5_Data(initialData.po_pso_id);
             
             setAlert(
               <SweetAlert
@@ -246,7 +246,7 @@ const Criterion5_5Form = ({
     if (!progId) return;
     
     try {
-      const response = await newnbaCriteria1Service.getCoPoMappingsByProgram(progId);
+      const response = await newnbaCriteria5Service.getCoPoMappingsByProgram(progId);
       const mappings = response?.content || [];
 
       const poMappingMap = {};
@@ -341,13 +341,13 @@ const Criterion5_5Form = ({
 
       // Use PUT for update if ID exists, otherwise POST for create
       if (initialData?.po_pso_id) {
-        await newnbaCriteria1Service.putCriteria1_3_Data(
+        await newnbaCriteria5Service.putCriteria5_5_Data(
           initialData.po_pso_id,
-          currentOtherStaffId,
-          payload
+          payload,
+          currentOtherStaffId
         );
       } else {
-        await newnbaCriteria1Service.saveCriteria1_3_Data(currentOtherStaffId, payload);
+        await newnbaCriteria5Service.saveCriteria5_5_Data(payload,currentOtherStaffId);
       }
 
       setAlert(
