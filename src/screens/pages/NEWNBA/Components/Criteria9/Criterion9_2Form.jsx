@@ -88,7 +88,7 @@ const Criterion9_2Form = ({
         dataItem = response;
       }
 
-      if (dataItem && dataItem.mentoring_system_id) {
+      if (dataItem && dataItem.id) {
         if (dataItem.other_staff_name) {
           setContributorName(dataItem.other_staff_name);
         } else if (dataItem.firstname) {
@@ -96,7 +96,7 @@ const Criterion9_2Form = ({
           setContributorName(name);
         }
 
-        setMentoringSystemId(dataItem.mentoring_system_id);
+        setMentoringSystemId(dataItem.id);
 
         if (dataItem.approval_status) {
           setApprovalStatus({
@@ -107,12 +107,8 @@ const Criterion9_2Form = ({
           });
         }
 
-        const filesA = Array.isArray(dataItem.mentoring_supporting_documents) 
-          ? dataItem.mentoring_supporting_documents 
-          : [];
-
-        const filesB = Array.isArray(dataItem.supporting_documents_b) 
-          ? dataItem.supporting_documents_b 
+        const files = Array.isArray(dataItem.budget_document) 
+          ? dataItem.budget_document 
           : [];
 
         const mapFiles = (files) => files.length > 0 ? files.map((f, i) => ({
@@ -126,12 +122,12 @@ const Criterion9_2Form = ({
 
         setInitialData({
           tableData: {
-            income_table: dataItem.income_table || [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
-            budget_expenditure_table: dataItem.budget_expenditure_table || BUDGET_ITEMS.map(emptyBudgetRow),
+            income_table: dataItem.total_income_institute_level || [{ ...emptyIncomeRow, id: `row-${Date.now()}` }],
+            budget_expenditure_table: dataItem.income_expenditure_institute_level || BUDGET_ITEMS.map(emptyBudgetRow),
           },
           filesByField: {
-            table9_2_a_files: mapFiles(filesA),
-            table9_2_b_files: mapFiles(filesB),
+            table9_2_a_files: mapFiles(files.slice(0, Math.ceil(files.length/2))),
+            table9_2_b_files: mapFiles(files.slice(Math.ceil(files.length/2))),
           }
         });
 
@@ -193,9 +189,9 @@ const Criterion9_2Form = ({
   }, [loadData]);
 
   const handleSave = async (formData) => {
+    setSaving(true);
+
     try {
-      setSaving(true);
-      
       const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
       const currentUserStaffId = userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
@@ -203,12 +199,12 @@ const Criterion9_2Form = ({
       const payload = {
         other_staff_id: otherStaffId || nba_contributor_allocation_id || currentUserStaffId,
         cycle_sub_category_id: nba_criteria_sub_level2_id,
-        income_table: formData.tableData.income_table.map(r => {
+        total_income_institute_level: formData.tableData.income_table.map(r => {
           const { id, ...rest } = r;
           return rest;
         }),
-        budget_expenditure_table: formData.tableData.budget_expenditure_table,
-        mentoring_supporting_documents: formData.filesByField.table9_2_a_files.map(f => ({
+        income_expenditure_institute_level: formData.tableData.budget_expenditure_table,
+        budget_document: formData.filesByField.table9_2_a_files.map(f => ({
           id: f.id,
           filename: f.filename,
           url: f.s3Url,
@@ -228,46 +224,107 @@ const Criterion9_2Form = ({
         response = await newnbaCriteria9Service.saveCriteria9_2_Data(currentUserStaffId, payload);
       }
       
-      if (response && response.mentoring_system_id) {
-        setMentoringSystemId(response.mentoring_system_id);
+      if (response && (response.id || response.mentoring_system_id)) {
+        setMentoringSystemId(response.id || response.mentoring_system_id);
       }
       
-      toast.success("Data saved successfully!");
+      setAlert(
+        <SweetAlert
+          success
+          title="Saved!"
+          confirmBtnCssClass="btn-confirm"
+          onConfirm={() => setAlert(null)}
+        >
+          Criterion 9.2 saved successfully!
+        </SweetAlert>
+      );
+      
       if (onSaveSuccess) onSaveSuccess();
       
     } catch (error) {
       console.error("Save failed:", error);
-      toast.error("Failed to save data");
+      setAlert(
+        <SweetAlert
+          danger
+          title="Error"
+          confirmBtnCssClass="btn-confirm"
+          onConfirm={() => setAlert(null)}
+        >
+          Failed to save Criterion 9.2. Error: {error.message || error}
+        </SweetAlert>
+      );
     } finally {
       setSaving(false);
     }
   };
   
   const handleDelete = async () => {
-    if (!mentoringSystemId) return;
-    
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "This action cannot be undone!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!"
-    });
-    
-    if (result.isConfirmed) {
-      try {
-        await newnbaCriteria9Service.deleteCriteria9_2Data(mentoringSystemId);
-        toast.success("Data deleted successfully!");
-        setMentoringSystemId(null);
-        setInitialData({ content: { mentoring_system_details: "" }, tableData: [], filesByField: {} });
-        if (onSaveSuccess) onSaveSuccess();
-      } catch (error) {
-        console.error("Delete failed:", error);
-        toast.error("Failed to delete data");
-      }
+    if (!mentoringSystemId) {
+      setAlert(
+        <SweetAlert
+          info
+          title="Nothing to Delete"
+          confirmBtnCssClass="btn-confirm"
+          confirmBtnText="OK"
+          onConfirm={() => setAlert(null)}
+        >
+          No data available to delete
+        </SweetAlert>
+      );
+      return;
     }
+
+    setAlert(
+      <SweetAlert
+        warning
+        showCancel
+        confirmBtnText="Yes, delete it!"
+        cancelBtnText="Cancel"
+        confirmBtnCssClass="btn-confirm"
+        cancelBtnCssClass="btn-cancel"
+        title="Are you sure?"
+        onConfirm={async () => {
+          setAlert(null);
+
+          try {
+            await newnbaCriteria9Service.deleteCriteria9_2Data(mentoringSystemId);
+            
+            setAlert(
+              <SweetAlert
+                success
+                title="Deleted!"
+                confirmBtnCssClass="btn-confirm"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                Criterion 9.2 deleted successfully!
+              </SweetAlert>
+            );
+            
+            setMentoringSystemId(null);
+            setInitialData({ content: {}, tableData: { income_table: [], budget_expenditure_table: [] }, filesByField: {} });
+            if (onSaveSuccess) onSaveSuccess();
+          } catch (error) {
+            console.error("Delete failed:", error);
+            
+            setAlert(
+              <SweetAlert
+                danger
+                title="Delete Failed"
+                confirmBtnCssClass="btn-confirm"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                Error deleting the record
+              </SweetAlert>
+            );
+          }
+        }}
+        onCancel={() => setAlert(null)}
+      >
+        You won't be able to revert this!
+      </SweetAlert>
+    );
   };
   
   return (
@@ -291,7 +348,7 @@ const Criterion9_2Form = ({
         config={config}
         initialData={initialData}
         onSave={handleSave}
-        onDelete={mentoringSystemId ? handleDelete : null}
+        onDelete={handleDelete}
         loading={loading}
         saving={saving}
         isEditable={isContributorEditable && !completed}
