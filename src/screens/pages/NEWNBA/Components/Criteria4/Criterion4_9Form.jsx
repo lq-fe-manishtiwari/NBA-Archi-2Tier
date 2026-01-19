@@ -94,7 +94,7 @@ const Criterion4_9Form = ({
       {
         name: "4.9.3",
         label:
-          "4.9.3 Participation in Inter-Institute Events by Students (10)",
+          "4.9.3 Participation in Inter-Institute Events by Students of the Program of Study (10)",
         marks: 10,
         description:
           "Describe participation and achievements in inter-institute events",
@@ -175,26 +175,48 @@ const Criterion4_9Form = ({
         "4.9.3": [],
       };
 
-      (data.supporting_documents || []).forEach((doc) => {
-        const category = doc.category || "4.9.1";
-        if (filesByField[category]) {
-          filesByField[category].push({
-            id: `file-${category}-${doc.id || Math.random()}`,
-            filename: doc.file_name || "",
-            s3Url: doc.file_url || "",
-            url: doc.file_url || "",
-            description: doc.description || "",
-            uploading: false,
+      const mapDocs = (docs, field) => {
+        if (Array.isArray(docs)) {
+          docs.forEach((doc, idx) => {
+            filesByField[field].push({
+              id: doc.id || `file-${field}-${idx}-${Date.now()}`,
+              filename: doc.file_name || doc.name || "",
+              s3Url: doc.file_url || doc.url || "",
+              url: doc.file_url || doc.url || "",
+              description: doc.description || "",
+              uploading: false,
+            });
           });
         }
-      });
+      };
+
+      mapDocs(data.societies_document, "4.9.1");
+      mapDocs(data.magazines_document, "4.9.2");
+      mapDocs(data.events_document, "4.9.3");
+
+      // Fallback for supporting_documents if specific arrays are missing
+      if (!data.societies_document && !data.magazines_document && !data.events_document && data.supporting_documents) {
+        (data.supporting_documents || []).forEach((doc) => {
+          const category = doc.category || "4.9.1";
+          if (filesByField[category]) {
+            filesByField[category].push({
+              id: `file-${category}-${doc.id || Math.random()}`,
+              filename: doc.file_name || "",
+              s3Url: doc.file_url || "",
+              url: doc.file_url || "",
+              description: doc.description || "",
+              uploading: false,
+            });
+          }
+        });
+      }
 
       setInitialData(
         ensureFileSlots({
           content: {
-            "4.9.1": data.professional_societies_description || "",
-            "4.9.2": data.publications_description || "",
-            "4.9.3": data.participation_description || "",
+            "4.9.1": data.societies_description || data.professional_societies_description || "",
+            "4.9.2": data.magazines_description || data.publications_description || "",
+            "4.9.3": data.events_description || data.participation_description || "",
           },
           tableData: {},
           filesByField,
@@ -224,33 +246,36 @@ const Criterion4_9Form = ({
     setSaving(true);
 
     try {
+      const prepareDocs = (field) => {
+        return (formData.filesByField[field] || [])
+          .filter((f) => f.s3Url)
+          .map((f) => ({
+            file_name: f.filename,
+            file_url: f.s3Url,
+            description: f.description || "",
+          }));
+      };
+
       const payload = {
-        cycle_sub_category_id,
         other_staff_id: currentOtherStaffId,
-        professional_societies_description: formData.content["4.9.1"] || "",
-        publications_description: formData.content["4.9.2"] || "",
-        participation_description: formData.content["4.9.3"] || "",
-        supporting_documents: Object.keys(formData.filesByField || {}).flatMap(
-          (field) =>
-            (formData.filesByField[field] || [])
-              .filter((f) => f.s3Url)
-              .map((f) => ({
-                file_name: f.filename,
-                file_url: f.s3Url,
-                description: f.description || "",
-                category: field,
-              }))
-        ),
+        cycle_sub_category_id,
+        societies_description: formData.content["4.9.1"] || "",
+        societies_document: prepareDocs("4.9.1"),
+        magazines_description: formData.content["4.9.2"] || "",
+        magazines_document: prepareDocs("4.9.2"),
+        events_description: formData.content["4.9.3"] || "",
+        events_document: prepareDocs("4.9.3"),
       };
 
       if (recordId) {
-        await newnbaCriteria4Service.updateCriteria4_9_Data(
+        await newnbaCriteria4Service.putCriteria4_9_Data(
           recordId,
-          payload
+          payload,
+          currentOtherStaffId
         );
       } else {
         const res =
-          await newnbaCriteria4Service.saveCriteria4_9_Data(payload);
+          await newnbaCriteria4Service.saveCriteria4_9_Data(payload, currentOtherStaffId);
         setRecordId(res?.professional_activities_id || res?.id || null);
       }
 

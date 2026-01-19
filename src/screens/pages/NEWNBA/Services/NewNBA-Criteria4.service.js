@@ -107,6 +107,15 @@ export const newnbaCriteria4Service = {
   getallCardDetails4_8,
   deleteCriteria4_8_Data,
   putCriteria4_8_Data,
+
+  // 4.9
+  saveCriteria4_9_Data,
+  getCriteria4_9_Data,
+  deleteCriteria4_9_Data,
+  putCriteria4_9_Data,
+  getAllCriteria4_9_Data,
+  updateCardStatus4_9,
+  getallCardDetails4_9,
 };
 
 /// 4A //////////
@@ -140,6 +149,75 @@ function saveCriteria4_A_Data(values,currentUserStaffId) {
   const url = `/admin/nba/4a/new-admission-details?currentUserStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'POST',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+//// 4.9 //////////
+
+function getAllCriteria4_9_Data(cycleSubCategoryId) {
+  const url = `/admin/nba/4.9/new-professional-activities/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function updateCardStatus4_9(statusPayload, approverStaffId) {
+  const payload = {
+    id: statusPayload.id,
+    approval_status: statusPayload.approval_status,
+    rejection_reason: statusPayload.rejection_reason || null,
+    approved_by: statusPayload.approved_by,
+    approved_by_name: statusPayload.approved_by_name,
+  };
+
+  const url = `/admin/nba/4.9/new-professional-activities/approval-status?approverStaffId=${approverStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(payload),
+  }).then(handleResponse);
+}
+
+function saveCriteria4_9_Data(values, currentUserStaffId) {
+  const url = `/admin/nba/4.9/new-professional-activities?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'POST',
+    headers: authHeaderToPost(),
+    body: JSON.stringify(values),
+  }).then(handleResponse);
+}
+
+function getCriteria4_9_Data(cycleSubCategoryId, otherStaffId) {
+  const url = `/admin/nba/4.9/new-professional-activities/cycle-subcategory/${cycleSubCategoryId}/staff/${otherStaffId}`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function getallCardDetails4_9(cycleSubCategoryId) {
+  const url = `/admin/nba/4.9/new-professional-activities/cycle-subcategory/${cycleSubCategoryId}/contributors`;
+  return apiNBARequest(url, {
+    method: 'GET',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function deleteCriteria4_9_Data(id) {
+  const url = `/admin/nba/4.9/new-professional-activities/${id}`;
+  return apiNBARequest(url, {
+    method: 'DELETE',
+    headers: authHeader(),
+  }).then(handleResponse);
+}
+
+function putCriteria4_9_Data(id, values, currentUserStaffId) {
+  const url = `/admin/nba/4.9/new-professional-activities/${id}?currentUserStaffId=${currentUserStaffId}`;
+  return apiNBARequest(url, {
+    method: 'PUT',
     headers: authHeaderToPost(),
     body: JSON.stringify(values),
   }).then(handleResponse);
