@@ -1035,7 +1035,7 @@ const NBACriteria8Optimized = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-[#2163c1]">
-                  Criterion 8: Continuous Improvement
+                  Criterion 8: Student support Systems
                 </h1>
                 <nav className="flex items-center gap-2 text-sm text-gray-600 mt-3">
 

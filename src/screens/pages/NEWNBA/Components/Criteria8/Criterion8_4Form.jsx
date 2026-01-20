@@ -51,12 +51,12 @@ const Criterion8_4Form = ({
   };
 
   const sectionConfig = {
-    title: "8.4. Mentoring System to Help at Individual Levels",
+    title: "8.4. Self Learning",
     totalMarks: 5,
     fields: [
       {
         name: "8.4.1",
-        label: "8.4.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.4.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,

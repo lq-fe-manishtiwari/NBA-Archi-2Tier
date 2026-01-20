@@ -51,12 +51,12 @@ const Criterion8_7Form = ({
   };
 
   const sectionConfig = {
-    title: "8.7. Mentoring System to Help at Individual Levels",
+    title: "8.7. Co-curricular and Extra-curricular Activities",
     totalMarks: 5,
     fields: [
       {
         name: "8.7.1",
-        label: "8.7.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.7.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,

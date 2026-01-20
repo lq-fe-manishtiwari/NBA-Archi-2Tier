@@ -51,12 +51,12 @@ const Criterion8_5Form = ({
   };
 
   const sectionConfig = {
-    title: "8.5. Mentoring System to Help at Individual Levels",
+    title: "8.5. Career Guidance , Training , Placement",
     totalMarks: 5,
     fields: [
       {
         name: "8.5.1",
-        label: "8.5.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.5.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,

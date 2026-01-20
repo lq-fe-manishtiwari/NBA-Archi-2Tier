@@ -51,12 +51,12 @@ const Criterion8_6Form = ({
   };
 
   const sectionConfig = {
-    title: "8.6. Mentoring System to Help at Individual Levels",
+    title: "8.6. Entrepreneurship Cell",
     totalMarks: 5,
     fields: [
       {
         name: "8.6.1",
-        label: "8.6.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
+        // label: "8.6.1 Actions Taken Based on the Results of Evaluation of the COs Attainment",
         marks: 20,
         type: "textarea",
         rows: 8,
