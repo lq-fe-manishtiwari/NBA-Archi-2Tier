@@ -418,7 +418,7 @@ const Criterion5_1Form = ({
 
   const confirmDelete = async () => {
     try {
-      await newnbaCriteria5Service.deleteCriteria5_1Data(recordId);
+      await newnbaCriteria5Service.deleteCriteria5_1_Data(recordId);
   
       toast.success("✅ Section data deleted successfully!");
   
