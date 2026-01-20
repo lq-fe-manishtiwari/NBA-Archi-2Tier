@@ -130,12 +130,12 @@ function getAllCriteria4_A_Data(cycleSubCategoryId) {
 
 function updateCardStatus4_A(statusPayload, currentUserStaffId) {
   const payload = {
-    teaching_learning_quality_id: statusPayload.teaching_learning_quality_id || statusPayload.id,
+    id: statusPayload.teaching_learning_quality_id || statusPayload.id,
     approval_status: statusPayload.approval_status,
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4a/new-admission-details/approval-status?approvalId=${currentUserStaffId}`;
+  const url = `/admin/nba/4a/new-admission-details/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -276,12 +276,12 @@ function getAllCriteria4_B_Data(cycleSubCategoryId) {
 
 function updateCardStatus4_B(statusPayload, currentUserStaffId) {
   const payload = {
-    teaching_learning_quality_id: statusPayload.teaching_learning_quality_id || statusPayload.id,
+    id: statusPayload.id || statusPayload.id,
     approval_status: statusPayload.approval_status,
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4b/new-students-graduated/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4b/new-students-graduated/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -353,12 +353,12 @@ function getAllCriteria4_C_Data(cycleSubCategoryId) {
 
 function updateCardStatus4_C(statusPayload, currentUserStaffId) {
   const payload = {
-    teaching_learning_quality_id: statusPayload.teaching_learning_quality_id || statusPayload.id,
+    id: statusPayload.teaching_learning_quality_id || statusPayload.id,
     approval_status: statusPayload.approval_status,
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4c/new-students-graduated-stipulated/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4c/new-students-graduated-stipulated/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -431,7 +431,7 @@ function updateCardStatus4_1(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.1/new-enrollment-ratio/approval-status?approverId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.1/new-enrollment-ratio/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -507,7 +507,7 @@ function updateCardStatus4_2(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.2/new-success-rate/approval-status?approverId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.2/new-success-rate/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -580,7 +580,7 @@ function updateCardStatus4_3(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.3/new-academic-performance-final-year/approval-status?approverId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.3/new-academic-performance-final-year/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -734,7 +734,7 @@ function updateCardStatus4_5(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.5/new-academic-performance-third-year/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.5/new-academic-performance-third-year/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -811,7 +811,7 @@ function updateCardStatus4_6(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.6/new-academic-performance-second-year/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.6/new-academic-performance-second-year/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),
@@ -888,7 +888,7 @@ function updateCardStatus4_7(statusPayload, currentUserStaffId) {
     rejection_reason: statusPayload.rejection_reason || null
   };
   
-  const url = `/admin/nba/4.7/new-academic-performance-first-year/approval-status?currentUserStaffId=${currentUserStaffId}`;
+  const url = `/admin/nba/4.7/new-academic-performance-first-year/approval-status?approverStaffId=${currentUserStaffId}`;
   return apiNBARequest(url, {
     method: 'PUT',
     headers: authHeaderToPost(),

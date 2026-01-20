@@ -447,7 +447,7 @@ const NBACriteria4Optimized = () => {
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
 
           // Check for ID (generic or specific)
-          const recordId = coordinatorRecord?.teaching_learning_quality_id || coordinatorRecord?.id || coordinatorRecord?.professional_activities_id;
+          const recordId = coordinatorRecord?.id || coordinatorRecord?.id || coordinatorRecord?.id;
 
           if (coordinatorRecord && recordId) {
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
@@ -967,18 +967,18 @@ const NBACriteria4Optimized = () => {
                                           userField: "other_staff_id",
                                           nameFields: ["firstname", "lastname"],
                                           idField:
-                                            actualSectionCode === '4.1' ? "enrolment_ratio_id" :
-                                              actualSectionCode === '4.2' ? "cri42_success_rate_id" :
-                                                actualSectionCode === '4.3' ? "cri43_academic_performance_id" :
-                                                  actualSectionCode === '4.4' ? "cri44_second_year_students_id" :
-                                                    actualSectionCode === '4.5' ? "cri45_third_year_students_id" :
-                                                      actualSectionCode === '4.6' ? "cri46_higher_studies_id" :
-                                                        actualSectionCode === '4.7' ? "cri47_professional_activities_id" :
+                                            actualSectionCode === '4.1' ? "id" :
+                                              actualSectionCode === '4.2' ? "id" :
+                                                actualSectionCode === '4.3' ? "id" :
+                                                  actualSectionCode === '4.4' ? "id" :
+                                                    actualSectionCode === '4.5' ? "id" :
+                                                      actualSectionCode === '4.6' ? "id" :
+                                                        actualSectionCode === '4.7' ? "id" :
                                                         actualSectionCode === '4.8' ? "id" :
                                                         actualSectionCode === '4.9' ? "id" :
-                                                          actualSectionCode === '4A' ? "students_performance_id" :
-                                                            actualSectionCode === '4B' ? "bstudents_performance_id" :
-                                                              actualSectionCode === '4C' ? "cstudents_performance_id" :
+                                                          actualSectionCode === '4A' ? "id" :
+                                                            actualSectionCode === '4B' ? "id" :
+                                                              actualSectionCode === '4C' ? "id" :
                                                                 null,
                                           isCoordinatorField: "is_coordinator_entry"
                                         }}
@@ -1027,18 +1027,18 @@ const NBACriteria4Optimized = () => {
                                           userField: "other_staff_id",
                                           nameFields: ["firstname", "lastname"],
                                           idField:
-                                            actualSectionCode === '4.1' ? "enrolment_ratio_id" :
-                                              actualSectionCode === '4.2' ? "cri42_success_rate_id" :
-                                                actualSectionCode === '4.3' ? "cri43_academic_performance_id" :
-                                                  actualSectionCode === '4.4' ? "cri44_second_year_students_id" :
-                                                    actualSectionCode === '4.5' ? "cri45_third_year_students_id" :
-                                                      actualSectionCode === '4.6' ? "cri46_higher_studies_id" :
-                                                        actualSectionCode === '4.7' ? "cri47_professional_activities_id" :
+                                            actualSectionCode === '4.1' ? "id" :
+                                              actualSectionCode === '4.2' ? "id" :
+                                                actualSectionCode === '4.3' ? "id" :
+                                                  actualSectionCode === '4.4' ? "id" :
+                                                    actualSectionCode === '4.5' ? "id" :
+                                                      actualSectionCode === '4.6' ? "id" :
+                                                        actualSectionCode === '4.7' ? "id" :
                                                         actualSectionCode === '4.8' ? "id" :
                                                         actualSectionCode === '4.9' ? "id" :
-                                                          actualSectionCode === '4A' ? "students_performance_id" :
-                                                            actualSectionCode === '4B' ? "bstudents_performance_id" :
-                                                              actualSectionCode === '4C' ? "cstudents_performance_id" :
+                                                          actualSectionCode === '4A' ? "id" :
+                                                            actualSectionCode === '4B' ? "id" :
+                                                              actualSectionCode === '4C' ? "id" :
                                                                 null,
                                           isCoordinatorField: "is_coordinator_entry"
                                         }}
