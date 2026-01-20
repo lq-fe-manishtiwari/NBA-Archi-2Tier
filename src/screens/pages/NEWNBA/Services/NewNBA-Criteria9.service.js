@@ -280,7 +280,7 @@ import {
   // Get API endpoint based on section
   const getApiEndpoint = (section) => {
     const sectionMap = {
-      '9.2': 'mentoring-system',
+      '9.2': 'institute-budget',
       '9.4': 'training-and-placement',
       '9.5': 'startup-entrepreneurship',
       '9.6': 'governance-transparency',

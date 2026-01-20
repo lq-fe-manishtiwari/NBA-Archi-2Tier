@@ -54,7 +54,7 @@ const NBACriteria7Optimized = () => {
       '7.3': 10,
       '7.4': 10,
       '7.5': 10,
-      '7.6':10,v
+      '7.6': 10,
     };
     return marks[sectionCode] || 0;
   };

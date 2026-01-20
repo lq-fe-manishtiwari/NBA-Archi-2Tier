@@ -57,8 +57,8 @@ const Criterion9_2Form = ({
       
       const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const userInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const staffIdToUse = otherStaffId || nba_contributor_allocation_id || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
-      
+      const staffIdToUse = otherStaffId || userInfo?.rawData?.other_staff_id || userInfo.user_id || userInfo2?.other_staff_id;
+      console.log("staffIdToUse",staffIdToUse)
       if (!staffIdToUse) {
         setInitialData({ 
           tableData: {
@@ -78,6 +78,7 @@ const Criterion9_2Form = ({
         nba_criteria_sub_level2_id,
         staffIdToUse
       );
+      console.log(response);
 
       let dataItem = null;
       if (Array.isArray(response)) {
@@ -87,6 +88,7 @@ const Criterion9_2Form = ({
       } else {
         dataItem = response;
       }
+      console.log(dataItem,"dataItem")
 
       if (dataItem && dataItem.id) {
         if (dataItem.other_staff_name) {
@@ -95,6 +97,7 @@ const Criterion9_2Form = ({
           const name = `${dataItem.firstname || ''} ${dataItem.middlename || ''} ${dataItem.lastname || ''}`.trim();
           setContributorName(name);
         }
+        console.log(dataItem.id);
 
         setMentoringSystemId(dataItem.id);
 

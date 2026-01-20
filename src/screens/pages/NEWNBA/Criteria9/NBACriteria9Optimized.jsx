@@ -113,8 +113,8 @@ const NBACriteria9Optimized = () => {
       };
     } else if (sectionCode) {
       return {
-        updateCardStatus: (statusPayload, approverId) => newnbaCriteria9Service.updateCardStatus9(sectionCode, statusPayload, approverId),
-        getCardData: (cycleSubCategoryId) => newnbaCriteria9Service.getAllCardDetails9(sectionCode, cycleSubCategoryId)
+        updateCardStatus: (statusPayload, approverId) => newnbaCriteria9Service.updateCriteria9_2Status(statusPayload, approverId),
+        getCardData: (cycleSubCategoryId) => newnbaCriteria9Service.getAllCriteria9_2_Data(cycleSubCategoryId)
       };
     }
 

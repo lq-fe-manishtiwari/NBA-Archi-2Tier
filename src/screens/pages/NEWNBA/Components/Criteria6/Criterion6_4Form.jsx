@@ -111,46 +111,7 @@ const Criterion6_4Form = ({
 
       setInitialData({
         content: {
-          museum_info: d.material_museum_description || d.museum_info || `
-            <p><strong>Material Museum Overview:</strong></p>
-            <p>The Department of Architecture maintains a comprehensive Material Museum that serves as an essential educational resource for students and faculty. The museum houses diverse collections that support the curriculum and provide hands-on learning experiences.</p>
-            
-            <p><strong>Type and Quality of Collection:</strong></p>
-            <ul>
-              <li><strong>Geological Samples:</strong> Collection of rocks, minerals, and soil samples representing different geological formations.</li>
-              <li><strong>Building Material Samples:</strong> Comprehensive range of construction materials including bricks, tiles, concrete blocks, wood types, steel sections, and finishing materials.</li>
-              <li><strong>Historical Architectural Models:</strong> Scale models of historical and contemporary buildings showing construction techniques.</li>
-              <li><strong>Construction Details:</strong> Physical samples of joinery, connections, and building assembly details.</li>
-              <li><strong>Sustainable Materials:</strong> Environmentally friendly building materials and innovative construction products.</li>
-              <li><strong>Material Testing Specimens:</strong> Samples showing material behavior under different conditions.</li>
-            </ul>
-            
-            <p><strong>Labeling Standards:</strong></p>
-            <p>The museum maintains high labeling standards with each specimen clearly labeled with:</p>
-            <ul>
-              <li>Scientific/technical name of the material</li>
-              <li>Common name and alternative names</li>
-              <li>Material properties and specifications</li>
-              <li>Source/location of collection</li>
-              <li>Date of acquisition</li>
-              <li>Catalog number for reference</li>
-              <li>QR codes linking to digital database</li>
-            </ul>
-            
-            <p><strong>Display Standards:</strong></p>
-            <p>The museum follows international display standards:</p>
-            <ul>
-              <li>Proper lighting to show material texture and color accurately</li>
-              <li>Climate control to preserve material integrity</li>
-              <li>Logical organization by material type and application</li>
-              <li>Interactive displays with digital information screens</li>
-              <li>Safety measures to protect valuable specimens</li>
-              <li>Accessibility features for all users</li>
-              <li>Regular maintenance and cleaning schedule</li>
-            </ul>
-            
-            <p>The museum is regularly updated with new acquisitions and serves as an important resource for design studios, material science courses, and research projects.</p>
-          `,
+          museum_info: d.material_museum_description || d.museum_info || ``,
         },
         material_museum_id: d.id || null,
         filesByField: {

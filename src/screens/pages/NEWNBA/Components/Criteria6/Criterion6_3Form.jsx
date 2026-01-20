@@ -232,7 +232,8 @@ const Criterion6_3Form = ({
       }
 
       setAlert(
-        <SweetAlert success title="Saved!" onConfirm={() => setAlert(null)}>
+        <SweetAlert success title="Saved!"     confirmBtnCssClass="btn-confirm"
+        cancelBtnCssClass="btn-cancel" onConfirm={() => setAlert(null)}>
           Criterion 6.3 saved successfully!
         </SweetAlert>
       );
@@ -259,6 +260,8 @@ const Criterion6_3Form = ({
         warning
         showCancel
         confirmBtnText="Yes, delete it!"
+            confirmBtnCssClass="btn-confirm"
+        cancelBtnCssClass="btn-cancel"
         onConfirm={async () => {
           setAlert(null);
           await newnbaCriteria6Service.deleteCriteria6_3_Data(labsId);
