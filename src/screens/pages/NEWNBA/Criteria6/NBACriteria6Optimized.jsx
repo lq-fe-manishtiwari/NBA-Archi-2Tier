@@ -51,6 +51,10 @@ const NBACriteria6Optimized = () => {
     const marks = {
       '6.1': 60,
       '6.2': 60,
+       '6.3': 60,
+      '6.4': 60,
+      '6.5':60,
+
     };
     return marks[sectionCode] || 0;
   };
@@ -70,28 +74,102 @@ const NBACriteria6Optimized = () => {
   const [selectedCard, setSelectedCard] = useState(null);
 
   // Dynamic card configuration based on section type
-  const getCardConfig = (sectionName) => {
-    const isSection62 = sectionName && sectionName.includes("6.2");
+const getCardConfig = (sectionName) => {
+  if (!isCardBasedSection(sectionName)) return null;
 
-    return {
-      title: isSection62 ? "Research & Development Entry" : "Professional Development Entry",
-      statusField: "approval_status",
-      userField: "other_staff_id",
-      nameFields: ["firstname", "lastname"],
-      idField: isSection62 ? "id" : "id",
-      isCoordinatorField: "is_coordinator_entry"
-    };
+  const match = sectionName.match(/^6\.(\d+)/);
+  const sub = match ? parseInt(match[1], 10) : 0;
+
+  const base = {
+    statusField: "approval_status",
+    userField: "other_staff_id",
+    nameFields: ["firstname", "lastname"],
+    isCoordinatorField: "is_coordinator_entry"
   };
+
+  switch (sub) {
+    case 1:
+      return {
+        ...base,
+        title: "Professional Development Entry",
+        idField: "id",                    // adjust to your actual PK
+      };
+    case 2:
+      return {
+        ...base,
+        title: "Research & Development Entry",
+        idField: "id",
+      };
+    case 3:
+      return {
+        ...base,
+        title: "FDPs / STTPs / Memberships Entry",
+        idField: "id",                    // ← change if different table
+      };
+    case 4:
+      return {
+        ...base,
+        title: "Publications / Consultancy / IPR Entry",
+        idField: "id",
+      };
+    case 5:
+      return {
+        ...base,
+        title: "Awards / Appraisal / Incentives Entry",
+        idField: "id",
+      };
+    default:
+      return null;
+  }
+};
+  // Near the top – replace your current isSection62 style checks
+const isCardBasedSection = (sectionName) => {
+  if (!sectionName) return false;
+  const match = sectionName.match(/^6\.(\d+)/);
+  if (!match) return false;
+  const sub = parseInt(match[1], 10);
+  return [1, 2, 3, 4, 5].includes(sub);   // ← now includes 6.3, 6.4, 6.5
+};
 
   // Dynamic API service based on section type
-  const getApiService = (sectionName) => {
-    const isSection62 = sectionName && sectionName.includes("6.2");
+const getApiService = (sectionName) => {
+  if (!isCardBasedSection(sectionName)) {
+    return { updateCardStatus: null, getCardData: null };
+  }
 
-    return {
-      updateCardStatus: isSection62 ? newnbaCriteria6Service.updateCardStatus6_2 : newnbaCriteria6Service.updateCardStatus6_1,
-      getCardData: isSection62 ? newnbaCriteria6Service.getallCardDetails6_2 : newnbaCriteria6Service.getallCardDetails6_1
-    };
-  };
+  const match = sectionName.match(/^6\.(\d+)/);
+  const sub = match ? parseInt(match[1], 10) : 0;
+
+  switch (sub) {
+    case 1:
+      return {
+        updateCardStatus: newnbaCriteria6Service.updateCardStatus6_1,
+        getCardData: newnbaCriteria6Service.getallCardDetails6_1
+      };
+    case 2:
+      return {
+        updateCardStatus: newnbaCriteria6Service.updateCardStatus6_2,
+        getCardData: newnbaCriteria6Service.getallCardDetails6_2
+      };
+    case 3:
+      return {
+        updateCardStatus: newnbaCriteria6Service.updateCardStatus6_3  || null,  // ← create these!
+        getCardData: newnbaCriteria6Service.getallCardDetails6_3     || null
+      };
+    case 4:
+      return {
+        updateCardStatus: newnbaCriteria6Service.updateCardStatus6_4  || null,
+        getCardData: newnbaCriteria6Service.getallCardDetails6_4     || null
+      };
+    case 5:
+      return {
+        updateCardStatus: newnbaCriteria6Service.updateCardStatus6_5  || null,
+        getCardData: newnbaCriteria6Service.getallCardDetails6_5     || null
+      };
+    default:
+      return { updateCardStatus: null, getCardData: null };
+  }
+};
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -386,7 +464,7 @@ const NBACriteria6Optimized = () => {
       const indicator = keyIndicators.find(ind => ind.subLevel2Id === id);
       console.log("🔍 DEBUG: Found indicator:", indicator);
 
-      if (indicator && indicator.rawName && (indicator.rawName.includes("6.1") || indicator.rawName.includes("6.2"))) {
+      if (indicator && indicator.rawName && (indicator.rawName.includes("6.1") || indicator.rawName.includes("6.2")  || indicator.rawName.includes("6.3") || indicator.rawName.includes("6.4") || indicator.rawName.includes("6.5"))) {
         console.log("✅ DEBUG: This is a 6.1 or 6.2 section, fetching card details...");
         await fetchCardDetails(id, indicator.rawName);
       } else {
@@ -396,95 +474,170 @@ const NBACriteria6Optimized = () => {
   };
 
   // Fetch card details for coordinator view
-  const fetchCardDetails = async (cycleSubCategoryId, sectionName = "6.1") => {
-    console.log("🔍 CRITERIA 6 DEBUG: fetchCardDetails called with cycleSubCategoryId:", cycleSubCategoryId, "sectionName:", sectionName);
+const fetchCardDetails = async (cycleSubCategoryId, sectionName = "6.1") => {
+  console.log("🔍 CRITERIA 6 DEBUG: fetchCardDetails called with", {
+    cycleSubCategoryId,
+    sectionName,
+  });
 
-    try {
-      // Determine which service to use based on section
-      const isSection62 = sectionName && sectionName.includes("6.2");
-      const cardService = isSection62 ? newnbaCriteria6Service.getallCardDetails6_2 : newnbaCriteria6Service.getallCardDetails6_1;
-      const dataService = isSection62 ? newnbaCriteria6Service.getCriteria6_2_Data : newnbaCriteria6Service.getCriteria6_1_Data;
-      const idField = isSection62 ? "id" : "id";
+  try {
+    // ───────────────────────────────────────────────
+    // 1. Determine if this section uses card workflow
+    // ───────────────────────────────────────────────
+    const getSubSectionNumber = (name) => {
+      if (!name) return null;
+      const match = name.match(/^6\.(\d+)/i);
+      return match ? parseInt(match[1], 10) : null;
+    };
 
-      // Fetch contributor cards
-      console.log("📡 CRITERIA 6 DEBUG: Fetching contributor cards...");
-      const cardDetails = await cardService(cycleSubCategoryId);
+    const subSectionNum = getSubSectionNumber(sectionName);
 
-      // Log each card's structure
-      if (cardDetails && cardDetails.length > 0) {
-        cardDetails.forEach((card, index) => {
-        });
-      }
+    const supportedCardSections = [1, 2, 3, 4, 5];
 
-      // Also try to fetch coordinator's own data
-      const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const currentUserInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
-
-      // Try multiple sources for current staff ID
-      const currentStaffId = currentUserInfo?.rawData?.other_staff_id ||
-        currentUserInfo.user_id ||
-        currentUserInfo2?.other_staff_id ||
-        currentUserInfo2?.user_id;
-
-      console.log("🆔 DEBUG: Resolved currentStaffId:", currentStaffId);
-
-      let allCards = [...cardDetails];
-
-      // Try to fetch coordinator's own data if they have any
-      if (currentStaffId) {
-        try {
-          console.log("📡 DEBUG: Fetching coordinator's own data...");
-          const coordinatorData = await dataService(cycleSubCategoryId, currentStaffId);
-          console.log("📊 DEBUG: Coordinator data received:", coordinatorData);
-
-          // Handle coordinator data - it might be an array or object
-          const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
-          console.log("📊 DEBUG: Coordinator record extracted:", coordinatorRecord);
-
-          // If coordinator has data, add it to the cards array
-          if (coordinatorRecord && coordinatorRecord[idField]) {
-            // Check if this coordinator data is not already in the contributor cards
-            const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
-            console.log("🔍 DEBUG: Existing card check:", existingCard);
-
-            if (!existingCard) {
-              // Add coordinator's data as a card with special marking
-              const coordinatorCard = {
-                ...coordinatorRecord,
-                is_coordinator_entry: true,
-                approval_status: 'COORDINATORS_DATA', // Coordinator's own entries are auto-approved
-                firstname: coordinatorRecord.firstname || currentUserInfo?.rawData?.firstname || currentUserInfo2?.firstname || 'Coordinator',
-                lastname: coordinatorRecord.lastname || currentUserInfo?.rawData?.lastname || currentUserInfo2?.lastname || '',
-                other_staff_id: currentStaffId
-              };
-              console.log("➕ DEBUG: Adding coordinator card:", coordinatorCard);
-              allCards.unshift(coordinatorCard); // Add at the beginning
-            } else {
-              console.log("⚠️ DEBUG: Coordinator already exists in contributor cards");
-            }
-          } else {
-            console.log("⚠️ DEBUG: No coordinator data or missing professional_development_id");
-          }
-        } catch (coordinatorError) {
-          // Coordinator doesn't have data yet, that's fine
-          console.log("⚠️ DEBUG: Coordinator hasn't filled data yet:", coordinatorError);
-        }
-      }
-
-      console.log("📋 DEBUG: Final allCards array:", allCards);
-
-      setCardData(prev => ({
-        ...prev,
-        [cycleSubCategoryId]: allCards
-      }));
-      return allCards;
-    } catch (error) {
-      console.error("❌ DEBUG: Failed to fetch card details:", error);
-      toast.error("Failed to load cards");
+    if (!subSectionNum || !supportedCardSections.includes(subSectionNum)) {
+      console.warn(`Section ${sectionName} is not configured for card-based workflow`);
       return [];
     }
-  };
 
+    // ───────────────────────────────────────────────
+    // 2. Select correct service methods based on sub-section
+    // ───────────────────────────────────────────────
+    let cardService;       // get all cards / list view
+    let dataService;       // get single entry data (for coordinator's own entry)
+    let idField = "id";    // default – override only if different
+
+    switch (subSectionNum) {
+      case 1:
+        cardService = newnbaCriteria6Service.getallCardDetails6_1;
+        dataService = newnbaCriteria6Service.getCriteria6_1_Data;
+        break;
+
+      case 2:
+        cardService = newnbaCriteria6Service.getallCardDetails6_2;
+        dataService = newnbaCriteria6Service.getCriteria6_2_Data;
+        break;
+
+      case 3:
+        cardService = newnbaCriteria6Service.getallCardDetails6_3   || null;
+        dataService = newnbaCriteria6Service.getCriteria6_3_Data    || null;
+        break;
+
+      case 4:
+        cardService = newnbaCriteria6Service.getallCardDetails6_4   || null;
+        dataService = newnbaCriteria6Service.getCriteria6_4_Data    || null;
+        break;
+
+      case 5:
+        cardService = newnbaCriteria6Service.getallCardDetails6_5   || null;
+        dataService = newnbaCriteria6Service.getCriteria6_5_Data    || null;
+        break;
+
+      default:
+        console.warn(`No service mapping for section 6.${subSectionNum}`);
+        return [];
+    }
+
+    // Safety check – services must exist
+    if (!cardService) {
+      console.error(`Missing card list service for section 6.${subSectionNum}`);
+      toast.error(`Card view not available for this section yet`);
+      return [];
+    }
+
+    // ───────────────────────────────────────────────
+    // 3. Fetch all contributor cards / entries
+    // ───────────────────────────────────────────────
+    console.log(`📡 Fetching contributor cards for 6.${subSectionNum}...`);
+    const cardDetails = await cardService(cycleSubCategoryId);
+
+    // Optional: log structure of first few items (for debugging)
+    if (cardDetails?.length > 0) {
+      console.log(`Received ${cardDetails.length} cards. First item keys:`, 
+        Object.keys(cardDetails[0]).slice(0, 8));
+    } else {
+      console.log("No contributor cards found");
+    }
+
+    let allCards = Array.isArray(cardDetails) ? [...cardDetails] : [];
+
+    // ───────────────────────────────────────────────
+    // 4. Try to add coordinator's own entry (if any)
+    // ───────────────────────────────────────────────
+    const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const currentUserInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
+
+    const currentStaffId =
+      currentUserInfo?.rawData?.other_staff_id ||
+      currentUserInfo.user_id ||
+      currentUserInfo2?.other_staff_id ||
+      currentUserInfo2?.user_id ||
+      null;
+
+    console.log("🆔 Resolved current staff ID:", currentStaffId);
+
+    if (currentStaffId && dataService) {
+      try {
+        console.log("📡 Fetching coordinator's own entry...");
+        const coordinatorData = await dataService(cycleSubCategoryId, currentStaffId);
+
+        const coordinatorRecord = Array.isArray(coordinatorData)
+          ? coordinatorData[0]
+          : coordinatorData;
+
+        if (coordinatorRecord && coordinatorRecord[idField]) {
+          // Avoid duplication
+          const alreadyExists = allCards.some(
+            (card) => String(card.other_staff_id) === String(currentStaffId)
+          );
+
+          if (!alreadyExists) {
+            const coordinatorCard = {
+              ...coordinatorRecord,
+              is_coordinator_entry: true,
+              approval_status: "COORDINATORS_DATA", // auto-approved
+              firstname:
+                coordinatorRecord.firstname ||
+                currentUserInfo?.rawData?.firstname ||
+                currentUserInfo2?.firstname ||
+                "Coordinator",
+              lastname:
+                coordinatorRecord.lastname ||
+                currentUserInfo?.rawData?.lastname ||
+                currentUserInfo2?.lastname ||
+                "",
+              other_staff_id: currentStaffId,
+            };
+
+            console.log("➕ Adding coordinator's own card:", coordinatorCard);
+            allCards.unshift(coordinatorCard); // put at beginning
+          } else {
+            console.log("Coordinator entry already present in list");
+          }
+        } else {
+          console.log("No coordinator data found or missing key field");
+        }
+      } catch (coordinatorErr) {
+        console.log("Coordinator has no entry yet (normal):", coordinatorErr.message);
+      }
+    }
+
+    // ───────────────────────────────────────────────
+    // 5. Finalize & store
+    // ───────────────────────────────────────────────
+    console.log(`📋 Final cards for section 6.${subSectionNum}: ${allCards.length} entries`);
+
+    setCardData((prev) => ({
+      ...prev,
+      [cycleSubCategoryId]: allCards,
+    }));
+
+    return allCards;
+  } catch (error) {
+    console.error("❌ Failed to fetch card details:", error);
+    toast.error("Could not load entries. Please try again.");
+    return [];
+  }
+};
   // Handle card click to view details
   const handleCardClick = async (subLevel2Id, userStaffId, cardItem = null) => {
     try {

@@ -263,12 +263,12 @@ const Criterion6_5Form = ({
         program_id: programId ? Number(programId) : null,
 
         incentives_skill_upgrade: formData.content?.staff_availability_info || "",
-        technical_staff_details: formData.content?.incentives_info || "",
+        technical_staff_details: technical_staff_table|| "",
 
         "6_5table": technical_staff_table,
         "6_5table_document": table_documents,
 
-        technical_supporting_staff_availability: availability_documents,
+        technical_supporting_staff_availability: formData.content?.incentives_info || "",
         non_teaching_staff_document: incentives_documents,
       };
 
