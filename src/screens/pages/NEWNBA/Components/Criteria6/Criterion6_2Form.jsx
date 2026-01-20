@@ -92,8 +92,8 @@ const Criterion6_2Form = ({
         },
         tableData: [],
         filesByField: {
-          "6.2": (d.faculty_rooms_documents || []).length > 0
-            ? (d.faculty_rooms_documents || []).map((f, i) => ({
+          "6.2": (d.faculty_rooms_document || []).length > 0
+            ? (d.faculty_rooms_document || []).map((f, i) => ({
                 id: `file-6.2-${i}`,
                 filename: f.file_name || f.name || "",
                 s3Url: f.file_url || f.url || "",
