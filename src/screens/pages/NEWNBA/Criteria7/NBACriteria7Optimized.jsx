@@ -18,10 +18,7 @@ import { newnbaCriteria7Service } from "../Services/NewNBA-Criteria7.service";
 import { newnbaCriteria1Service } from "../Services/NewNBA-Criteria1.service";
 import { toast } from "react-toastify";
 // import Swal from "sweetalert2";
-import { newnbaCriteria7_2_Service } from "../Services/NewNBA-Criteria7_2.service";
-import { newnbaCriteria7_3_Service } from "../Services/NewNBA-Criteria7_3.service";
-import { newnbaCriteria7_4_Service } from "../Services/NewNBA-Criteria7_4.service";
-import { newnbaCriteria7_5_Service } from "../Services/NewNBA-Criteria7_5.service";
+
 import { ReportService } from "../Services/Report.Service";
 
 const NBACriteria7Optimized = () => {
@@ -57,6 +54,7 @@ const NBACriteria7Optimized = () => {
       '7.3': 10,
       '7.4': 10,
       '7.5': 10,
+      '7.6':10,v
     };
     return marks[sectionCode] || 0;
   };
@@ -81,7 +79,7 @@ const NBACriteria7Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: "innovation_lab_id",
+      idField: "id",
       isCoordinatorField: "is_coordinator_entry"
     },
     "7.2": {
@@ -89,7 +87,7 @@ const NBACriteria7Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: "lab_learning_facilities_id",
+      idField: "id",
       isCoordinatorField: "is_coordinator_entry"
     },
     "7.3": {
@@ -97,7 +95,7 @@ const NBACriteria7Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: "lab_maintenance_id",
+      idField: "id",
       isCoordinatorField: "is_coordinator_entry"
     },
     "7.4": {
@@ -105,7 +103,7 @@ const NBACriteria7Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: "lab_safety_id",
+      idField: "id",
       isCoordinatorField: "is_coordinator_entry"
     },
     "7.5": {
@@ -113,7 +111,15 @@ const NBACriteria7Optimized = () => {
       statusField: "approval_status",
       userField: "other_staff_id",
       nameFields: ["firstname", "lastname"],
-      idField: "project_research_lab_id",
+      idField: "id",
+      isCoordinatorField: "is_coordinator_entry"
+    },
+    "7.6": {
+      title: "Lab Maintenance Entry",
+      statusField: "approval_status",
+      userField: "other_staff_id",
+      nameFields: ["firstname", "lastname"],
+      idField: "id",
       isCoordinatorField: "is_coordinator_entry"
     },
   };
@@ -121,31 +127,36 @@ const NBACriteria7Optimized = () => {
 
   const cardServiceConfig = {
     "7.1": {
-      getContributorCards: newnbaCriteria7Service.getallCardDetails,
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_1_Cards,
       getOwnData: newnbaCriteria7Service.getCriteria7_1_Data,
-      updateStatus: newnbaCriteria7Service.updateCardStatus,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_1_Status,
       // idField: "innovation_lab_id",
     },
     "7.2": {
-      getContributorCards: newnbaCriteria7_2_Service.getAllCardDetails_7_2,
-      getOwnData: newnbaCriteria7_2_Service.getCriteria7_2_Data,
-      updateStatus: newnbaCriteria7_2_Service.updateCardStatus,
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_2_Cards,
+      getOwnData: newnbaCriteria7Service.getCriteria7_2_Data,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_2_Status,
       // idField: "lab_learning_facilities_id",
     },
     "7.3": {
-      getContributorCards: newnbaCriteria7_3_Service.getAllCardDetails_7_3,
-      getOwnData: newnbaCriteria7_3_Service.getCriteria7_3_Data,
-      updateStatus: newnbaCriteria7_3_Service.updateCardStatus,
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_3_Cards,
+      getOwnData: newnbaCriteria7Service.getCriteria7_3_Data,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_3_Status,
     },
     "7.4": {
-      getContributorCards: newnbaCriteria7_4_Service.getAllCardDetails_7_4,
-      getOwnData: newnbaCriteria7_4_Service.getCriteria7_4_Data,
-      updateStatus: newnbaCriteria7_4_Service.updateCardStatus,
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_4_Cards,
+      getOwnData: newnbaCriteria7Service.getCriteria7_4_Data,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_4_Status,
     },
     "7.5": {
-      getContributorCards: newnbaCriteria7_5_Service.getAllCardDetails_7_5,
-      getOwnData: newnbaCriteria7_5_Service.getCriteria7_5_Data,
-      updateStatus: newnbaCriteria7_5_Service.updateCardStatus,
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_5_Cards,
+      getOwnData: newnbaCriteria7Service.getCriteria7_5_Data,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_5_Status,
+    },
+     "7.6": {
+      getContributorCards: newnbaCriteria7Service.getAllCriteria7_6_Cards,
+      getOwnData: newnbaCriteria7Service.getCriteria7_6_Data,
+      updateStatus: newnbaCriteria7Service.updateCriteria7_6_Status,
     }
   };
 

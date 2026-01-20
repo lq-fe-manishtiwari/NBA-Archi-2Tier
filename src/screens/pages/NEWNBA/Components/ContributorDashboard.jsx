@@ -567,7 +567,7 @@ const ContributorDashboard = ({ nbaAccreditedProgramId, academicYear, programNam
         // "Governance and Leadership": "/nba/criterion-6",
 
         // Criterion 7 - Facilities and Technical Support
-        "Facilities and Technical Support": "/nba/criterion-7",
+        "Continuous Improvement": "/nba/criterion-7",
 
         // Criterion 8 - Continuous Improvement
         "Student Support Systems": "/nba/criterion-8",
