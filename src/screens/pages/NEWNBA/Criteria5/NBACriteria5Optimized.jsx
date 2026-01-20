@@ -57,6 +57,10 @@ const NBACriteria5Optimized = () => {
       '5.3': 25,
       '5.4': 10,
       '5.5': 10,
+      '5.6': 25,
+      '5.7': 25,
+      '5.8': 10,
+      '5.9': 10,
     };
     return marks[sectionCode] || 0;
   };
@@ -71,7 +75,7 @@ const NBACriteria5Optimized = () => {
     const sectionCode = sectionName ? sectionName.match(/5\.(\d+)/)?.[0] : null;
     const isFiveA = sectionName && (sectionName.startsWith("5A:") || sectionName === '5A');
     const effectiveSectionCode = isFiveA ? "5A" : sectionCode;
-    const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5', '5A'];
+    const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5','5.6', '5.7', '5.8', '5.9', '5A'];
 
     if (cardSupportedSections.includes(effectiveSectionCode)) {
       return {
@@ -93,12 +97,16 @@ const NBACriteria5Optimized = () => {
     const isFiveA = sectionName && (sectionName.startsWith("5A:") || sectionName === '5A');
 
     const idFieldMap = {
-      '5.1': 'sfr_id',
-      '5.2': 'fqi_id',
-      '5.3': 'cadre_proportion_id',
-      '5.4': 'visiting_faculty_id',
-      '5.5': 'faculty_retention_id',
-      '5A': 'faculty_info_id',
+      '5.1': 'id',
+      '5.2': 'id',
+      '5.3': 'id',
+      '5.4': 'id',
+      '5.5': 'id',
+      '5.6': 'id',
+      '5.7': 'id',
+      '5.8': 'id',
+      '5.9': 'id',
+      '5A': 'id',
     };
 
     if (isFiveA) {
@@ -128,6 +136,14 @@ const NBACriteria5Optimized = () => {
               return newnbaCriteria5Service.updateCriteria5_4_ApprovalStatus(approverId, statusPayload);
             case '5.5':
               return newnbaCriteria5Service.updateCriteria5_5_ApprovalStatus(approverId, statusPayload);
+            case '5.6':
+              return newnbaCriteria5Service.updateCriteria5_6_ApprovalStatus(approverId, statusPayload);
+            case '5.7':
+              return newnbaCriteria5Service.updateCriteria5_7_ApprovalStatus(approverId, statusPayload);
+            case '5.8':
+              return newnbaCriteria5Service.updateCriteria5_8_ApprovalStatus(approverId, statusPayload);
+            case '5.9':
+              return newnbaCriteria5Service.updateCriteria5_9_ApprovalStatus(approverId, statusPayload);
             case '5A':
               return newnbaCriteria5Service.updateCriteria5_A_ApprovalStatus(approverId, statusPayload);
             default:
@@ -137,7 +153,7 @@ const NBACriteria5Optimized = () => {
         getCardData: (cycleSubCategoryId) => {
           switch (effectiveSection) {
             case '5.1':
-              return newnbaCriteria5Service.getallCardDetails(cycleSubCategoryId);
+              return newnbaCriteria5Service.getallCardDetails5_1Data(cycleSubCategoryId);
             case '5.2':
               return newnbaCriteria5Service.getallCardDetails5_2Data(cycleSubCategoryId);
             case '5.3':
@@ -146,6 +162,14 @@ const NBACriteria5Optimized = () => {
               return newnbaCriteria5Service.getallCardDetails5_4Data(cycleSubCategoryId);
             case '5.5':
               return newnbaCriteria5Service.getallCardDetails5_5Data(cycleSubCategoryId);
+            case '5.6':
+              return newnbaCriteria5Service.getallCardDetails5_6Data(cycleSubCategoryId);
+            case '5.7':
+              return newnbaCriteria5Service.getallCardDetails5_7Data(cycleSubCategoryId);
+            case '5.8':
+              return newnbaCriteria5Service.getallCardDetails5_8Data(cycleSubCategoryId);
+            case '5.9':
+              return newnbaCriteria5Service.getallCardDetails5_9Data(cycleSubCategoryId);
             case '5A':
               return newnbaCriteria5Service.getallCardDetails5_A(cycleSubCategoryId);
             default:
@@ -505,6 +529,18 @@ const NBACriteria5Optimized = () => {
             case '5.5':
               coordinatorData = await newnbaCriteria5Service.getCriteria5_5_Data(cycleSubCategoryId, currentStaffId);
               break;
+            case '5.6':
+              coordinatorData = await newnbaCriteria5Service.getCriteria5_6_Data(cycleSubCategoryId, currentStaffId);
+              break;
+            case '5.7':
+              coordinatorData = await newnbaCriteria5Service.getCriteria5_7_Data(cycleSubCategoryId, currentStaffId);
+              break;
+            case '5.8':
+              coordinatorData = await newnbaCriteria5Service.getCriteria5_8_Data(cycleSubCategoryId, currentStaffId);
+              break;
+            case '5.9':
+              coordinatorData = await newnbaCriteria5Service.getCriteria5_9_Data(cycleSubCategoryId, currentStaffId);
+              break;
             case '5A':
               coordinatorData = await newnbaCriteria5Service.getCriteria5_A_Data(cycleSubCategoryId, currentStaffId);
               break;
@@ -570,7 +606,7 @@ const NBACriteria5Optimized = () => {
         cycleSubCategoryId: subLevel2Id,
         otherStaffId: userStaffId,
         editMode: true,
-        sfrId: cardItem?.sfr_id || null, // Use sfr_id for 5.1 sections
+        sfrId: cardItem?.id || null, // Use id for 5.1 sections
         cardData: cardItem
       });
     } catch (error) {
@@ -584,7 +620,7 @@ const NBACriteria5Optimized = () => {
       await fetchCardDetails(subLevel2Id);
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.sfr_id]: newStatus // Use sfr_id for 5.1 sections
+        [cardItem.id]: newStatus // Use id for 5.1 sections
       }));
     }
   };
@@ -612,7 +648,7 @@ const NBACriteria5Optimized = () => {
         const isFiveA = indicator.rawName && (indicator.rawName.startsWith("5A:") || indicator.rawName === '5A');
         console.log("🎯 DEBUG: isFiveA:", isFiveA);
 
-        const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5'];
+        const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5','5.6','5.7','5.8','5.9'];
 
         // Allow if it matches list OR is 5A:
         if (cardSupportedSections.includes(sectionCode) || isFiveA) {
@@ -1005,7 +1041,7 @@ const NBACriteria5Optimized = () => {
                           // Contributor sees form
                           (() => {
                             const otherStaffId = users[0]?.school_user?.school_user_id || null;
-                            console.log("🔵 Contributor otherStaffId:", otherStaffId);
+                            console.log("🔵 Contributor otherStaffId:",users, otherStaffId);
                             return (
                               <CriterionForm5
                                 section={(indicator.rawName && (indicator.rawName.startsWith("5A:") || indicator.rawName === '5A')) ? "5A" : actualSectionCode}
@@ -1026,7 +1062,7 @@ const NBACriteria5Optimized = () => {
                         ) : hasAllocation ? (
                           (() => {
                             // Check if this section supports card workflow
-                            const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5', '5A'];
+                            const cardSupportedSections = ['5.1', '5.2', '5.3', '5.4', '5.5','5.6','5.7','5.8','5.9', '5A'];
                             const supportsCards = cardSupportedSections.includes(actualSectionCode) || (indicator.rawName && (indicator.rawName.startsWith('5A:') || indicator.rawName === '5A'));
 
                             if (supportsCards && (hasDataFilled || (cardData[subLevel2Id] && cardData[subLevel2Id].length > 0))) {

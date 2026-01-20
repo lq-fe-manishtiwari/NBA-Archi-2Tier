@@ -241,10 +241,10 @@ const Criterion4_4Form = ({
 
       if (academicPerformanceId) {
         // UPDATE existing record
-        await newnbaCriteria4Service.putCriteria4_4_Data(academicPerformanceId, payload);
+        await newnbaCriteria4Service.putCriteria4_4_Data(academicPerformanceId, payload,staffId);
       } else {
         // CREATE new record
-        await newnbaCriteria4Service.saveCriteria4_4_Data(payload);
+        await newnbaCriteria4Service.saveCriteria4_4_Data(payload,staffId);
       }
 
       setAlert(
