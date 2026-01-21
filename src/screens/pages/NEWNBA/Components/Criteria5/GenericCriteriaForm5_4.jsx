@@ -443,7 +443,7 @@ const GenericCriteriaForm5_4 = ({
     setIsEditMode(false);
   };
 
-  const isEditingDisabled = approvalStatus === "APPROVED" || approvalStatus === "REJECTED" || !isContributorEditable;
+  const isEditingDisabled = false;
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">

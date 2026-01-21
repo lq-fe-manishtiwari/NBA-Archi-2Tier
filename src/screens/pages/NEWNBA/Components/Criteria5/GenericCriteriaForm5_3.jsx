@@ -568,7 +568,7 @@ const GenericCriteriaForm5_3 = ({
   };
 
   // Determine if editing should be disabled
-  const isEditingDisabled = approvalStatus === 'APPROVED' || approvalStatus === 'REJECTED' || !isContributorEditable;
+const isEditingDisabled = false;
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
