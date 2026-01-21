@@ -218,7 +218,7 @@ const Criterion5_5Form = ({
           try {
             let res;
             if (isContributor) {
-              res = await newnbaCriteria5Service.deleteStageCriteria5_5Data(
+              res = await newnbaCriteria5Service.deleteCriteria5_5Data(
                 teaching_learning_quality_id
               );
             } else {

@@ -187,8 +187,8 @@ Note:
 
         // Handle files
         let filesByField = {};
-        if (data.fqi_faculty_qualification_document && Array.isArray(data.fqi_faculty_qualification_document)) {
-          data.fqi_faculty_qualification_document.forEach(doc => {
+        if (data.faculty_qualification_document && Array.isArray(data.faculty_qualification_document)) {
+          data.faculty_qualification_document.forEach(doc => {
             const fieldName = doc.field_name || "5.3";
             if (!filesByField[fieldName]) {
               filesByField[fieldName] = [];
