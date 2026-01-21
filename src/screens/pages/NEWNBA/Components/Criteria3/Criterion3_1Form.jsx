@@ -222,7 +222,7 @@ const Criterion3_1Form = ({
       );
 
       const data = res?.data?.[0] || {};
-      setCorrelationId(data?.course_outcome_correlation_id || null);
+      setCorrelationId(data?.id || null);
 
       setInitialData((prev) => ({
         ...prev,

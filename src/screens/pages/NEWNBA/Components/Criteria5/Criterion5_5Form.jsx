@@ -90,7 +90,7 @@ const Criterion5_5Form = ({
         course_name: d.course_name || "",
       },
       tableData: {},
-      po_pso_id: d.po_pso_id || null,
+      po_pso_id: d.id || null,
       filesByField: {
         "5.51": (d.course_documents || []).length > 0 
           ? (d.course_documents || []).map((f, i) => ({

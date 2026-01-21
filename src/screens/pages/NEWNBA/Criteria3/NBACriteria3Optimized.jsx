@@ -333,12 +333,12 @@ const NBACriteria3Optimized = () => {
       const sectionName = indicator?.rawName || "";
 
       let cardDetails;
-      if (sectionName.includes("3.7")) {
-        cardDetails = await newnbaCriteria3Service.getallCardDetails3_7(cycleSubCategoryId);
-      } else if (sectionName.includes("3.8")) {
-        cardDetails = await newnbaCriteria3Service.getallCardDetails3_8(cycleSubCategoryId);
+      if (sectionName.includes("3.1")) {
+        cardDetails = await newnbaCriteria3Service.getAllCriteria3_1_Data(cycleSubCategoryId);
+      } else if (sectionName.includes("3.2")) {
+        cardDetails = await newnbaCriteria3Service.getAllCriteria3_2_Data(cycleSubCategoryId);
       } else {
-        cardDetails = await newnbaCriteria3Service.getallCardDetails(cycleSubCategoryId);
+        cardDetails = await newnbaCriteria3Service.getAllCriteria3_3_Data(cycleSubCategoryId);
       }
 
       const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
@@ -356,7 +356,7 @@ const NBACriteria3Optimized = () => {
           const coordinatorData = await newnbaCriteria3Service.getCriteria3_1_Data(cycleSubCategoryId, currentStaffId);
           const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
 
-          if (coordinatorRecord && coordinatorRecord.teaching_learning_quality_id) {
+          if (coordinatorRecord && coordinatorRecord.id) {
             const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
 
             if (!existingCard) {
@@ -392,7 +392,7 @@ const NBACriteria3Optimized = () => {
       cycleSubCategoryId: subLevel2Id,
       otherStaffId: userStaffId,
       editMode: true,
-      teachingLearningQualityId: cardItem?.teaching_learning_quality_id || null,
+      teachingLearningQualityId: cardItem?.id || null,
       cardData: cardItem
     });
   };
@@ -403,7 +403,7 @@ const NBACriteria3Optimized = () => {
       await fetchCardDetails(subLevel2Id);
       setApprovalStatus(prev => ({
         ...prev,
-        [cardItem.teaching_learning_quality_id]: newStatus
+        [cardItem.id]: newStatus
       }));
     }
   };
@@ -843,11 +843,11 @@ const NBACriteria3Optimized = () => {
                                 onCardClick={handleCardClick}
                                 onStatusChange={handleStatusChange}
                                 apiService={{
-                                  updateCardStatus: actualSectionCode === "3.7"
-                                    ? newnbaCriteria3Service.updateCriteria3_7_Status
-                                    : actualSectionCode === "3.8"
-                                      ? newnbaCriteria3Service.updateCriteria3_8_Status
-                                      : newnbaCriteria3Service.updateCardStatus,
+                                  updateCardStatus: actualSectionCode === "3.1"
+                                    ? newnbaCriteria3Service.updateCriteria3_1_Status
+                                    : actualSectionCode === "3.2"
+                                      ? newnbaCriteria3Service.updateCriteria3_2_Status
+                                      : newnbaCriteria3Service.updateCriteria3_3_Status,
                                   getCardData: () => fetchCardDetails(subLevel2Id)
                                 }}
                                 cardConfig={{
@@ -855,9 +855,7 @@ const NBACriteria3Optimized = () => {
                                   statusField: "approval_status",
                                   userField: "other_staff_id",
                                   nameFields: ["firstname", "lastname"],
-                                  idField: actualSectionCode === "3.7" ? "attainment_co_id"
-                                    : actualSectionCode === "3.8" ? "attainment_po_id"
-                                      : "teaching_learning_quality_id",
+                                  idField: "id",
                                   isCoordinatorField: "is_coordinator_entry"
                                 }}
                                 isSubCoordinator={isSubCoordinator}

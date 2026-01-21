@@ -272,12 +272,12 @@ const GenericCriteriaForm3_8 = ({
 
   // Initialize files with at least one empty row if none exist
   const [filesByField, setFilesByField] = useState(() => {
-    const incomingFiles = initialData?.filesByField?.["3.8"] || [];
+    const incomingFiles = initialData?.filesByField?.["3.3"] || [];
 
     if (Array.isArray(incomingFiles) && incomingFiles.length > 0) {
       return {
-        "3.8": incomingFiles.map((f, i) => ({
-          id: f.id || `file-3.8-${i}-${Date.now()}`,
+        "3.3": incomingFiles.map((f, i) => ({
+          id: f.id || `file-3.3-${i}-${Date.now()}`,
           filename: f.filename || f.file_name || "",
           file: null,
           s3Url: f.s3Url || f.file_url || "",
@@ -289,9 +289,9 @@ const GenericCriteriaForm3_8 = ({
 
     // Default: always show one empty upload slot
     return {
-      "3.8": [
+      "3.3": [
         {
-          id: `file-3.8-empty-${Date.now()}`,
+          id: `file-3.3-empty-${Date.now()}`,
           filename: "",
           file: null,
           s3Url: "",
@@ -310,12 +310,12 @@ const GenericCriteriaForm3_8 = ({
     if (initialData?.content) {
       setFormValues(initialData.content);
     }
-    if (initialData?.filesByField?.["3.8"]) {
-      const files = initialData.filesByField["3.8"];
+    if (initialData?.filesByField?.["3.3"]) {
+      const files = initialData.filesByField["3.3"];
       setFilesByField({
-        "3.8": files.length > 0 
+        "3.3": files.length > 0 
           ? files.map((f, i) => ({
-              id: f.id || `file-3.8-${i}-${Date.now()}`,
+              id: f.id || `file-3.3-${i}-${Date.now()}`,
               filename: f.filename || "",
               file: null,
               s3Url: f.s3Url || "",
@@ -323,7 +323,7 @@ const GenericCriteriaForm3_8 = ({
               uploading: false,
             }))
           : [{
-              id: `file-3.8-empty-${Date.now()}`,
+              id: `file-3.3-empty-${Date.now()}`,
               filename: "",
               file: null,
               s3Url: "",
@@ -336,10 +336,10 @@ const GenericCriteriaForm3_8 = ({
 
   const addFileRow = () => {
     setFilesByField((prev) => ({
-      "3.8": [
-        ...(prev["3.8"] || []),
+      "3.3": [
+        ...(prev["3.3"] || []),
         {
-          id: `file-3.8-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `file-3.3-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           description: "",
           file: null,
           filename: "",
@@ -352,7 +352,7 @@ const GenericCriteriaForm3_8 = ({
 
   const updateFileDescription = (index, value) => {
     setFilesByField((prev) => ({
-      "3.8": prev["3.8"].map((f, i) =>
+      "3.3": prev["3.3"].map((f, i) =>
         i === index ? { ...f, description: value } : f
       ),
     }));
@@ -362,7 +362,7 @@ const GenericCriteriaForm3_8 = ({
     if (!newFile || !(newFile instanceof File)) return;
 
     setFilesByField((prev) => ({
-      "3.8": prev["3.8"].map((f, i) =>
+      "3.3": prev["3.3"].map((f, i) =>
         i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
       ),
     }));
@@ -370,14 +370,14 @@ const GenericCriteriaForm3_8 = ({
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      const currentDesc = filesByField["3.8"][index]?.description?.trim();
+      const currentDesc = filesByField["3.3"][index]?.description?.trim();
       if (currentDesc) formData.append("description", currentDesc);
 
       const resData = await nbaDashboardService.uploadFile(formData);
       const s3Url = resData?.url || resData || "";
 
       setFilesByField((prev) => ({
-        "3.8": prev["3.8"].map((f, i) =>
+        "3.3": prev["3.3"].map((f, i) =>
           i === index ? { ...f, s3Url, filename: newFile.name, uploading: false } : f
         ),
       }));
@@ -386,7 +386,7 @@ const GenericCriteriaForm3_8 = ({
     } catch (err) {
       toast.error("File upload failed");
       setFilesByField((prev) => ({
-        "3.8": prev["3.8"].map((f, i) =>
+        "3.3": prev["3.3"].map((f, i) =>
           i === index ? { ...f, uploading: false, file: null, filename: "" } : f
         ),
       }));
@@ -395,20 +395,44 @@ const GenericCriteriaForm3_8 = ({
 
   const removeFileRow = (index) => {
     setFilesByField((prev) => ({
-      "3.8": prev["3.8"].filter((_, i) => i !== index),
+      "3.3": prev["3.3"].filter((_, i) => i !== index),
     }));
   };
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave({
-        content: formValues,
-        filesByField,
-      });
-    }
-    setIsEditMode(false);
-    toast.success("Section saved successfully");
+const handleSave = () => {
+  if (!onSave) return;
+
+  // Normalize files → map "3.3" → "3.3.1"
+  const normalizedFilesByField = {
+    "3.3.1": (filesByField["3.3"] || []).map((f) => ({
+      filename: f.filename || "",
+      file: null,
+      s3Url: f.s3Url || "",
+      url: f.s3Url || "",
+      description: f.description || "",
+    })),
   };
+
+  // 🔴 IMPORTANT:
+  // Criterion 3.3 DOES NOT use editable table here
+  // Attainment table is AUTO-GENERATED (view-only)
+  // So we MUST send EMPTY array safely
+  const normalizedTableData = {
+    "3.3.2": [],
+  };
+
+  onSave({
+    content: {
+      "3.3.1": formValues["3.3.1"] || "",
+    },
+    tableData: normalizedTableData,
+    filesByField: normalizedFilesByField,
+  });
+
+  setIsEditMode(false);
+  toast.success("Section saved successfully");
+};
+
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -470,9 +494,9 @@ const GenericCriteriaForm3_8 = ({
                 <Upload className="w-6 h-6" /> Supporting Documents
               </h4>
 
-              {isEditMode && (filesByField["3.8"]?.length || 0) > 1 && (
+              {isEditMode && (filesByField["3.3"]?.length || 0) > 1 && (
                 <button
-                  onClick={() => setMergeModal({ isOpen: true, fieldName: "3.8" })}
+                  onClick={() => setMergeModal({ isOpen: true, fieldName: "3.3" })}
                   className="px-5 py-2.5 bg-[#2163c5] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2 shadow-sm"
                 >
                   <FileText className="w-5 h-5" /> Merge PDFs
@@ -484,17 +508,17 @@ const GenericCriteriaForm3_8 = ({
               <DragDropContext
                 onDragEnd={(result) => {
                   if (!result.destination) return;
-                  const items = [...(filesByField["3.8"] || [])];
+                  const items = [...(filesByField["3.3"] || [])];
                   const [moved] = items.splice(result.source.index, 1);
                   items.splice(result.destination.index, 0, moved);
-                  setFilesByField({ "3.8": items });
+                  setFilesByField({ "3.3": items });
                 }}
               >
-                <Droppable droppableId="files-3.8">
+                <Droppable droppableId="files-3.3">
                   {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                      {(filesByField["3.8"] || []).map((file, index) => {
-                        const isOnlyOne = (filesByField["3.8"]?.length || 0) <= 1;
+                      {(filesByField["3.3"] || []).map((file, index) => {
+                        const isOnlyOne = (filesByField["3.3"]?.length || 0) <= 1;
 
                         return (
                           <Draggable key={file.id} draggableId={file.id} index={index}>
@@ -580,12 +604,12 @@ const GenericCriteriaForm3_8 = ({
               </DragDropContext>
             ) : (
               <div className="space-y-4">
-                {(filesByField["3.8"] || []).length === 0 ? (
+                {(filesByField["3.3"] || []).length === 0 ? (
                   <div className="p-8 text-center text-gray-500 italic bg-white rounded-xl border-2 border-dashed border-gray-300">
                     No supporting documents uploaded yet
                   </div>
                 ) : (
-                  (filesByField["3.8"] || []).map((file, idx) => (
+                  (filesByField["3.3"] || []).map((file, idx) => (
                     <div
                       key={file.id}
                       className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-white rounded-xl border border-gray-200"

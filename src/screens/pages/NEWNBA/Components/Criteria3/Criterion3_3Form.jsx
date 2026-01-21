@@ -136,7 +136,7 @@ const Criterion3_3Form = ({
         userProfile?.user_id;
 
       const res = await newnbaCriteria3Service.getCriteria3_3_Data(cycle_sub_category_id, staffId);
-      const data = res?.data || res || null;
+      const data = res[0] || res || null;
 
       console.log("[Criterion 3.3] GET full response:", data);
 
@@ -187,108 +187,150 @@ const Criterion3_3Form = ({
   // ────────────────────────────────────────────────
   //                   SAVE DATA
   // ────────────────────────────────────────────────
-  const handleSave = async (formData) => {
-    setSaving(true);
+const handleSave = async (formData = {}) => {
+  setSaving(true);
 
-    try {
-      const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const staffId =
-        otherStaffId ||
-        userProfile?.rawData?.other_staff_id ||
-        userProfile?.user_id;
+  try {
+    // ────────────────────────────────────────────────
+    // Normalize formData (VERY IMPORTANT)
+    // ────────────────────────────────────────────────
+    const safeFormData = {
+      content: formData?.content || {},
+      tableData: formData?.tableData || {},
+      filesByField: formData?.filesByField || {},
+    };
+console.log("safeformdata",safeFormData);
+    const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const staffId =
+      otherStaffId ||
+      userProfile?.rawData?.other_staff_id ||
+      userProfile?.user_id;
 
-      // Prepare documents array exactly as backend expects
-      const documentsArray = (formData.filesByField["3.3.1"] || [])
-        .filter((f) => f.s3Url || f.url)
-        .map((f) => ({
-          file_name: (f.filename || "").trim(),
-          file_url: (f.s3Url || f.url || "").trim(),
-          description: (f.description || "").trim(),
-        }));
+    // ────────────────────────────────────────────────
+    // Documents (3.3.1)
+    // ────────────────────────────────────────────────
+    const documentsArray = (safeFormData.filesByField["3.3.1"] || [])
+      .filter((f) => f?.s3Url || f?.url)
+      .map((f) => ({
+        file_name: (f.filename || "").trim(),
+        file_url: (f.s3Url || f.url || "").trim(),
+        description: (f.description || "").trim(),
+      }));
 
-      const payload = {
-        other_staff_id: Number(staffId),
-        cycle_sub_category_id: Number(cycle_sub_category_id),
+    // ────────────────────────────────────────────────
+    // Payload
+    // ────────────────────────────────────────────────
+    const payload = {
+      other_staff_id: Number(staffId),
+      cycle_sub_category_id: Number(cycle_sub_category_id),
 
-        assessment_tools_description: (formData.content["3.3.1"] || "").trim(),
+      assessment_tools_description: (
+        safeFormData.content["3.3.1"] || ""
+      ).trim(),
 
-        evaluation_results: (formData.tableData["3.3.2"] || []).map((item) => ({
+      evaluation_results: (safeFormData.tableData["3.3.2"] || []).map(
+        (item) => ({
           po_code: (item.po_code || "").trim(),
           direct_attainment: Number(item.direct_attainment) || 0,
           indirect_attainment: Number(item.indirect_attainment) || 0,
           overall_attainment: Number(item.overall_attainment) || 0,
           attainment_level: (item.attainment_level || "1").trim(),
-        })),
+        })
+      ),
 
-        attainment_po_pso_document: documentsArray,
-      };
+      attainment_po_pso_document: documentsArray,
+    };
 
-      console.log("[Criterion 3.3] Sending payload:", JSON.stringify(payload, null, 2));
+    console.log(
+      "[Criterion 3.3] Sending payload:",
+      JSON.stringify(payload, null, 2)
+    );
 
-      let response;
+    // ────────────────────────────────────────────────
+    // Save / Update
+    // ────────────────────────────────────────────────
+    let response;
 
-      if (recordId) {
-        response = await newnbaCriteria3Service.putCriteria3_3_Data(recordId, staffId, payload);
-      } else {
-        response = await newnbaCriteria3Service.saveCriteria3_3_Data(staffId, payload);
-      }
+    if (recordId) {
+      response = await newnbaCriteria3Service.putCriteria3_3_Data(
+        recordId,
+        staffId,
+        payload
+      );
+    } else {
+      response = await newnbaCriteria3Service.saveCriteria3_3_Data(
+        staffId,
+        payload
+      );
+    }
 
-      if (response?.status === 200 || response?.status === 201 || response?.id) {
-        setAlert(
-          <SweetAlert
-            success
-            title="Saved!"
-            confirmBtnText="OK"
-            onConfirm={() => {
-              setAlert(null);
-              onSaveSuccess?.();
-            }}
-          >
-            Criterion 3.3 saved successfully.
-          </SweetAlert>
-        );
-
-        await loadData();
-
-        // Auto-approve for contributors
-        if (isContributor) {
-          try {
-            const updatedId = response?.id || recordId;
-            if (updatedId) {
-              await newnbaCriteria3Service.updateCriteria3_3_Status(
-                {
-                  id: updatedId,
-                  approval_status: "APPROVED",
-                  approved_by: staffId,
-                  approved_by_name: userProfile?.name || userProfile?.rawData?.name || "",
-                },
-                staffId
-              );
-              console.log("[Criterion 3.3] Auto-approved successfully");
-            }
-          } catch (approveErr) {
-            console.error("[Criterion 3.3] Auto-approve failed:", approveErr);
-          }
-        }
-      } else {
-        throw new Error(response?.message || "Save failed");
-      }
-    } catch (err) {
-      console.error("[Criterion 3.3] Save failed:", err);
+    // ────────────────────────────────────────────────
+    // Success
+    // ────────────────────────────────────────────────
+    if (response?.status === 200 || response?.status === 201 || response?.id) {
       setAlert(
         <SweetAlert
-          danger
-          title="Save Failed"
+          success
+          title="Saved!"
           confirmBtnText="OK"
-          onConfirm={() => setAlert(null)}
+          onConfirm={() => {
+            setAlert(null);
+            onSaveSuccess?.();
+          }}
         >
-          {err.message || "Could not save data. Please try again."}
+          Criterion 3.3 saved successfully.
         </SweetAlert>
       );
-    } finally {
-      setSaving(false);
+
+      await loadData();
+
+      // ────────────────────────────────────────────────
+      // Auto-approve (Contributor)
+      // ────────────────────────────────────────────────
+      if (isContributor) {
+        try {
+          const updatedId = response?.id || recordId;
+
+          if (updatedId) {
+            await newnbaCriteria3Service.updateCriteria3_3_Status(
+              {
+                id: updatedId,
+                approval_status: "APPROVED",
+                approved_by: staffId,
+                approved_by_name:
+                  userProfile?.name || userProfile?.rawData?.name || "",
+              },
+              staffId
+            );
+          }
+        } catch (approveErr) {
+          console.error(
+            "[Criterion 3.3] Auto-approve failed:",
+            approveErr
+          );
+        }
+      }
+    } else {
+      throw new Error(response?.message || "Save failed");
     }
-  };
+  } catch (err) {
+    console.error("[Criterion 3.3] Save failed:", err);
+
+    setAlert(
+      <SweetAlert
+        danger
+        title="Save Failed"
+        confirmBtnText="OK"
+        onConfirm={() => setAlert(null)}
+      >
+        {err.message || "Could not save data. Please try again."}
+      </SweetAlert>
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   // ────────────────────────────────────────────────
   //                   DELETE

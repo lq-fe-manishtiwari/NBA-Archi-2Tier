@@ -124,9 +124,10 @@ const Criterion3_2Form = ({
         userInfo?.other_staff_id;
 
       const res = await newnbaCriteria3Service.getCriteria3_2_Data(cycle_sub_category_id, staffId);
-      const data = res?.data || res || null;
-
-      const attainmentId = data?.attainment_co_id || data?.id || null;
+      const data = res[0] || null;
+       console.log(res);
+      const attainmentId = data?.id || data?.id || null;
+      console.log(attainmentId);
       setAttainmentCoId(attainmentId);
 
       let descriptionText = "";
