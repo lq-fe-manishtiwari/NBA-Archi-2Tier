@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import GenericCriteriaForm7 from "./GenericCriteriaForm7";
+import GenericCriteriaForm7_5 from "./GenericCriteriaForm7_5";
 import GenericCriteriaForm7_6 from "./GenericCriteriaForm7_6";
 import StatusBadge from "./StatusBadge";
 import { newnbaCriteria7Service } from "../Services/NewNBA-Criteria7.service";
@@ -180,6 +181,18 @@ const CriterionForm = ({
           hasEditor: true,
           hasFileUpload: true,
         },
+        {
+      name: "po_attainment",                  // ← new field for the table
+      label: "POs Attainment Levels & Actions Taken",
+      showPOTable: true,                      // ← new flag we'll use
+      hasFileUpload: false,                    // documents can support the actions / observations
+      // Optional: you can pre-fill PO statements if you have them
+      poStatements: {
+        PO1: "Engineering knowledge: Apply the knowledge of mathematics, science, engineering fundamentals...",
+        PO2: "Problem analysis: Identify, formulate, review research literature, and analyze complex engineering problems...",
+        // PO3, PO4, ..., PO12 as needed
+      },
+    },
       ],
     },
   };
@@ -456,9 +469,10 @@ const CriterionForm = ({
   if (loading) return <div className="py-20 text-center">Loading…</div>;
 
   const FormComponent =
-    section === "7.5" || section === "7.6"
-      ? GenericCriteriaForm7_6
-      : GenericCriteriaForm7;
+    section === "7.5"
+      ? GenericCriteriaForm7_5
+      : section === "7.6" ? GenericCriteriaForm7_6
+      : GenericCriteriaForm7
 
   return (
     <div className="space-y-4">
