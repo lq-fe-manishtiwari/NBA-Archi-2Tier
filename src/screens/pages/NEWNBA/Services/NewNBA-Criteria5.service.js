@@ -21,7 +21,7 @@ export const newnbaCriteria5Service = {
   saveCriteria5_2_Data,
   updateCriteria5_2_Data,
   updateCriteria5_2_ApprovalStatus,
-  deleteCriteria5_2_Data,
+  deleteCriteria5_2Data,
   getallCardDetails5_2Data,
 
   // 5.3
@@ -29,7 +29,7 @@ export const newnbaCriteria5Service = {
   saveCriteria5_3_Data,
   updateCriteria5_3_Data,
   updateCriteria5_3_ApprovalStatus,
-  deleteCriteria5_3_Data,
+  deleteCriteria5_3Data,
   getallCardDetails5_3Data,
 
   // 5.4
@@ -37,7 +37,7 @@ export const newnbaCriteria5Service = {
   saveCriteria5_4_Data,
   updateCriteria5_4_Data,
   updateCriteria5_4_ApprovalStatus,
-  deleteCriteria5_4_Data,
+  deleteCriteria5_4Data,
   getallCardDetails5_4Data,
 
   // 5.5
@@ -45,7 +45,7 @@ export const newnbaCriteria5Service = {
   saveCriteria5_5_Data,
   updateCriteria5_5_Data,
   updateCriteria5_5_ApprovalStatus,
-  deleteCriteria5_5_Data,
+  deleteCriteria5_5Data,
   getallCardDetails5_5Data,
 
   // 5.6
@@ -155,7 +155,7 @@ function updateCriteria5_2_ApprovalStatus(approverStaffId, approvalData) {
   ).then(handleResponse);
 }
 
-function deleteCriteria5_2_Data(id) {
+function deleteCriteria5_2Data(id) {
   return apiNBARequest(
     `/admin/nba/5.2/new-faculty-cadre-ratio/${id}`,
     { method: 'DELETE', headers: authHeader() }
@@ -199,7 +199,7 @@ function updateCriteria5_3_ApprovalStatus(approverStaffId, approvalData) {
   ).then(handleResponse);
 }
 
-function deleteCriteria5_3_Data(id) {
+function deleteCriteria5_3Data(id) {
   return apiNBARequest(
     `/admin/nba/5.3/new-faculty-qualification/${id}`,
     { method: 'DELETE', headers: authHeader() }
@@ -243,7 +243,7 @@ function updateCriteria5_4_ApprovalStatus(approverStaffId, approvalData) {
   ).then(handleResponse);
 }
 
-function deleteCriteria5_4_Data(id) {
+function deleteCriteria5_4Data(id) {
   return apiNBARequest(
     `/admin/nba/5.4/new-faculty-retention/${id}`,
     { method: 'DELETE', headers: authHeader() }
@@ -287,7 +287,7 @@ function updateCriteria5_5_ApprovalStatus(approverStaffId, approvalData) {
   ).then(handleResponse);
 }
 
-function deleteCriteria5_5_Data(id) {
+function deleteCriteria5_5Data(id) {
   return apiNBARequest(
     `/admin/nba/5.5/new-faculty-innovations/${id}`,
     { method: 'DELETE', headers: authHeader() }
