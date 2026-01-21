@@ -90,7 +90,7 @@ const Criterion4_1Form = ({
       {
         id: "row-4-average",
         item: "Average Enrolment Ratio for 3 years.",
-        averageValue: "", // Will be calculated client-side
+         averageValue: enrolment?.average ?? "", 
       },
     ];
 
@@ -98,15 +98,23 @@ const Criterion4_1Form = ({
     return tableRows;
   };
 
-  const tableToEnrolment = (tableData = []) => {
-    const rowKeys = ["sanctioned_intake", "total_admitted", "enrolment_ratio"];
-    return tableData.slice(0, 3).map((row, i) => ({
-      row_type: rowKeys[i],
-      cay: row.cay || "",
-      caym1: row.caym1 || "",
-      caym2: row.caym2 || "",
-    }));
-  };
+ const tableToEnrolment = (tableData = []) => {
+  const rowKeys = [
+    "sanctioned_intake",
+    "total_admitted",
+    "enrolment_ratio",
+    "average_enrolment_ratio"
+  ];
+
+  return tableData.map((row, i) => ({
+    row_type: rowKeys[i],
+    cay: row.cay || "",
+    caym1: row.caym1 || "",
+    caym2: row.caym2 || "",
+    value: row.averageValue || ""   // ⭐ average saved here
+  }));
+};
+
 
   const mapFiles = (filesByField) => {
     const arr = filesByField["4.1.1"] || [];
@@ -119,120 +127,142 @@ const Criterion4_1Form = ({
       }));
   };
 
-  // LOAD DATA - FINAL FIXED VERSION
-  const loadData = useCallback(async () => {
-    if (!cycle_sub_category_id) {
-      console.log("No cycle_sub_category_id → empty form");
-      setLoading(false);
-      return;
-    }
+  // LOAD DATA - FINAL CORRECT VERSION (WITH AVERAGE FIX)
+const loadData = useCallback(async () => {
+  if (!cycle_sub_category_id) {
+    console.log("No cycle_sub_category_id → empty form");
+    setLoading(false);
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-      const userIsContributor = userInfo?.rawData?.is_contributor || false;
-      setIsContributor(userIsContributor);
+  try {
+    const userInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const userInfoo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const userIsContributor = userInfo?.rawData?.is_contributor || false;
+    setIsContributor(userIsContributor);
 
-      const currentOtherStaffId =
-        otherStaffId ||
-        userInfo?.rawData?.other_staff_id ||
-        userInfo.user_id ||
-        userInfoo?.other_staff_id;
+    const currentOtherStaffId =
+      otherStaffId ||
+      userInfo?.rawData?.other_staff_id ||
+      userInfo.user_id ||
+      userInfoo?.other_staff_id;
 
-      const res = await newnbaCriteria4Service.getCriteria4_1_Data(
-        cycle_sub_category_id,
-        currentOtherStaffId
-      );
+    const res = await newnbaCriteria4Service.getCriteria4_1_Data(
+      cycle_sub_category_id,
+      currentOtherStaffId
+    );
 
-      const d =  res[0] || res || {};
-      console.log("API Response Data:", d);
+    const d = res?.[0] || res || {};
+    console.log("API Response Data:", d);
 
-      setEnrolmentRatioId(d.id || null);
+    setEnrolmentRatioId(d.id || null);
 
-      // FIXED: Robust row_type matching
-      const tableArray = d.enrollment_ratio_data || [];
-      console.log("tableArray",tableArray);
-      const enrolment = {};
+    const tableArray = d.enrollment_ratio_data || [];
+    console.log("tableArray:", tableArray);
 
-      tableArray.forEach((row) => {
-        const rowType = (row.row_type || "").trim().toLowerCase().replace(/\s+/g, '_'); // normalize
-        console.log("Normalized row_type:", rowType, "Raw:", row.row_type, "Values:", row.cay, row.caym1, row.caym2);
+    const enrolment = {
+      sanctioned_intake: { cay: "", caym1: "", caym2: "" },
+      total_admitted: { cay: "", caym1: "", caym2: "" },
+      enrolment_ratio: { cay: "", caym1: "", caym2: "" },
+      average: "", // ✅ IMPORTANT
+    };
 
-        if (rowType.includes("sanctioned_intake") || rowType.includes("sanctionedintake")) {
-          enrolment.sanctioned_intake = {
-            cay: row.cay || "",
-            caym1: row.caym1 || "",
-            caym2: row.caym2 || "",
-          };
-        } else if (rowType.includes("total_admitted") || rowType.includes("totaladmitted")) {
-          enrolment.total_admitted = {
-            cay: row.cay || "",
-            caym1: row.caym1 || "",
-            caym2: row.caym2 || "",
-          };
-        } else if (rowType.includes("enrolment_ratio") || rowType.includes("enrollment_ratio")) {
-          enrolment.enrolment_ratio = {
-            cay: row.cay || "",
-            caym1: row.caym1 || "",
-            caym2: row.caym2 || "",
-          };
-        }
-      });
+    tableArray.forEach((row) => {
+      const rowType = (row.row_type || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_");
 
-      console.log("Constructed enrolment object:", enrolment);
+      console.log("Normalized row_type:", rowType, row);
 
-      const tableDataFromApi = enrolmentToTable(enrolment);
+      if (rowType === "sanctioned_intake") {
+        enrolment.sanctioned_intake = {
+          cay: row.cay || "",
+          caym1: row.caym1 || "",
+          caym2: row.caym2 || "",
+        };
+      }
 
-      console.log("Final tableData sent to form:", tableDataFromApi);
+      else if (rowType === "total_admitted") {
+        enrolment.total_admitted = {
+          cay: row.cay || "",
+          caym1: row.caym1 || "",
+          caym2: row.caym2 || "",
+        };
+      }
 
-      const serverFiles = d.enrollment_ratio_document || [];
-      const files = serverFiles.map((f, i) => ({
-        id: f.id || `file-${i}`,
-        filename: f.filename || f.file_name || f.name || "",
-        s3Url: f.url || f.file_url || f.downloadPath || "",
-        description: f.description || "",
-        uploading: false,
-      }));
+      else if (rowType === "enrolment_ratio" || rowType === "enrollment_ratio") {
+        enrolment.enrolment_ratio = {
+          cay: row.cay || "",
+          caym1: row.caym1 || "",
+          caym2: row.caym2 || "",
+        };
+      }
 
-      setInitialData({
-        content: { "4.1.1": d.description || "" },
-        tableData: tableDataFromApi,
-        filesByField: {
-          "4.1.1": files.length > 0 ? files : [{
+      // ✅ THIS WAS MISSING
+      else if (rowType === "average_enrolment_ratio") {
+        enrolment.average = row.value || "";
+      }
+    });
+
+    console.log("Constructed enrolment object:", enrolment);
+
+    const tableDataFromApi = enrolmentToTable(enrolment);
+    console.log("Final tableData sent to form:", tableDataFromApi);
+
+    const serverFiles = d.enrollment_ratio_document || [];
+    const files = serverFiles.map((f, i) => ({
+      id: f.id || `file-${i}`,
+      filename: f.filename || f.file_name || f.name || "",
+      s3Url: f.url || f.file_url || f.downloadPath || "",
+      description: f.description || "",
+      uploading: false,
+    }));
+
+    setInitialData({
+      content: { "4.1.1": d.description || "" },
+      tableData: tableDataFromApi,
+      filesByField: {
+        "4.1.1": files.length > 0 ? files : [
+          {
             id: "file-default-4.1.1",
             description: "",
             file: null,
             filename: "",
             s3Url: "",
             uploading: false,
-          }],
-        },
-      });
+          },
+        ],
+      },
+    });
 
-      console.log("setInitialData called with table rows:", tableDataFromApi.length);
-    } catch (err) {
-      console.error("Load failed:", err);
-      toast.error("Failed to load data");
-      setInitialData({
-        content: { "4.1.1": "" },
-        tableData: enrolmentToTable(),
-        filesByField: {
-          "4.1.1": [{
+    console.log("setInitialData called with table rows:", tableDataFromApi.length);
+  } catch (err) {
+    console.error("Load failed:", err);
+    toast.error("Failed to load data");
+
+    setInitialData({
+      content: { "4.1.1": "" },
+      tableData: enrolmentToTable(),
+      filesByField: {
+        "4.1.1": [
+          {
             id: "file-default-4.1.1",
             description: "",
             file: null,
             filename: "",
             s3Url: "",
             uploading: false,
-          }],
-        },
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [cycle_sub_category_id, otherStaffId]);
+          },
+        ],
+      },
+    });
+  } finally {
+    setLoading(false);
+  }
+}, [cycle_sub_category_id, otherStaffId]);
 
   useEffect(() => {
     loadData();

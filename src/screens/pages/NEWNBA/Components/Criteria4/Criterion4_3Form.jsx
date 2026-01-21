@@ -118,13 +118,25 @@ const Criterion4_3Form = ({
         caym3: row.caym3 || "",
       })) : [];
 
-      setInitialData({
-        content: { "4.3": "" },
-        tableData,
-        filesByField: {
-          "4.3": [{ id: `file-4.3-0`, description: "", file: null, filename: "", s3Url: "", uploading: false }]
-        }
-      });
+    setInitialData({
+  content: { "4.3": "" },
+  tableData,
+  filesByField: {
+    "4.3": files.length > 0
+      ? files
+      : [
+          {
+            id: `file-4.3-0`,
+            description: "",
+            file: null,
+            filename: "",
+            s3Url: "",
+            uploading: false,
+          },
+        ],
+  },
+});
+
     } catch (err) {
       console.warn("Load failed:", err);
 
