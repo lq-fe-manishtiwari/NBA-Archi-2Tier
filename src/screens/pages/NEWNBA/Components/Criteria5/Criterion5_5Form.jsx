@@ -31,13 +31,13 @@ const Criterion5_5Form = ({
     title: "5.5 Innovations by the Faculty in Teaching and Learning (15)",
     totalMarks: 15,
     fields: [
-        {
+      {
         name: "5.5",
         label: "5.5 Innovations by the Faculty in Teaching and Learning (15)",
         marks: 15,
         type: "textarea",
       },
-    ]
+    ],
   };
 
   // ---------------- LOAD DATA ----------------

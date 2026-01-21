@@ -161,7 +161,7 @@ const loadData = async () => {
         onConfirm={async () => {
           setAlert(null);
           try {
-            await newnbaCriteria5Service.deleteCriteria5_9_Data(initialData.po_pso_id);
+            await newnbaCriteria5Service.deleteCriteria5_9Data(initialData.po_pso_id);
             
             setAlert(
               <SweetAlert
@@ -174,7 +174,7 @@ const loadData = async () => {
                   onSaveSuccess?.();
                 }}
               >
-                Criterion 1.3 data has been deleted successfully.
+                Criterion 5.9 data has been deleted successfully.
               </SweetAlert>
             );
           } catch (err) {
