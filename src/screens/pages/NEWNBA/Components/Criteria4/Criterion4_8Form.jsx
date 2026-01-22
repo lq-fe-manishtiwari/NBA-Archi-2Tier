@@ -79,8 +79,8 @@ const Criterion4_8Form = ({
           columns: [
             { field: "sl_no", header: "Sl. No.", placeholder: "" },
             { field: "name", header: "Name of the Student", placeholder: "Full name" },
-            { field: "Enrollment No", header: "USN / Roll No.", placeholder: "1XX18XX000" },
-            { field: "Name of the Employer", header: "Company / Institute / Enterprise", placeholder: "" },
+            { field: "usn", header: "USN / Roll No.", placeholder: "1XX18XX000" },
+            { field: "company", header: "Name of the Employer", placeholder: "" },
       
           ],
           predefinedRows: [], // user adds rows manually
@@ -107,9 +107,17 @@ const Criterion4_8Form = ({
         userInfoo?.other_staff_id;
 
       const res = await newnbaCriteria4Service.getCriteria4_8_Data(cycle_sub_category_id, currentOtherStaffId);
-      const d = res?.data?.[0] || res || {};
+      
+      let d = {};
+      if (Array.isArray(res) && res.length > 0) {
+        d = res[0];
+      } else if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        d = res.data[0];
+      } else if (res && typeof res === 'object' && !Array.isArray(res)) {
+        d = res;
+      }
 
-      setPlacementId(d.cri48_placement_id || null);
+      setPlacementId(d.cri48_placement_id || d.id || null);
 
       // Transform 4.8.1 data
       const tableData481 = (d.placement_data || []).map((row, index) => ({
@@ -118,15 +126,44 @@ const Criterion4_8Form = ({
         lyg: row.lyg || "",
         lygm1: row.lygm1 || "",
         lygm2: row.lygm2 || "",
+        row_type: row.row_type || "",
       }));
 
+      // Calculate Average if missing (Row 6 depends on Row 5)
+      if (tableData481.length > 6) {
+        const piRow = tableData481[5];
+        const avgRow = tableData481[6];
+        // Always recalculate average to ensure consistency
+        const p1 = parseFloat(piRow.lyg) || 0;
+        const p2 = parseFloat(piRow.lygm1) || 0;
+        const p3 = parseFloat(piRow.lygm2) || 0;
+        const avg = ((p1 + p2 + p3) / 3).toFixed(2);
+        avgRow.lyg = avg;
+        avgRow.lygm1 = avg;
+        avgRow.lygm2 = avg;
+      }
+
+      // Ensure we have all 7 rows even if data is incomplete
+      while (tableData481.length < 7) {
+        const index = tableData481.length;
+        const rowTypes = ["N_row", "X_row", "Y_row", "Z_row", "total", "placement_index", "average"];
+        tableData481.push({
+          id: `row481-${Date.now()}-${index}`,
+          item: getRowLabel481(index),
+          lyg: "",
+          lygm1: "",
+          lygm2: "",
+          row_type: rowTypes[index] || "unknown",
+        });
+      }
+
       // Transform 4.8.2 data (adjust field names according to your actual API)
-      const tableData482 = (d.placement_student_list || []).map((row, index) => ({
+      const tableData482 = (d.placement_higher_studies_data || []).map((row, index) => ({
         id: `row482-${Date.now()}-${index}`,
         sl_no: row.sl_no || index + 1,
         name: row.student_name || "",
-        usn: row.usn || "",
-        company: row.company_institute || "",
+        usn: row.usn || row.enrollment_no || "",
+        company: row.company_institute || row.company || row.name_of_employer || "",
         package: row.ctc_program || "",
         year: row.year || "",
         type: row.type || "",
@@ -215,6 +252,19 @@ const Criterion4_8Form = ({
       };
     });
 
+    // Ensure average is calculated before saving
+    if (payload481.length > 6) {
+      const piRow = payload481[5]; // placement_index row
+      const avgRow = payload481[6]; // average row
+      const p1 = parseFloat(piRow.lyg) || 0;
+      const p2 = parseFloat(piRow.lygm1) || 0;
+      const p3 = parseFloat(piRow.lygm2) || 0;
+      const avg = ((p1 + p2 + p3) / 3).toFixed(2);
+      avgRow.lyg = avg;
+      avgRow.lygm1 = avg;
+      avgRow.lygm2 = avg;
+    }
+
     const payload482 = (formData.tableData["4.8.2"] || []).map((row) => ({
       sl_no: row.sl_no || "",
       student_name: row.name || "",
@@ -227,7 +277,7 @@ const Criterion4_8Form = ({
 
     return {
       placement_data: payload481,
-      placement_student_list: payload482,
+      placement_higher_studies_data: payload482,
     };
   };
 
@@ -288,7 +338,7 @@ const Criterion4_8Form = ({
       );
 
       onSaveSuccess?.();
-      loadData();
+      await loadData();
     } catch (err) {
       console.error(err);
       setAlert(
@@ -323,7 +373,55 @@ const Criterion4_8Form = ({
       );
       return;
     }
-    // ... (delete logic remains same)
+    console.log("Deleting Criterion 4.8 data with ID:", placementId);
+    
+    setAlert(
+      <SweetAlert
+        warning
+        showCancel
+        confirmBtnText="Yes, delete it!"
+        confirmBtnBsStyle="danger"
+        confirmBtnCssClass="btn-confirm"
+        cancelBtnCssClass="btn-cancel"
+        title="Are you sure?"
+        onConfirm={async () => {
+          setAlert(null);
+          try {
+            await newnbaCriteria4Service.deleteCriteria4_8_Data(placementId);
+            setAlert(
+              <SweetAlert
+                success
+                title="Deleted!"
+                confirmBtnCssClass="btn-confirm"
+                onConfirm={async () => {
+                  setAlert(null);
+                  setPlacementId(null);
+                  await loadData(); 
+                  onSaveSuccess?.();
+                }}
+              >
+                Data has been deleted successfully.
+              </SweetAlert>
+            );
+          } catch (err) {
+            console.error("Delete Error:", err);
+            setAlert(
+              <SweetAlert
+                danger
+                title="Delete Failed"
+                confirmBtnCssClass="btn-confirm"
+                onConfirm={() => setAlert(null)}
+              >
+                {err.message || 'Failed to delete data'}
+              </SweetAlert>
+            );
+          }
+        }}
+        onCancel={() => setAlert(null)}
+      >
+        You won't be able to revert this deletion!
+      </SweetAlert>
+    );
   };
 
   if (loading || (showCardView && cardLoading)) {
@@ -375,4 +473,4 @@ const Criterion4_8Form = ({
   );
 };
 
-export default Criterion4_8Form;
+export default Criterion4_8Form; 
