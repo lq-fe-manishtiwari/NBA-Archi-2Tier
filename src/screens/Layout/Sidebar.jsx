@@ -13,17 +13,26 @@ import logoutIcon from "@/_assets/images_new_design/sidebarIcon/Logout.svg";
 
 const Sidebar = ({ isOpen, toggle }) => {
   const [roles, setRoles] = useState("");
+  const [staffAccess, setStaffAccess] = useState({});
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const location = useLocation(); // ✅ use react-router location
+  const location = useLocation();
 
-  const currentUser = localStorage.getItem("currentUser");
   const learnQoch =
     "https://learnqoch.com/wp-content/uploads/al_opt_content/IMAGE/learnqoch.com/wp-content/uploads/2024/08/LearnQoch-WebT_Logo.png.bv_resized_mobile.png.bv.webp?bv_host=learnqoch.com";
 
   useEffect(() => {
+    const currentUser = localStorage.getItem("currentUser");
+    const userProfile = localStorage.getItem("userProfile");
+
     if (currentUser) {
       const user = JSON.parse(currentUser);
-      setRoles(user.sub);
+      setRoles(user.sub || user.roles?.[0]?.name);
+    }
+
+    if (userProfile) {
+      const profile = JSON.parse(userProfile);
+      const accessAttrs = profile.staffAccessAttributes?.[0] || {};
+      setStaffAccess(accessAttrs);
     }
   }, []);
 
@@ -49,7 +58,8 @@ const Sidebar = ({ isOpen, toggle }) => {
       iconActive: academicsActive,
       iconInactive: academicsInactive,
       match: ["/academics", "/add-grade", "/add-batch", "/add-role"],
-      role: ["SUPERADMIN"],
+      role: ["SUPERADMIN", "ADMIN"],
+      accessKey: "academics_access",
     },
     {
       path: "/courses",
@@ -57,25 +67,10 @@ const Sidebar = ({ isOpen, toggle }) => {
       iconActive: academicsActive,
       iconInactive: academicsInactive,
       match: ["/courses", "/add-courses", "/add-paper", "/add-module", "/add-unit"],
-      role: ["SUPERADMIN"],
+      role: ["SUPERADMIN", "ADMIN"],
+      accessKey: "academics_access",
     },
-    // {
-    //   path: "/student",
-    //   label: "Students",
-    //   iconActive: studentActive,
-    //   iconInactive: studentInactive,
-    //   match: ["/student", "/add-student", "/student-view-profile", "/student-edit"],
-    //   role: ["ADMIN", "SUPERADMIN"],
-    // },
-    // {
-    //   path: "/teacher-list",
-    //   label: "Teachers",
-    //   iconActive: studentActive,
-    //   iconInactive: studentInactive,
-    //   match: ["/teacher-list", "/add-teacher", "/teacher-view-profile", "/teacher-edit"],
-    //   role: ["ADMIN", "SUPERADMIN"],
-    // },
-     {
+    {
       path: "/other-staff/dashboard",
       label: "Other Staff",
       iconActive: studentActive,
@@ -83,51 +78,27 @@ const Sidebar = ({ isOpen, toggle }) => {
       match: ["/other-staff"],
       role: ["SUPERADMIN"],
     },
-    //  {
-    //   path: "/admin-assessment",
-    //   label: "Assessment",
-    //   iconActive: studentActive,
-    //   iconInactive: studentInactive,
-    //   match: ["/admin-assessment"],
-    //   role: ["ADMIN", "SUPERADMIN"],
-    // },
-    //  {
-    //   path: "/admin-receivable",
-    //   label: "Receivable",
-    //   iconActive: studentActive,
-    //   iconInactive: studentInactive,
-    //   match: ["/admin-receivable"],
-    //   role: ["ADMIN", "SUPERADMIN"],
-    // },
-    //  {
-    //   path: "/admin-AdvanceFees",
-    //   label: "Advance Fee",
-    //   iconActive: studentActive,
-    //   iconInactive: studentInactive,
-    //   match: ["/admin-AdvanceFees"],
-    //   role: ["ADMIN", "SUPERADMIN"],
-    // },
     {
       path: "/obe",
       label: "OBE",
       iconActive: studentActive,
       iconInactive: studentInactive,
       match: ["/obe"],
-      role: ["SUPERADMIN"],
+      role: ["SUPERADMIN", "ADMIN"],
+      accessKey: "uniform_access",
     },
-     {
+    {
       path: "/view-nba",
       label: "NBA",
       iconActive: studentActive,
       iconInactive: studentInactive,
       match: ["/view-nba"],
-      role: ["ADMIN", "SUPERADMIN"],
+      role: ["SUPERADMIN", "ADMIN"],
     },
   ];
 
   const handleMobileToggle = () => setIsMobileOpen(!isMobileOpen);
 
-  // ✅ Common function for active logic (works both in desktop & mobile)
   const isItemActive = (item, pathname) => {
     return item.match.some((url) => {
       if (url === "/") {
@@ -135,6 +106,14 @@ const Sidebar = ({ isOpen, toggle }) => {
       }
       return pathname.startsWith(url);
     });
+  };
+
+  const hasAccess = (item) => {
+    if (!item.role.includes(roles)) return false;
+    if (item.accessKey) {
+      return staffAccess?.[item.accessKey] === "true";
+    }
+    return true;
   };
 
   return (
@@ -169,7 +148,7 @@ const Sidebar = ({ isOpen, toggle }) => {
         {/* ===== Menu Items ===== */}
         <ul className="list-none flex-1 px-2">
           {menuItems.map((item, i) => {
-            if (!item.role.includes(roles)) return null;
+            if (!hasAccess(item)) return null;
 
             const active = isItemActive(item, location.pathname);
 
@@ -247,7 +226,7 @@ const Sidebar = ({ isOpen, toggle }) => {
             {/* ===== Menu Items (Mobile) ===== */}
             <ul className="list-none flex-1">
               {menuItems.map((item, i) => {
-                if (!item.role.includes(roles)) return null;
+                if (!hasAccess(item)) return null;
 
                 const active = isItemActive(item, location.pathname);
 

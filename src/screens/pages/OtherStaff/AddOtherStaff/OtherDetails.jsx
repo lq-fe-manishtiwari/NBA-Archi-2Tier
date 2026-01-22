@@ -20,7 +20,7 @@ const OtherDetails = ({ values, onCheckboxChangeCurr }) => {
     { key: "enquiry_access", label: "Enquiry Access" },
     { key: "report_access", label: "Report Access" },
     { key: "leave_access", label: "Leave Access" },
-    { key: "uniform_access", label: "Uniform Access" },
+    { key: "uniform_access", label: "OBE Access" },
     { key: "library", label: "Library Access" },
     { key: "placement", label: "Placement Access" },
     { key: "event_access", label: "Event Access" },
