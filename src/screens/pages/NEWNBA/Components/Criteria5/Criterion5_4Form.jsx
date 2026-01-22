@@ -13,6 +13,11 @@ const Criterion5_4Form = ({
   onSaveSuccess,
   cardItem = null,
 }) => {
+  console.log("🔵 Criterion5_3Form props:", {
+    cycle_sub_category_id,
+    other_staff_id,
+    isEditable
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recordId, setRecordId] = useState(null);
@@ -166,7 +171,7 @@ const Criterion5_4Form = ({
   }, [cycle_sub_category_id, other_staff_id]);
 
   useEffect(() => {
-    if (cycle_sub_category_id && other_staff_id) {
+    if (cycle_sub_category_id) {
       console.log("🚀 Loading data for 5.4 Faculty Retention...");
       loadData();
     }
@@ -177,7 +182,8 @@ const Criterion5_4Form = ({
     console.log("handleSave called with formData:", formData);
     
     if (!other_staff_id || !cycle_sub_category_id) {
-      toast.error("Staff ID or Cycle information is missing.");
+      console.log(cycle_sub_category_id,other_staff_id)
+      console.error("Staff ID or Cycle information is missing.");
       return;
     }
   

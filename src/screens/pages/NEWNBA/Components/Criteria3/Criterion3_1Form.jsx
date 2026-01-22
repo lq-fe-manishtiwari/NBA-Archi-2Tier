@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+// src/screens/pages/NEWNBA/Components/Criteria3/Criterion3_1Form.jsx
+
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import SweetAlert from "react-bootstrap-sweetalert";
 import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
@@ -44,7 +46,8 @@ const Criterion3_1Form = ({
     fields: [
       {
         name: "3.1.1",
-        label: "3.1.1. Course Outcomes (SAR Should include Course Outcomes of One Course from Each Semester ofStudy, however, should be Prepared for all Courses) (05)",
+        label:
+          "3.1.1. Course Outcomes (SAR Should include Course Outcomes of One Course from Each Semester of Study, however, should be Prepared for all Courses) (05)",
         marks: 5,
         hasTable: true,
         hasFile: true,
@@ -62,7 +65,8 @@ const Criterion3_1Form = ({
       },
       {
         name: "3.1.2",
-        label: "3.1.2. CO-PO Matrices of Courses Selected in 3.1.1 (Ten Matrices to be Mentioned; One per Semester from 1st to 10th Semester) (05)",
+        label:
+          "3.1.2. CO-PO Matrices of Courses Selected in 3.1.1 (Ten Matrices to be Mentioned; One per Semester from 1st to 10th Semester) (05)",
         marks: 5,
         hasTable: true,
         hasFile: true,
@@ -76,10 +80,7 @@ const Criterion3_1Form = ({
               header: `PO${i + 1}`,
               width: "w-16",
               type: "select",
-              options: ["-", "1", "2", "3"].map((v) => ({
-                value: v,
-                label: v,
-              })),
+              options: ["-", "1", "2", "3"].map((v) => ({ value: v, label: v })),
             })),
           ],
         },
@@ -100,10 +101,7 @@ const Criterion3_1Form = ({
               header: `PO${i + 1}`,
               width: "w-16",
               type: "select",
-              options: ["-", "1", "2", "3"].map((v) => ({
-                value: v,
-                label: v,
-              })),
+              options: ["-", "1", "2", "3"].map((v) => ({ value: v, label: v })),
             })),
           ],
         },
@@ -118,192 +116,183 @@ const Criterion3_1Form = ({
     JSON.parse(localStorage.getItem("userProfile") || "{}")?.rawData?.other_staff_id ||
     JSON.parse(localStorage.getItem("userInfo") || "{}")?.other_staff_id;
 
-  // Always ensure at least one empty file upload entry
   const ensureFileUploadSlot = (files = []) => {
-    if (files?.length > 0) {
-      return files.map((f, i) => ({
-        id: `file-${f.field || "doc"}-${i}-${Date.now()}`,
-        filename: f.file_name || f.name || "",
-        file: null,
-        s3Url: f.file_url || f.url || "",
+    const normalized = (files || []).map((f, i) => {
+      const url = f.file_url || f.url || f.s3Url || "";
+      return {
+        id: `file-${i}-${Date.now() + Math.random()}`,
+        filename: f.file_name || f.name || (url ? url.split("/").pop() : ""),
+        s3Url: url,
         description: f.description || "",
         uploading: false,
-      }));
-    }
-
-    return [
-      {
-        id: `file-empty-${Date.now()}`,
-        filename: "",
         file: null,
-        s3Url: "",
-        description: "",
-        uploading: false,
-      },
-    ];
-  };
+      };
+    });
 
-  /* ---------- 3.1.1 Semester-wise COs ---------- */
+    return normalized.length > 0
+      ? normalized
+      : [
+          {
+            id: `file-empty-${Date.now()}`,
+            filename: "",
+            s3Url: "",
+            description: "",
+            uploading: false,
+            file: null,
+          },
+        ];
+  };
 
   const mapCourseOutcomesTo311 = (data = []) =>
     data.map((co) => ({
-      course_code: co.subject?.subjectCode || "",
+      course_code: co.subject?.subject_code || co.subject?.subjectCode || "",
       course_name: co.subject?.name || "",
       year_of_study: co.subject?.semester
         ? `Semester ${co.subject.semester.semester_number} (${co.subject.semester.name})`
         : "",
-      co_code: co.coCode || "",
-      co_statement: co.coStatement || "",
+      co_code: co.co_code || co.coCode || "",
+      co_statement: co.co_statement || co.coStatement || "",
     }));
-
-  /* ---------- 3.1.2 CO–PO Matrix ---------- */
 
   const buildCoPoMatrix312 = (mapping = []) => {
     const rows = {};
-
     mapping.forEach((m) => {
-      const coCode = m.co?.coCode;
+      const coCode = m.co?.coCode || m.co_code;
       if (!coCode) return;
-
       if (!rows[coCode]) {
         rows[coCode] = { co_code: coCode };
         for (let i = 1; i <= 12; i++) rows[coCode][`PO${i}`] = "-";
       }
-
       const poCode = m.po?.poCode;
-      if (poCode) {
-        rows[coCode][poCode] = m.correlationLevel || "-";
-      }
+      if (poCode) rows[coCode][poCode] = m.correlationLevel || "-";
     });
-
     return Object.values(rows);
   };
 
-  /* ---------- 3.1.3 Course–PO Matrix ---------- */
-
   const buildCoursePoMatrix313 = (mapping = []) => {
     const courseMap = {};
-
     mapping.forEach((m) => {
-      const courseCode = m.subject?.subjectCode;
+      const courseCode = m.subject?.subjectCode || m.course_code;
       const poCode = m.po?.poCode;
       if (!courseCode || !poCode) return;
-
       if (!courseMap[courseCode]) {
         courseMap[courseCode] = { course_code: courseCode };
         for (let i = 1; i <= 12; i++) courseMap[courseCode][`PO${i}`] = "-";
       }
-
       courseMap[courseCode][poCode] = m.averageCorrelation?.toString() || "-";
     });
-
     return Object.values(courseMap);
   };
 
-  /* ---------------- API CALLS ---------------- */
-
-  const fetchProgramCOs = useCallback(async () => {
-    if (!programId) return;
-    try {
-      const res = await newnbaCriteria1Service.getCourseOutcomesByProgram(programId);
-      setProgramCourseOutcomes(res?.data || res || []);
-    } catch {
-      toast.error("Failed to fetch Course Outcomes");
-    }
-  }, [programId]);
-
-  const loadUserData = useCallback(async () => {
-    if (!cycle_sub_category_id) return;
-
-    try {
-      const res = await newnbaCriteria3Service.getCriteria3_1_Data(
-        cycle_sub_category_id,
-        getStaffId()
-      );
-
-      const data = res?.data?.[0] || {};
-      setCorrelationId(data?.id || null);
-
-      setInitialData((prev) => ({
-        ...prev,
-        tableData: {
-          "3.1.1": data?.course_outcomes || [],
-          "3.1.2": data?.co_po_matrices || [],
-          "3.1.3": data?.course_po_matrix || [],
-        },
-        filesByField: {
-          "3.1.1": ensureFileUploadSlot(data?.course_outcome_document),
-          "3.1.2": ensureFileUploadSlot(data?.co_po_matrices_document),
-          "3.1.3": ensureFileUploadSlot(data?.course_po_matrix_document),
-        },
-      }));
-    } catch (err) {
-      console.warn("No previous Criterion 3.1 data found", err);
-
-      // Show empty file upload slots even when no data exists
-      setInitialData((prev) => ({
-        ...prev,
-        filesByField: {
-          "3.1.1": ensureFileUploadSlot(),
-          "3.1.2": ensureFileUploadSlot(),
-          "3.1.3": ensureFileUploadSlot(),
-        },
-      }));
-    }
-  }, [cycle_sub_category_id]);
-
-  const loadReferenceData = useCallback(async () => {
-    if (!programId) return;
-
-    const [poRes, psoRes, mappingRes] = await Promise.all([
-      POService.getPObyProgramId(programId),
-      PSOService.getPSOByProgramId(programId),
-      newnbaCriteria1Service.getCoPoMappingsByProgram(programId),
-    ]);
-
-    setPoData(poRes || []);
-    setPsoData(psoRes || []);
-
-    const mappings = mappingRes?.content || [];
-
-    setInitialData((prev) => ({
-      ...prev,
-      tableData: {
-        ...prev.tableData,
-        "3.1.2": buildCoPoMatrix312(mappings),
-        "3.1.3": buildCoursePoMatrix313(mappings),
-      },
-    }));
-  }, [programId]);
-
-  /* ---------------- INIT ---------------- */
+  /* ---------------- INITIAL DATA LOADING ---------------- */
 
   useEffect(() => {
-    const init = async () => {
+    const initializeAllData = async () => {
+      if (!cycle_sub_category_id) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      await Promise.all([fetchProgramCOs(), loadReferenceData(), loadUserData()]);
-      setLoading(false);
+
+      try {
+        // 1. Load user-saved data (highest priority)
+        const userRes = await newnbaCriteria3Service.getCriteria3_1_Data(
+          cycle_sub_category_id,
+          getStaffId()
+        );
+
+        const rawUserData = userRes?.[0] || userRes?.data || {};
+        console.log(rawUserData);
+        const corrId = rawUserData.course_outcome_correlation_id || rawUserData.id || null;
+        console.log(corrId);
+        setCorrelationId(corrId);
+
+        const userTableData = {
+          "3.1.1": rawUserData.course_outcomes || [],
+          "3.1.2": rawUserData.co_po_matrices || [],
+          "3.1.3": rawUserData.course_po_matrix || [],
+        };
+
+        const userFiles = {
+          "3.1.1": ensureFileUploadSlot(rawUserData.course_outcome_document || []),
+          "3.1.2": ensureFileUploadSlot(rawUserData.co_po_document || []),
+          "3.1.3": ensureFileUploadSlot(rawUserData.course_po_document || []),
+        };
+
+        // 2. Load reference / auto-fill data (only if programId exists)
+        let ref312 = [];
+        let ref313 = [];
+        let autoFill311 = [];
+
+        if (programId) {
+          const [poRes, psoRes, mappingRes, coRes] = await Promise.all([
+            POService.getPObyProgramId(programId),
+            PSOService.getPSOByProgramId(programId),
+            newnbaCriteria1Service.getCoPoMappingsByProgram(programId),
+            newnbaCriteria1Service.getCourseOutcomesByProgram(programId),
+          ]);
+
+          setPoData(poRes || []);
+          setPsoData(psoRes || []);
+          const cos = coRes?.data || coRes || [];
+          setProgramCourseOutcomes(cos);
+
+          const mappings = mappingRes?.content || [];
+
+          ref312 = buildCoPoMatrix312(mappings);
+          ref313 = buildCoursePoMatrix313(mappings);
+          autoFill311 = mapCourseOutcomesTo311(cos);
+        }
+
+        // 3. Final merge — user saved data has priority
+        const finalTableData = {
+          "3.1.1":
+            userTableData["3.1.1"].length > 0
+              ? userTableData["3.1.1"]
+              : autoFill311,
+          "3.1.2":
+            userTableData["3.1.2"].length > 0
+              ? userTableData["3.1.2"]
+              : ref312,
+          "3.1.3":
+            userTableData["3.1.3"].length > 0
+              ? userTableData["3.1.3"]
+              : ref313,
+        };
+
+        setInitialData({
+          tableData: finalTableData,
+          filesByField: userFiles,
+        });
+
+        console.log("[INIT SUCCESS] Final rows:", {
+          "3.1.1": finalTableData["3.1.1"].length,
+          "3.1.2": finalTableData["3.1.2"].length,
+          "3.1.3": finalTableData["3.1.3"].length,
+        });
+
+        console.log("[INIT] correlationId:", corrId);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+        toast.error("Failed to load Criterion 3.1 data");
+        setCorrelationId(null);
+
+        setInitialData({
+          tableData: { "3.1.1": [], "3.1.2": [], "3.1.3": [] },
+          filesByField: {
+            "3.1.1": ensureFileUploadSlot(),
+            "3.1.2": ensureFileUploadSlot(),
+            "3.1.3": ensureFileUploadSlot(),
+          },
+        });
+      } finally {
+        setLoading(false);
+      }
     };
-    init();
-  }, [fetchProgramCOs, loadReferenceData, loadUserData]);
 
-  /* ---------- Auto-fill 3.1.1 only if empty ---------- */
-
-  useEffect(() => {
-    if (
-      !loading &&
-      initialData.tableData["3.1.1"].length === 0 &&
-      programCourseOutcomes.length > 0
-    ) {
-      setInitialData((prev) => ({
-        ...prev,
-        tableData: {
-          ...prev.tableData,
-          "3.1.1": mapCourseOutcomesTo311(programCourseOutcomes),
-        },
-      }));
-    }
-  }, [loading, programCourseOutcomes, initialData.tableData]);
+    initializeAllData();
+  }, [cycle_sub_category_id, programId]);
 
   /* ---------------- SAVE ---------------- */
 
@@ -316,37 +305,126 @@ const Criterion3_1Form = ({
         course_outcomes: formData.tableData["3.1.1"],
         co_po_matrices: formData.tableData["3.1.2"],
         course_po_matrix: formData.tableData["3.1.3"],
+
+        course_outcome_document: formData.filesByField["3.1.1"]
+          ?.filter((f) => f.s3Url || f.url || f.file_url)
+          ?.map((f) => ({
+            file_url: f.s3Url || f.url || f.file_url,
+            file_name: f.filename,
+            description: f.description?.trim() || "",
+          })) || [],
+
+        co_po_document: formData.filesByField["3.1.2"]
+          ?.filter((f) => f.s3Url || f.url || f.file_url)
+          ?.map((f) => ({
+            file_url: f.s3Url || f.url || f.file_url,
+            file_name: f.filename,
+            description: f.description?.trim() || "",
+          })) || [],
+
+        course_po_document: formData.filesByField["3.1.3"]
+          ?.filter((f) => f.s3Url || f.url || f.file_url)
+          ?.map((f) => ({
+            file_url: f.s3Url || f.url || f.file_url,
+            file_name: f.filename,
+            description: f.description?.trim() || "",
+          })) || [],
       };
 
+      let res;
       if (correlationId) {
-        await newnbaCriteria3Service.putCriteria3_1_Data(
+        res = await newnbaCriteria3Service.putCriteria3_1_Data(
           correlationId,
           getStaffId(),
           payload
         );
       } else {
-        const res = await newnbaCriteria3Service.saveCriteria3_1_Data(
-          getStaffId(),
-          payload
-        );
-        setCorrelationId(res?.course_outcome_correlation_id);
+        res = await newnbaCriteria3Service.saveCriteria3_1_Data(getStaffId(), payload);
+        setCorrelationId(res?.course_outcome_correlation_id || res?.id);
       }
 
       toast.success("Criterion 3.1 saved successfully");
       onSaveSuccess?.();
-    } catch {
-      toast.error("Save failed");
+
+      // Option A: full reload (simple but heavy)
+      // window.location.reload();
+
+      // Option B: better → just re-fetch user data
+      // You can call a lighter version of initializeAllData() here if you want
+      // For now we keep reload for consistency with original behavior
+      window.location.reload();
+    } catch (err) {
+      console.error("Save failed:", err);
+      toast.error("Failed to save Criterion 3.1");
     } finally {
       setSaving(false);
     }
   };
 
-  /* ---------------- RENDER ---------------- */
+  /* ---------------- DELETE ---------------- */
+
+  const handleDelete = () => {
+    if (!correlationId) {
+      setAlert(
+        <SweetAlert
+          info
+          title="Nothing to Delete"
+          confirmBtnText="OK"
+          onConfirm={() => setAlert(null)}
+        >
+          No saved Criterion 3.1 record found.
+        </SweetAlert>
+      );
+      return;
+    }
+
+    setAlert(
+      <SweetAlert
+        warning
+        showCancel
+        confirmBtnText="Yes, delete it!"
+        cancelBtnText="Cancel"
+        title="Are you sure?"
+        onConfirm={async () => {
+          try {
+            await newnbaCriteria3Service.deleteCriteria3_1Data(correlationId);
+            setAlert(
+              <SweetAlert
+                success
+                title="Deleted!"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                Criterion 3.1 data deleted successfully
+              </SweetAlert>
+            );
+            setCorrelationId(null);
+            window.location.reload();
+          } catch (err) {
+            console.error("Delete failed:", err);
+            setAlert(
+              <SweetAlert
+                danger
+                title="Delete Failed"
+                confirmBtnText="OK"
+                onConfirm={() => setAlert(null)}
+              >
+                Could not delete the record.
+              </SweetAlert>
+            );
+          }
+        }}
+        onCancel={() => setAlert(null)}
+      >
+        This action cannot be undone.
+      </SweetAlert>
+    );
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh] text-lg">
-        Loading Criterion 3.1...
+      <div className="flex justify-center items-center min-h-[50vh] text-lg font-medium text-gray-600">
+        Loading Criterion 3.1 data...
       </div>
     );
   }
@@ -362,6 +440,7 @@ const Criterion3_1Form = ({
         isCompleted={!isEditable}
         isContributorEditable={isEditable}
         onSave={handleSave}
+        onDelete={handleDelete}
       />
       {alert}
     </div>

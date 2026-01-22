@@ -154,8 +154,8 @@ const Criterion3_2Form = ({
             : [],
         },
         filesByField: {
-          "3.2.1": ensureFileUploadSlot(data?.attainment_course_outcome_documents),
-          "3.2.2": ensureFileUploadSlot(data?.attainment_course_outcome_table_documents || []), // ← NEW: for table 3.2.2
+          "3.2.1": ensureFileUploadSlot(data?.description_assessment_process_document),
+          "3.2.2": ensureFileUploadSlot(data?.record_attainment_course_outcomes_document || []), // ← NEW: for table 3.2.2
         },
       });
     } catch (err) {
@@ -234,8 +234,8 @@ const Criterion3_2Form = ({
           attainment_level: String(item.attainment_level || "1"),
         })),
 
-        attainment_course_outcome_documents: descriptionFiles,          // for 3.2.1
-        attainment_course_outcome_table_documents: tableFiles,         // for 3.2.2  ← NEW (adjust name if backend uses different field)
+        description_assessment_process_document: descriptionFiles,          // for 3.2.1
+        record_attainment_course_outcomes_document: tableFiles,         // for 3.2.2  ← NEW (adjust name if backend uses different field)
       };
 
       console.log("[Criterion 3.2] Saving payload:", JSON.stringify(payload, null, 2));

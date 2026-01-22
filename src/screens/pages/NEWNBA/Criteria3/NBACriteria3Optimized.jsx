@@ -327,65 +327,95 @@ const NBACriteria3Optimized = () => {
     setDataFilledStatus(filledMap);
   };
 
-  const fetchCardDetails = async (cycleSubCategoryId) => {
-    try {
-      const indicator = keyIndicators.find(ind => ind.subLevel2Id === cycleSubCategoryId);
-      const sectionName = indicator?.rawName || "";
+const fetchCardDetails = async (cycleSubCategoryId) => {
+  try {
+    const indicator = keyIndicators.find(ind => ind.subLevel2Id === cycleSubCategoryId);
+    const sectionName = indicator?.rawName || "";
 
-      let cardDetails;
-      if (sectionName.includes("3.1")) {
-        cardDetails = await newnbaCriteria3Service.getAllCriteria3_1_Data(cycleSubCategoryId);
-      } else if (sectionName.includes("3.2")) {
-        cardDetails = await newnbaCriteria3Service.getAllCriteria3_2_Data(cycleSubCategoryId);
-      } else {
-        cardDetails = await newnbaCriteria3Service.getAllCriteria3_3_Data(cycleSubCategoryId);
-      }
+    let cardDetails;
 
-      const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
-      const currentUserInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    if (sectionName.includes("3.1")) {
+      cardDetails = await newnbaCriteria3Service.getAllCriteria3_1_Data(cycleSubCategoryId);
 
-      const currentStaffId = currentUserInfo?.rawData?.other_staff_id ||
-        currentUserInfo.user_id ||
-        currentUserInfo2?.other_staff_id ||
-        currentUserInfo2?.user_id;
-
-      let allCards = [...cardDetails];
-
-      if (currentStaffId) {
-        try {
-          const coordinatorData = await newnbaCriteria3Service.getCriteria3_1_Data(cycleSubCategoryId, currentStaffId);
-          const coordinatorRecord = Array.isArray(coordinatorData) ? coordinatorData[0] : coordinatorData;
-
-          if (coordinatorRecord && coordinatorRecord.id) {
-            const existingCard = cardDetails.find(card => card.other_staff_id === currentStaffId);
-
-            if (!existingCard) {
-              const coordinatorCard = {
-                ...coordinatorRecord,
-                is_coordinator_entry: true,
-                approval_status: 'COORDINATORS_DATA',
-                firstname: coordinatorRecord.firstname || currentUserInfo?.rawData?.firstname || currentUserInfo2?.firstname || 'Coordinator',
-                lastname: coordinatorRecord.lastname || currentUserInfo?.rawData?.lastname || currentUserInfo2?.lastname || '',
-                other_staff_id: currentStaffId
-              };
-              allCards.unshift(coordinatorCard);
-            }
-          }
-        } catch (coordinatorError) {
-          // Coordinator hasn't filled yet
-        }
-      }
-
-      setCardData(prev => ({
-        ...prev,
-        [cycleSubCategoryId]: allCards
+      // ✅ NORMALIZE ID FOR 3.1
+      cardDetails = (cardDetails || []).map(card => ({
+        ...card,
+        id: card.course_outcome_correlation_id // 🔥 critical fix
       }));
-      return allCards;
-    } catch (error) {
-      console.error("Failed to fetch card details:", error);
-      return [];
+
+    } else if (sectionName.includes("3.2")) {
+      cardDetails = await newnbaCriteria3Service.getAllCriteria3_2_Data(cycleSubCategoryId);
+
+    } else {
+      cardDetails = await newnbaCriteria3Service.getAllCriteria3_3_Data(cycleSubCategoryId);
     }
-  };
+
+    const currentUserInfo = JSON.parse(localStorage.getItem("userProfile") || "{}");
+    const currentUserInfo2 = JSON.parse(localStorage.getItem("userInfo") || "{}");
+
+    const currentStaffId =
+      currentUserInfo?.rawData?.other_staff_id ||
+      currentUserInfo.user_id ||
+      currentUserInfo2?.other_staff_id ||
+      currentUserInfo2?.user_id;
+
+    let allCards = [...cardDetails];
+    console.log("allCards", allCards);
+
+    // ✅ Only fetch coordinator data for 3.1
+    if (currentStaffId && sectionName.includes("3.1")) {
+      try {
+        const coordinatorData =
+          await newnbaCriteria3Service.getCriteria3_1_Data(cycleSubCategoryId, currentStaffId);
+
+        const coordinatorRecord = Array.isArray(coordinatorData)
+          ? coordinatorData[0]
+          : coordinatorData;
+
+        if (coordinatorRecord?.course_outcome_correlation_id) {
+          const existingCard = allCards.find(
+            card => card.other_staff_id === currentStaffId
+          );
+
+          if (!existingCard) {
+            const coordinatorCard = {
+              ...coordinatorRecord,
+              id: coordinatorRecord.course_outcome_correlation_id, // ✅ normalize here too
+              is_coordinator_entry: true,
+              approval_status: "COORDINATORS_DATA",
+              firstname:
+                coordinatorRecord.firstname ||
+                currentUserInfo?.rawData?.firstname ||
+                currentUserInfo2?.firstname ||
+                "Coordinator",
+              lastname:
+                coordinatorRecord.lastname ||
+                currentUserInfo?.rawData?.lastname ||
+                currentUserInfo2?.lastname ||
+                "",
+              other_staff_id: currentStaffId
+            };
+
+            allCards.unshift(coordinatorCard);
+          }
+        }
+      } catch (coordinatorError) {
+        // coordinator not filled
+      }
+    }
+
+    setCardData(prev => ({
+      ...prev,
+      [cycleSubCategoryId]: allCards
+    }));
+
+    return allCards;
+  } catch (error) {
+    console.error("Failed to fetch card details:", error);
+    return [];
+  }
+};
+
 
   const handleCardClick = async (subLevel2Id, userStaffId, cardItem = null) => {
     setSelectedCard({

@@ -1,3 +1,5 @@
+// src/screens/pages/NEWNBA/Components/Criteria3/Criterion3_3Form.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import GenericCriteriaForm3_8 from "./GenericCriteriaForm3_8";
 import { newnbaCriteria3Service } from "../../Services/NewNBA-Criteria3.service";
@@ -9,6 +11,8 @@ const Criterion3_3Form = ({
   isEditable = true,
   onSaveSuccess,
   otherStaffId = null,
+  programId = null,
+  academic_year_id = null,          // ← Changed: now numeric ID from parent
 }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,35 +91,41 @@ const Criterion3_3Form = ({
     ],
   };
 
-  // Helper to always ensure at least one empty file upload entry
+  // Helpers
+  const toNumberOrNull = (val) => {
+    if (val === "" || val == null || val === undefined) return null;
+    const num = Number(val);
+    return isNaN(num) ? null : num;
+  };
+
   const ensureFileUploadSlot = (files = []) => {
-    if (Array.isArray(files) && files.length > 0) {
-      return files.map((f, i) => ({
-        id: `file-3.3.1-${i}-${Date.now()}`,
-        filename: f.file_name || "",
-        file: null,
-        s3Url: f.file_url || "",
-        url: f.file_url || "",
-        description: f.description || "",
-        uploading: false,
-      }));
+    if (!Array.isArray(files) || files.length === 0) {
+      return [
+        {
+          id: `file-3.3.1-empty-${Date.now()}`,
+          filename: "",
+          file: null,
+          s3Url: "",
+          url: "",
+          description: "No document uploaded yet",
+          uploading: false,
+        },
+      ];
     }
 
-    // Default empty upload row when no documents exist
-    return [
-      {
-        id: `file-3.3.1-empty-${Date.now()}`,
-        filename: "",
-        file: null,
-        s3Url: "",
-        description: "",
-        uploading: false,
-      },
-    ];
+    return files.map((f, i) => ({
+      id: `file-3.3.1-${i}-${Date.now()}`,
+      filename: f.file_name || f.filename || "",
+      file: null,
+      s3Url: f.file_url || f.s3Url || f.url || "",
+      url: f.file_url || f.s3Url || f.url || "",
+      description: f.description || "",
+      uploading: false,
+    }));
   };
 
   // ────────────────────────────────────────────────
-  //                   LOAD DATA
+  // LOAD DATA
   // ────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     if (!cycle_sub_category_id) {
@@ -127,7 +137,7 @@ const Criterion3_3Form = ({
 
     try {
       const profileFlags = getAllProfileFlags();
-      setIsContributor(profileFlags?.isContributor || false);
+      setIsContributor(!!profileFlags?.isContributor);
 
       const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
       const staffId =
@@ -135,10 +145,14 @@ const Criterion3_3Form = ({
         userProfile?.rawData?.other_staff_id ||
         userProfile?.user_id;
 
-      const res = await newnbaCriteria3Service.getCriteria3_3_Data(cycle_sub_category_id, staffId);
-      const data = res[0] || res || null;
+      if (!staffId) throw new Error("Staff ID not found");
 
-      console.log("[Criterion 3.3] GET full response:", data);
+      const res = await newnbaCriteria3Service.getCriteria3_3_Data(
+        cycle_sub_category_id,
+        staffId
+      );
+
+      const data = Array.isArray(res) ? res[0] : res || null;
 
       const id = data?.id || null;
       setRecordId(id);
@@ -150,7 +164,6 @@ const Criterion3_3Form = ({
         tableData: {
           "3.3.2": Array.isArray(data?.evaluation_results)
             ? data.evaluation_results.map((item) => ({
-                ...item,
                 po_code: item.po_code || item.code || "",
                 direct_attainment: String(item.direct_attainment ?? item.direct ?? ""),
                 indirect_attainment: String(item.indirect_attainment ?? item.indirect ?? ""),
@@ -160,20 +173,24 @@ const Criterion3_3Form = ({
             : [],
         },
         filesByField: {
-          "3.3.1": ensureFileUploadSlot(data?.attainment_po_pso_document),
+          "3.3.1": ensureFileUploadSlot(data?.attainment_po_pso_document || []),
         },
+      });
+
+      // Debug logs – very important now
+      console.log("[Criterion 3.3] Loaded from parent:", { academic_year_id });
+      console.log("[Criterion 3.3] Backend response:", {
+        academic_year: data?.academic_year,
+        academic_year_id: data?.academic_year_id,
+        fullDataKeys: Object.keys(data || {}),
       });
     } catch (err) {
       console.error("[Criterion 3.3] Load failed:", err);
       setRecordId(null);
-
-      // Even on error → show at least one empty file upload
       setInitialData({
         content: { "3.3.1": "" },
         tableData: { "3.3.2": [] },
-        filesByField: {
-          "3.3.1": ensureFileUploadSlot(),
-        },
+        filesByField: { "3.3.1": ensureFileUploadSlot() },
       });
     } finally {
       setLoading(false);
@@ -185,165 +202,138 @@ const Criterion3_3Form = ({
   }, [loadData]);
 
   // ────────────────────────────────────────────────
-  //                   SAVE DATA
+  // SAVE
   // ────────────────────────────────────────────────
-const handleSave = async (formData = {}) => {
-  setSaving(true);
+  const handleSave = async (formData = {}) => {
+    setSaving(true);
 
-  try {
-    // ────────────────────────────────────────────────
-    // Normalize formData (VERY IMPORTANT)
-    // ────────────────────────────────────────────────
-    const safeFormData = {
-      content: formData?.content || {},
-      tableData: formData?.tableData || {},
-      filesByField: formData?.filesByField || {},
-    };
-console.log("safeformdata",safeFormData);
-    const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
-    const staffId =
-      otherStaffId ||
-      userProfile?.rawData?.other_staff_id ||
-      userProfile?.user_id;
+    try {
+      const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+      const staffId =
+        otherStaffId ||
+        userProfile?.rawData?.other_staff_id ||
+        userProfile?.user_id;
 
-    // ────────────────────────────────────────────────
-    // Documents (3.3.1)
-    // ────────────────────────────────────────────────
-    const documentsArray = (safeFormData.filesByField["3.3.1"] || [])
-      .filter((f) => f?.s3Url || f?.url)
-      .map((f) => ({
-        file_name: (f.filename || "").trim(),
-        file_url: (f.s3Url || f.url || "").trim(),
-        description: (f.description || "").trim(),
-      }));
+      if (!staffId) throw new Error("Staff ID missing");
 
-    // ────────────────────────────────────────────────
-    // Payload
-    // ────────────────────────────────────────────────
-    const payload = {
-      other_staff_id: Number(staffId),
-      cycle_sub_category_id: Number(cycle_sub_category_id),
+      const safeFormData = {
+        content: formData?.content || {},
+        tableData: formData?.tableData || {},
+        filesByField: formData?.filesByField || {},
+      };
 
-      assessment_tools_description: (
-        safeFormData.content["3.3.1"] || ""
-      ).trim(),
+      // Documents
+      const documentsArray = (safeFormData.filesByField["3.3.1"] || [])
+        .filter((f) => (f?.s3Url || f?.url) && (f.filename?.trim() || f.description?.trim()))
+        .map((f) => ({
+          file_name: (f.filename || "").trim(),
+          file_url: (f.s3Url || f.url || "").trim(),
+          description: (f.description || "").trim(),
+        }));
 
-      evaluation_results: (safeFormData.tableData["3.3.2"] || []).map(
-        (item) => ({
-          po_code: (item.po_code || "").trim(),
-          direct_attainment: Number(item.direct_attainment) || 0,
-          indirect_attainment: Number(item.indirect_attainment) || 0,
-          overall_attainment: Number(item.overall_attainment) || 0,
-          attainment_level: (item.attainment_level || "1").trim(),
-        })
-      ),
+      const payload = {
+        other_staff_id: Number(staffId),
+        cycle_sub_category_id: Number(cycle_sub_category_id),
+        program_id: programId ? Number(programId) : null,
 
-      attainment_po_pso_document: documentsArray,
-    };
+        // ─── ONLY THIS ───
+        academic_year_id: formData.academic_year_id 
+          ? Number(formData.academic_year_id) 
+          : null,
 
-    console.log(
-      "[Criterion 3.3] Sending payload:",
-      JSON.stringify(payload, null, 2)
-    );
+        // Removed: academic_year string completely
 
-    // ────────────────────────────────────────────────
-    // Save / Update
-    // ────────────────────────────────────────────────
-    let response;
+        assessment_tools_description: (safeFormData.content["3.3.1"] || "").trim(),
 
-    if (recordId) {
-      response = await newnbaCriteria3Service.putCriteria3_3_Data(
-        recordId,
-        staffId,
-        payload
-      );
-    } else {
-      response = await newnbaCriteria3Service.saveCriteria3_3_Data(
-        staffId,
-        payload
-      );
-    }
+        evaluation_results: (safeFormData.tableData["3.3.2"] || [])
+          .filter((item) => item.po_code?.trim())
+          .map((item) => ({
+            po_code: (item.po_code || "").trim(),
+            direct_attainment: toNumberOrNull(item.direct_attainment),
+            indirect_attainment: toNumberOrNull(item.indirect_attainment),
+            overall_attainment: toNumberOrNull(item.overall_attainment),
+            attainment_level: (item.attainment_level || "1").trim(),
+          })),
 
-    // ────────────────────────────────────────────────
-    // Success
-    // ────────────────────────────────────────────────
-    if (response?.status === 200 || response?.status === 201 || response?.id) {
+        attainment_po_pso_document: documentsArray,
+      };
+
+      console.log("[Criterion 3.3] Sending payload:", JSON.stringify(payload, null, 2));
+
+      let response;
+
+      if (recordId) {
+        response = await newnbaCriteria3Service.putCriteria3_3_Data(
+          recordId,
+          staffId,
+          payload
+        );
+      } else {
+        response = await newnbaCriteria3Service.saveCriteria3_3_Data(staffId, payload);
+      }
+
+      if (response?.status === 200 || response?.status === 201 || response?.id) {
+        setAlert(
+          <SweetAlert
+            success
+            title="Saved!"
+            confirmBtnText="OK"
+            onConfirm={() => {
+              setAlert(null);
+              onSaveSuccess?.();
+            }}
+          >
+            Criterion 3.3 saved successfully.
+          </SweetAlert>
+        );
+
+        await loadData();
+
+        if (isContributor) {
+          try {
+            const updatedId = response?.id || recordId;
+            if (updatedId) {
+              await newnbaCriteria3Service.updateCriteria3_3_Status(
+                {
+                  id: updatedId,
+                  approval_status: "APPROVED",
+                  approved_by: staffId,
+                  approved_by_name: userProfile?.name || userProfile?.rawData?.name || "",
+                },
+                staffId
+              );
+            }
+          } catch (approveErr) {
+            console.error("[Criterion 3.3] Auto-approve failed:", approveErr);
+          }
+        }
+      } else {
+        throw new Error(response?.message || "Save failed");
+      }
+    } catch (err) {
+      console.error("[Criterion 3.3] Save failed:", err);
       setAlert(
         <SweetAlert
-          success
-          title="Saved!"
+          danger
+          title="Save Failed"
           confirmBtnText="OK"
-          onConfirm={() => {
-            setAlert(null);
-            onSaveSuccess?.();
-          }}
+          onConfirm={() => setAlert(null)}
         >
-          Criterion 3.3 saved successfully.
+          {err.message || "Could not save data. Please try again."}
         </SweetAlert>
       );
-
-      await loadData();
-
-      // ────────────────────────────────────────────────
-      // Auto-approve (Contributor)
-      // ────────────────────────────────────────────────
-      if (isContributor) {
-        try {
-          const updatedId = response?.id || recordId;
-
-          if (updatedId) {
-            await newnbaCriteria3Service.updateCriteria3_3_Status(
-              {
-                id: updatedId,
-                approval_status: "APPROVED",
-                approved_by: staffId,
-                approved_by_name:
-                  userProfile?.name || userProfile?.rawData?.name || "",
-              },
-              staffId
-            );
-          }
-        } catch (approveErr) {
-          console.error(
-            "[Criterion 3.3] Auto-approve failed:",
-            approveErr
-          );
-        }
-      }
-    } else {
-      throw new Error(response?.message || "Save failed");
+    } finally {
+      setSaving(false);
     }
-  } catch (err) {
-    console.error("[Criterion 3.3] Save failed:", err);
-
-    setAlert(
-      <SweetAlert
-        danger
-        title="Save Failed"
-        confirmBtnText="OK"
-        onConfirm={() => setAlert(null)}
-      >
-        {err.message || "Could not save data. Please try again."}
-      </SweetAlert>
-    );
-  } finally {
-    setSaving(false);
-  }
-};
-
+  };
 
   // ────────────────────────────────────────────────
-  //                   DELETE
+  // DELETE (unchanged)
   // ────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!recordId) {
       setAlert(
-        <SweetAlert
-          info
-          title="Nothing to Delete"
-          confirmBtnText="OK"
-          onConfirm={() => setAlert(null)}
-        >
+        <SweetAlert info title="Nothing to Delete" confirmBtnText="OK" onConfirm={() => setAlert(null)}>
           No saved record found.
         </SweetAlert>
       );
@@ -379,12 +369,7 @@ console.log("safeformdata",safeFormData);
           } catch (err) {
             console.error("[Criterion 3.3] Delete failed:", err);
             setAlert(
-              <SweetAlert
-                danger
-                title="Delete Failed"
-                confirmBtnText="OK"
-                onConfirm={() => setAlert(null)}
-              >
+              <SweetAlert danger title="Delete Failed" confirmBtnText="OK" onConfirm={() => setAlert(null)}>
                 Could not delete the record. Please try again.
               </SweetAlert>
             );
@@ -412,11 +397,14 @@ console.log("safeformdata",safeFormData);
         marks={config.totalMarks}
         fields={config.fields}
         initialData={initialData}
+        hasData={!!initialData}  
         saving={saving}
         isContributorEditable={isEditable}
         showFileCategories={true}
         onSave={handleSave}
         onDelete={handleDelete}
+        programId={programId}
+        academic_year_id={academic_year_id}      // ← only numeric ID passed
       />
 
       {alert}

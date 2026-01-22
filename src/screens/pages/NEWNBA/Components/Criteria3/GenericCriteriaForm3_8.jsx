@@ -22,13 +22,21 @@ import { collegeService } from "../../../Academics/Services/college.service";
 import { AcademicService } from "../../../Academics/Services/Academic.service";
 import { nbaDashboardService } from "../../Services/NBA-dashboard.service";
 
-// Attainment Visualization Component (unchanged)
-const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
+// ────────────────────────────────────────────────
+// Attainment Visualization Component
+// ────────────────────────────────────────────────
+const Criterion3_8Content = ({
+  programId,
+  academicYearId,           // numeric ID only
+  isEditable,
+  onDelete,
+  onYearChange,             
+}) => {
   const [programs, setPrograms] = useState([]);
   const [academicYears, setAcademicYears] = useState([]);
   const [attainmentData, setAttainmentData] = useState(null);
   const [selectedProgram, setSelectedProgram] = useState(programId || "");
-  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedYearId, setSelectedYearId] = useState(academicYearId || "");
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -58,17 +66,18 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
   }, [programId]);
 
   useEffect(() => {
+    setSelectedYearId(academicYearId || "");
+  }, [academicYearId]);
+
+  useEffect(() => {
     const fetchAttainmentData = async () => {
-      if (selectedProgram && selectedYear) {
+      if (selectedProgram && selectedYearId) {
         try {
           const response = await AttainmentConfigService.getOverallAttainment(
             selectedProgram,
-            selectedYear
+            Number(selectedYearId)  // numeric ID
           );
           setAttainmentData(response || null);
-          if (onFormChange) {
-            onFormChange({ selectedProgram, selectedYear, attainmentData: response });
-          }
         } catch (err) {
           console.error("Failed to fetch attainment data:", err);
           setAttainmentData(null);
@@ -79,11 +88,10 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
     };
 
     fetchAttainmentData();
-  }, [selectedProgram, selectedYear, onFormChange]);
+  }, [selectedProgram, selectedYearId]);
 
   return (
     <div className="space-y-8">
-      {/* Selection Controls */}
       {!programId ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
@@ -94,7 +102,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
               value={selectedProgram}
               onChange={(e) => {
                 setSelectedProgram(e.target.value);
-                setSelectedYear("");
+                setSelectedYearId("");
               }}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -112,8 +120,11 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
               Academic Year
             </label>
             <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              value={selectedYearId}
+              onChange={(e) => {
+   setSelectedYearId(e.target.value);
+ if (onYearChange) onYearChange(e.target.value);
+ }}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select Academic Year</option>
@@ -131,9 +142,12 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
             Academic Year
           </label>
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            disabled={!isEditable}
+            value={selectedYearId}
+                      onChange={(e) => {
+   setSelectedYearId(e.target.value);
+ if (onYearChange) onYearChange(e.target.value);
+ }}
+            // disabled={!isEditable}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select Academic Year</option>
@@ -149,7 +163,6 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
       {/* Attainment Tables */}
       {attainmentData ? (
         <div className="space-y-12">
-          {/* Direct Attainment */}
           <div>
             <h4 className="text-xl font-semibold text-blue-700 mb-4">Direct Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -157,7 +170,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <thead className="bg-blue-600 text-white">
                   <tr>
                     <th className="px-6 py-4 text-left font-medium">PO/PSO</th>
-                    {Object.keys(attainmentData.direct_attainments).map((key) => (
+                    {Object.keys(attainmentData.direct_attainments || {}).map((key) => (
                       <th key={key} className="px-6 py-4 text-center font-medium">
                         {key}
                       </th>
@@ -167,9 +180,9 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
                     <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
-                    {Object.values(attainmentData.direct_attainments).map((val, i) => (
+                    {Object.values(attainmentData.direct_attainments || {}).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
-                        {val.toFixed(2)}
+                        {Number(val).toFixed(2)}
                       </td>
                     ))}
                   </tr>
@@ -178,7 +191,6 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
             </div>
           </div>
 
-          {/* Indirect Attainment */}
           <div>
             <h4 className="text-xl font-semibold text-green-700 mb-4">Indirect Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -186,7 +198,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <thead className="bg-green-600 text-white">
                   <tr>
                     <th className="px-6 py-4 text-left font-medium">PO/PSO</th>
-                    {Object.keys(attainmentData.indirect_attainments).map((key) => (
+                    {Object.keys(attainmentData.indirect_attainments || {}).map((key) => (
                       <th key={key} className="px-6 py-4 text-center font-medium">
                         {key}
                       </th>
@@ -196,9 +208,9 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
                     <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
-                    {Object.values(attainmentData.indirect_attainments).map((val, i) => (
+                    {Object.values(attainmentData.indirect_attainments || {}).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
-                        {val.toFixed(2)}
+                        {Number(val).toFixed(2)}
                       </td>
                     ))}
                   </tr>
@@ -207,7 +219,6 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
             </div>
           </div>
 
-          {/* Overall Attainment */}
           <div>
             <h4 className="text-xl font-semibold text-purple-700 mb-4">Overall Attainment</h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
@@ -215,7 +226,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <thead className="bg-purple-600 text-white">
                   <tr>
                     <th className="px-6 py-4 text-left font-medium">PO/PSO</th>
-                    {Object.keys(attainmentData.overall_attainments).map((key) => (
+                    {Object.keys(attainmentData.overall_attainments || {}).map((key) => (
                       <th key={key} className="px-6 py-4 text-center font-medium">
                         {key}
                       </th>
@@ -225,9 +236,9 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
                     <td className="px-6 py-4 font-semibold text-gray-800">Attainment Value</td>
-                    {Object.values(attainmentData.overall_attainments).map((val, i) => (
+                    {Object.values(attainmentData.overall_attainments || {}).map((val, i) => (
                       <td key={i} className="px-6 py-4 text-center text-gray-700">
-                        {val.toFixed(2)}
+                        {Number(val).toFixed(2)}
                       </td>
                     ))}
                   </tr>
@@ -236,7 +247,7 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
             </div>
           </div>
         </div>
-      ) : selectedProgram && selectedYear ? (
+      ) : selectedProgram && selectedYearId ? (
         <div className="text-center py-12 text-gray-500 italic bg-gray-50 rounded-xl border border-dashed">
           No attainment data available for the selected program and academic year.
         </div>
@@ -253,9 +264,13 @@ const Criterion3_8Content = ({ programId, isEditable, onFormChange }) => {
   );
 };
 
+// ────────────────────────────────────────────────
+// Main Generic Form
+// ────────────────────────────────────────────────
 const GenericCriteriaForm3_8 = ({
   cycle_sub_category_id,
-  programId,
+  programId = null,
+  academic_year_id = null,       // numeric ID only
   title = "3.3. Attainment of Program Outcomes and Program Specific Outcomes",
   marks = 40,
   isEditable = true,
@@ -270,52 +285,47 @@ const GenericCriteriaForm3_8 = ({
     initialData?.content || { "3.3.1": "" }
   );
 
-  // Initialize files with at least one empty row if none exist
   const [filesByField, setFilesByField] = useState(() => {
-    const incomingFiles = initialData?.filesByField?.["3.3"] || [];
-
-    if (Array.isArray(incomingFiles) && incomingFiles.length > 0) {
-      return {
-        "3.3": incomingFiles.map((f, i) => ({
-          id: f.id || `file-3.3-${i}-${Date.now()}`,
-          filename: f.filename || f.file_name || "",
-          file: null,
-          s3Url: f.s3Url || f.file_url || "",
-          description: f.description || "",
-          uploading: false,
-        })),
-      };
-    }
-
-    // Default: always show one empty upload slot
+    const incoming = initialData?.filesByField?.["3.3.1"] || [];
     return {
-      "3.3": [
-        {
-          id: `file-3.3-empty-${Date.now()}`,
-          filename: "",
-          file: null,
-          s3Url: "",
-          description: "",
-          uploading: false,
-        },
-      ],
+      "3.3.1": incoming.length > 0
+        ? incoming.map((f, i) => ({
+            id: f.id || `file-3.3.1-${i}-${Date.now()}`,
+            filename: f.filename || f.file_name || "",
+            file: null,
+            s3Url: f.s3Url || f.file_url || f.url || "",
+            description: f.description || "",
+            uploading: false,
+          }))
+        : [{
+            id: `file-3.3.1-empty-${Date.now()}`,
+            filename: "",
+            file: null,
+            s3Url: "",
+            description: "",
+            uploading: false,
+          }],
     };
   });
+
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState(
+    academic_year_id ? String(academic_year_id) : ""
+  );
 
   const [previewModal, setPreviewModal] = useState({ isOpen: false, file: null });
   const [mergeModal, setMergeModal] = useState({ isOpen: false, fieldName: null });
 
-  // Sync with parent initialData changes
+  // Sync initial data
   useEffect(() => {
     if (initialData?.content) {
       setFormValues(initialData.content);
     }
-    if (initialData?.filesByField?.["3.3"]) {
-      const files = initialData.filesByField["3.3"];
+    if (initialData?.filesByField?.["3.3.1"]) {
+      const files = initialData.filesByField["3.3.1"];
       setFilesByField({
-        "3.3": files.length > 0 
+        "3.3.1": files.length > 0
           ? files.map((f, i) => ({
-              id: f.id || `file-3.3-${i}-${Date.now()}`,
+              id: f.id || `file-3.3.1-${i}-${Date.now()}`,
               filename: f.filename || "",
               file: null,
               s3Url: f.s3Url || "",
@@ -323,7 +333,7 @@ const GenericCriteriaForm3_8 = ({
               uploading: false,
             }))
           : [{
-              id: `file-3.3-empty-${Date.now()}`,
+              id: `file-3.3.1-empty-${Date.now()}`,
               filename: "",
               file: null,
               s3Url: "",
@@ -334,12 +344,16 @@ const GenericCriteriaForm3_8 = ({
     }
   }, [initialData]);
 
+  useEffect(() => {
+    setSelectedAcademicYearId(academic_year_id ? String(academic_year_id) : "");
+  }, [academic_year_id]);
+
   const addFileRow = () => {
     setFilesByField((prev) => ({
-      "3.3": [
-        ...(prev["3.3"] || []),
+      "3.3.1": [
+        ...(prev["3.3.1"] || []),
         {
-          id: `file-3.3-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `file-3.3.1-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           description: "",
           file: null,
           filename: "",
@@ -352,7 +366,7 @@ const GenericCriteriaForm3_8 = ({
 
   const updateFileDescription = (index, value) => {
     setFilesByField((prev) => ({
-      "3.3": prev["3.3"].map((f, i) =>
+      "3.3.1": prev["3.3.1"].map((f, i) =>
         i === index ? { ...f, description: value } : f
       ),
     }));
@@ -362,7 +376,7 @@ const GenericCriteriaForm3_8 = ({
     if (!newFile || !(newFile instanceof File)) return;
 
     setFilesByField((prev) => ({
-      "3.3": prev["3.3"].map((f, i) =>
+      "3.3.1": prev["3.3.1"].map((f, i) =>
         i === index ? { ...f, file: newFile, filename: newFile.name, uploading: true } : f
       ),
     }));
@@ -370,14 +384,14 @@ const GenericCriteriaForm3_8 = ({
     try {
       const formData = new FormData();
       formData.append("file", newFile);
-      const currentDesc = filesByField["3.3"][index]?.description?.trim();
-      if (currentDesc) formData.append("description", currentDesc);
+      const desc = filesByField["3.3.1"][index]?.description?.trim();
+      if (desc) formData.append("description", desc);
 
       const resData = await nbaDashboardService.uploadFile(formData);
       const s3Url = resData?.url || resData || "";
 
       setFilesByField((prev) => ({
-        "3.3": prev["3.3"].map((f, i) =>
+        "3.3.1": prev["3.3.1"].map((f, i) =>
           i === index ? { ...f, s3Url, filename: newFile.name, uploading: false } : f
         ),
       }));
@@ -386,7 +400,7 @@ const GenericCriteriaForm3_8 = ({
     } catch (err) {
       toast.error("File upload failed");
       setFilesByField((prev) => ({
-        "3.3": prev["3.3"].map((f, i) =>
+        "3.3.1": prev["3.3.1"].map((f, i) =>
           i === index ? { ...f, uploading: false, file: null, filename: "" } : f
         ),
       }));
@@ -395,44 +409,36 @@ const GenericCriteriaForm3_8 = ({
 
   const removeFileRow = (index) => {
     setFilesByField((prev) => ({
-      "3.3": prev["3.3"].filter((_, i) => i !== index),
+      "3.3.1": prev["3.3.1"].filter((_, i) => i !== index),
     }));
   };
 
-const handleSave = () => {
-  if (!onSave) return;
+  const handleSave = () => {
+    if (!onSave) return;
 
-  // Normalize files → map "3.3" → "3.3.1"
-  const normalizedFilesByField = {
-    "3.3.1": (filesByField["3.3"] || []).map((f) => ({
-      filename: f.filename || "",
-      file: null,
-      s3Url: f.s3Url || "",
-      url: f.s3Url || "",
-      description: f.description || "",
-    })),
+    onSave({
+      content: {
+        "3.3.1": formValues["3.3.1"] || "",
+      },
+      tableData: {
+        "3.3.2": [], // no manual editing
+      },
+      filesByField: {
+        "3.3.1": (filesByField["3.3.1"] || []).map((f) => ({
+          filename: f.filename || "",
+          s3Url: f.s3Url || f.url || "",
+          url: f.s3Url || f.url || "",
+          description: f.description || "",
+        })),
+      },
+      academic_year_id: selectedAcademicYearId 
+        ? Number(selectedAcademicYearId) 
+        : null,  // ← only numeric ID is sent
+    });
+
+    setIsEditMode(false);
+    toast.success("Section saved successfully");
   };
-
-  // 🔴 IMPORTANT:
-  // Criterion 3.3 DOES NOT use editable table here
-  // Attainment table is AUTO-GENERATED (view-only)
-  // So we MUST send EMPTY array safely
-  const normalizedTableData = {
-    "3.3.2": [],
-  };
-
-  onSave({
-    content: {
-      "3.3.1": formValues["3.3.1"] || "",
-    },
-    tableData: normalizedTableData,
-    filesByField: normalizedFilesByField,
-  });
-
-  setIsEditMode(false);
-  toast.success("Section saved successfully");
-};
-
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -481,10 +487,15 @@ const handleSave = () => {
           <h3 className="text-xl font-bold text-blue-700">
             Attainment of Program Outcomes & Program Specific Outcomes
           </h3>
-          <Criterion3_8Content programId={programId} isEditable={false} />
+          <Criterion3_8Content
+            programId={programId}
+            academicYearId={selectedAcademicYearId}
+            isEditable={false}
+            onYearChange={setSelectedAcademicYearId}          
+          />
         </div>
 
-        {/* Supporting Documents Section */}
+        {/* Supporting Documents */}
         <div className="space-y-6">
           <h3 className="text-xl font-bold text-blue-700">Supporting Documents</h3>
 
@@ -494,9 +505,9 @@ const handleSave = () => {
                 <Upload className="w-6 h-6" /> Supporting Documents
               </h4>
 
-              {isEditMode && (filesByField["3.3"]?.length || 0) > 1 && (
+              {isEditMode && (filesByField["3.3.1"]?.length || 0) > 1 && (
                 <button
-                  onClick={() => setMergeModal({ isOpen: true, fieldName: "3.3" })}
+                  onClick={() => setMergeModal({ isOpen: true, fieldName: "3.3.1" })}
                   className="px-5 py-2.5 bg-[#2163c5] text-white font-medium rounded-lg hover:bg-[#1d57a8] transition flex items-center gap-2 shadow-sm"
                 >
                   <FileText className="w-5 h-5" /> Merge PDFs
@@ -508,17 +519,17 @@ const handleSave = () => {
               <DragDropContext
                 onDragEnd={(result) => {
                   if (!result.destination) return;
-                  const items = [...(filesByField["3.3"] || [])];
+                  const items = [...(filesByField["3.3.1"] || [])];
                   const [moved] = items.splice(result.source.index, 1);
                   items.splice(result.destination.index, 0, moved);
-                  setFilesByField({ "3.3": items });
+                  setFilesByField({ "3.3.1": items });
                 }}
               >
-                <Droppable droppableId="files-3.3">
+                <Droppable droppableId="files-3.3.1">
                   {(provided) => (
                     <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                      {(filesByField["3.3"] || []).map((file, index) => {
-                        const isOnlyOne = (filesByField["3.3"]?.length || 0) <= 1;
+                      {(filesByField["3.3.1"] || []).map((file, index) => {
+                        const isOnlyOne = (filesByField["3.3.1"]?.length || 0) <= 1;
 
                         return (
                           <Draggable key={file.id} draggableId={file.id} index={index}>
@@ -604,12 +615,12 @@ const handleSave = () => {
               </DragDropContext>
             ) : (
               <div className="space-y-4">
-                {(filesByField["3.3"] || []).length === 0 ? (
+                {(filesByField["3.3.1"] || []).length === 0 ? (
                   <div className="p-8 text-center text-gray-500 italic bg-white rounded-xl border-2 border-dashed border-gray-300">
                     No supporting documents uploaded yet
                   </div>
                 ) : (
-                  (filesByField["3.3"] || []).map((file, idx) => (
+                  (filesByField["3.3.1"] || []).map((file, idx) => (
                     <div
                       key={file.id}
                       className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-5 bg-white rounded-xl border border-gray-200"
