@@ -185,7 +185,7 @@ const CriterionForm = ({
       name: "po_attainment",                  // ← new field for the table
       label: "POs Attainment Levels & Actions Taken",
       showPOTable: true,                      // ← new flag we'll use
-      hasFileUpload: false,                    // documents can support the actions / observations
+      // hasFileUpload: false,                    // documents can support the actions / observations
       // Optional: you can pre-fill PO statements if you have them
       poStatements: {
         PO1: "Engineering knowledge: Apply the knowledge of mathematics, science, engineering fundamentals...",
@@ -298,22 +298,35 @@ const CriterionForm = ({
 
     /* ======================= 7.6 ======================= */
     "7.6": {
-      save: newnbaCriteria7Service.saveCriteria7_6_Data,
-      update: newnbaCriteria7Service.updateCriteria7_6_Data,
-      refresh: newnbaCriteria7Service.getCriteria7_6_Data,
-      delete: newnbaCriteria7Service.deleteCriteria7_6_Data,
-      mapPayload: (data, staffId) => ({
-        other_staff_id: staffId,
-        cycle_sub_category_id: nba_criteria_sub_level2_id,
-        continuous_improvement_description: data.content?.["7.6"] || "",
-        po_evaluation_document: mapFiles(data),
-      }),
-      mapResponse: (d) => ({
-        content: { "7.6": d.continuous_improvement_description || "" },
-        tableData: [],
-        filesByField: fileMap(d.po_evaluation_document, "7.6"),
-      }),
+  save: newnbaCriteria7Service.saveCriteria7_6_Data,
+  update: newnbaCriteria7Service.updateCriteria7_6_Data,
+  refresh: newnbaCriteria7Service.getCriteria7_6_Data,
+  delete: newnbaCriteria7Service.deleteCriteria7_6_Data,
+
+  mapPayload: (data, staffId) => ({
+    other_staff_id: staffId,
+    cycle_sub_category_id: nba_criteria_sub_level2_id,
+
+    // ✅ textarea
+    action_taken_description:
+      data.content?.action_taken_description || "",
+
+    // ✅ PO table
+    po_evaluation_data: data.poEvaluationData || [],
+
+    // ✅ files
+    po_evaluation_document: mapFiles(data),
+  }),
+
+  mapResponse: (d) => ({
+    content: {
+      action_taken_description: d.action_taken_description || "",
     },
+    poEvaluationData: d.po_evaluation_data || [],
+    filesByField: fileMap(d.po_evaluation_document, "7.6"),
+  }),
+},
+
   };
 
   /* =========================================================

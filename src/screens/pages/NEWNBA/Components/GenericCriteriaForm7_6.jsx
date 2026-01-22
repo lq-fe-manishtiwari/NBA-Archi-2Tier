@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Editor } from "react-editor";
 import Modal from "react-modal";
@@ -78,6 +78,34 @@ const GenericCriteriaForm7_6 = ({
     });
   };
 
+  useEffect(() => {
+  if (initialData?.content?.action_taken_description !== undefined) {
+    setFormValues((prev) => ({
+      ...prev,
+      action_taken_description:
+        initialData.content.action_taken_description,
+    }));
+  }
+}, [initialData?.content]);
+
+  useEffect(() => {
+  if (initialData?.poEvaluationData?.length) {
+    const values = {};
+
+    initialData.poEvaluationData.forEach(({ cay, ...poData }) => {
+      Object.entries(poData).forEach(([po, v]) => {
+        values[`${po}_${cay}_target`] = v.target;
+        values[`${po}_${cay}_attainment`] = v.attainment;
+        values[`${po}_${cay}_observation`] = v.observation;
+        values[`${po}_${cay}_actions`] = v.actions || ["", ""];
+      });
+    });
+
+    setFormValues((prev) => ({ ...prev, ...values }));
+  }
+}, [initialData]);
+
+
   const handleSave = () => {
     const poAttainmentData = preparePoData();
 
@@ -88,12 +116,13 @@ const GenericCriteriaForm7_6 = ({
     });
 
     onSave({
-      content: {
-        description: formValues.description || formValues["7.6"] || "",
-        po_attainment_by_cay: poAttainmentData,
-      },
-      filesByField,
-    });
+  content: {
+    action_taken_description:
+      formValues.action_taken_description || formValues["7.6"] || "",
+  },
+  poEvaluationData: poAttainmentData,   // ✅ table data
+  filesByField,
+});
 
     setIsEditMode(false);
   };
@@ -204,8 +233,15 @@ const GenericCriteriaForm7_6 = ({
             {field.hasEditor && (
               <div className="border-2 border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm">
                 <Editor
-                  value={formValues.description || ""}
-                  onChange={(val) => setFormValues((prev) => ({ ...prev, description: val }))}
+                  value={formValues.action_taken_description || ""}
+                    onChange={(val) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        action_taken_description: val,
+                      }))
+                    }
+
+                  // onChange={(val) => setFormValues((prev) => ({ ...prev, description: val }))}
                   disabled={!isEditMode || isCompleted}
                   style={{ minHeight: 280, padding: 20, fontSize: 16, lineHeight: 1.7 }}
                   className="focus:outline-none prose max-w-none"
@@ -216,7 +252,7 @@ const GenericCriteriaForm7_6 = ({
             {/* PO Attainment Section */}
             {field.showPOTable && (
               <div className="mt-10 space-y-16">
-                {["CAYm1", "CAYm2", "CAYm3"].map((cay) => (
+                {["caym1", "caym2", "caym3"].map((cay) => (
                   <div key={cay} className="space-y-8">
                     <h4 className="text-xl font-bold text-gray-800 border-b-2 border-blue-200 pb-2">
                       POs Attainment Levels and Actions for improvement – {cay}
