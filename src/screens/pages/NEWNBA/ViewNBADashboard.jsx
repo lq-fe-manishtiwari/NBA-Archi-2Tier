@@ -642,6 +642,14 @@ const ViewNBADashboard = () => {
     }
   };
 
+  const userProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+const role = userProfile?.roles?.[0]?.name?.toUpperCase();
+
+const collegeId =
+  role === "SUPERADMIN"
+    ? JSON.parse(localStorage.getItem("activeCollege") || "{}")?.id
+    : JSON.parse(localStorage.getItem("colleges") || "[]")?.[0]?.id;
+
   const {
     nbacoardinator,
     categories,
@@ -1034,7 +1042,7 @@ const ViewNBADashboard = () => {
               <p className="opacity-90 mt-1">View and manage all NBA reports</p>
             </div>
             <div className="p-6">
-              <ListNBAAccredatedOptimized collegeId={JSON.parse(localStorage.getItem('activeCollege') || '{}')?.id} programId={selectedProgram} />
+              <ListNBAAccredatedOptimized   collegeId={collegeId} programId={selectedProgram} />
             </div>
           </div>
         )}
